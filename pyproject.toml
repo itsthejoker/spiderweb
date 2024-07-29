@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "spiderweb"
+version = "0.1.0"
+description = "A small web framework, just big enough to hold your average spider."
+authors = ["Joe Kaufeld <opensource@joekaufeld.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+peewee = "^3.17.6"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.5"
+pytest = "^8.3.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
