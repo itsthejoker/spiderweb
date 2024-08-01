@@ -27,3 +27,7 @@ class ParseError(SpiderwebException):
 
 class GeneralException(SpiderwebException):
     pass
+
+
+class UnusedMiddleware(SpiderwebException):
+    pass

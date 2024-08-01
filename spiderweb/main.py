@@ -12,6 +12,7 @@ from typing import Callable, Any
 
 from spiderweb.converters import *  # noqa: F403
 from spiderweb.exceptions import APIError, ConfigError, ParseError, GeneralException
+from spiderweb.request import Request
 
 log = logging.getLogger(__name__)
 
@@ -95,7 +96,7 @@ class APIServer(HTTPServer):
                     self.add_route(route, method)
 
         try:
-            super().__init__(server_address, HandlerClass)
+            super().__init__(server_address, self.handler_class)
         except OSError:
             raise GeneralException("Port already in use.")
 
@@ -137,21 +138,32 @@ class APIHandler(BaseHTTPRequestHandler):
     # BaseHTTPRequestHandler uses for some weird reason
     _routes = {}
 
+    def get_request(self):
+        return Request(
+            content="",
+            body="",
+            method=self.command,
+            headers=self.headers,
+            path=self.path
+        )
+
     def do_GET(self):
-        self.do_action()
+        request = self.get_request()
+        self.handle_request(request)
 
     def do_POST(self):
         content = "{}"
         if self.headers["Content-Length"]:
             length = int(self.headers["Content-Length"])
             content = self.rfile.read(length)
-        info = None
+        request = self.get_request()
+        request.content = content
         if content:
             try:
-                info = json.loads(content)
+                request.json()
             except json.JSONDecodeError:
                 raise APIError(400, "Invalid JSON", content)
-        self.do_action(info)
+        self.handle_request(request)
 
     def get_route(self, path) -> tuple[Callable, dict[str, Any]]:
         for option in self._routes.keys():
@@ -161,23 +173,22 @@ class APIHandler(BaseHTTPRequestHandler):
                 )
         raise APIError(404, "No route found")
 
-    def do_action(self, info=None):
-        info = info or {}
+    def handle_request(self, request):
         try:
-            url = urlparse.urlparse(self.path)
+            request.url = urlparse.urlparse(request.path)
 
-            handler, additional_args = self.get_route(url.path)
+            handler, additional_args = self.get_route(request.url.path)
 
-            if url.query:
-                params = urlparse.parse_qs(url.query)
+            if request.url.query:
+                params = urlparse.parse_qs(request.url.query)
             else:
                 params = {}
 
-            info.update(params)
+            request.query_params = params
 
             if handler:
                 try:
-                    response = handler(info, **additional_args)
+                    response = handler(request, **additional_args)
                     self.send_response(200)
                     if response is None:
                         response = ""
