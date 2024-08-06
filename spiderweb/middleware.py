@@ -1,5 +1,3 @@
-from typing import Optional, NoReturn
-
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse
 
@@ -10,22 +8,22 @@ class SpiderwebMiddleware:
     (optional!) methods:
 
     process_request(self, request) -> None or Response
-    process_response(self, request, response) -> None
+    process_response(self, request, resp) -> None
 
     Middleware can be used to modify requests and responses in a variety of ways.
-    If one of the two methods is not defined, the request or response will be passed
+    If one of the two methods is not defined, the request or resp will be passed
     through unmodified.
 
-    If `process_request` returns
+    If `process_request` returns a HttpResponse, the request will be short-circuited
+    and the response will be returned immediately. `process_response` will not be called.
 
     """
     def process_request(self, request: Request) -> HttpResponse | None:
         # example of a middleware that sets a flag on the request
         request.spiderweb = True
 
-
-    def process_response(self, request: Request, response: HttpResponse) -> NoReturn:
-        # example of a middleware that sets a header on the response
+    def process_response(self, request: Request, response: HttpResponse) -> HttpResponse | None:
+        # example of a middleware that sets a header on the resp
         if hasattr(request, 'spiderweb'):
-            response['X-Spiderweb'] = 'true'
+            response.headers['X-Spiderweb'] = 'true'
         return response

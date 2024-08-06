@@ -4,6 +4,7 @@ class SpiderwebException(Exception):
 
 
 class SpiderwebNetworkException(SpiderwebException):
+    """Something has gone wrong with the network stack."""
     def __init__(self, code, msg=None, desc=None):
         self.code = code
         self.msg = msg
@@ -30,4 +31,8 @@ class GeneralException(SpiderwebException):
 
 
 class UnusedMiddleware(SpiderwebException):
+    pass
+
+
+class NoResponseError(SpiderwebException):
     pass
