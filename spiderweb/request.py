@@ -2,7 +2,16 @@ import json
 
 
 class Request:
-    def __init__(self, content=None, body=None, method=None, headers=None, path=None, url=None, query_params=None):
+    def __init__(
+        self,
+        content=None,
+        body=None,
+        method=None,
+        headers=None,
+        path=None,
+        url=None,
+        query_params=None,
+    ):
         self.content: str = content
         self.body: str = body
         self.method: str = method
@@ -13,5 +22,3 @@ class Request:
 
     def json(self):
         return json.loads(self.content)
-
-

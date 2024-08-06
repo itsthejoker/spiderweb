@@ -5,27 +5,37 @@
 
 import json
 import re
+import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse as urlparse
 import threading
 import logging
 from typing import Callable, Any
 
+from jinja2 import Environment, FileSystemLoader
+
 from spiderweb.converters import *  # noqa: F403
-from spiderweb.default_responses import http403, http404, http500
-from spiderweb.exceptions import APIError, ConfigError, ParseError, GeneralException, NoResponseError
+from spiderweb.default_responses import http403, http404, http500  # noqa: F401
+from spiderweb.exceptions import (
+    APIError,
+    ConfigError,
+    ParseError,
+    GeneralException,
+    NoResponseError,
+)
 from spiderweb.request import Request
-from spiderweb.response import HttpResponse, JsonResponse
+from spiderweb.response import HttpResponse, JsonResponse, TemplateResponse
 
 log = logging.getLogger(__name__)
 
 
-def api_route(path):
+def route(path):
     def outer(func):
         if not hasattr(func, "_routes"):
             setattr(func, "_routes", [])
         func._routes += [path]
         return func
+
     return outer
 
 
@@ -64,24 +74,30 @@ def convert_match_to_dict(match: dict):
 
 
 class WebServer(HTTPServer):
-    def __init__(self, addr: str, port: int, custom_handler: Callable = None):
+    def __init__(
+        self,
+        addr: str = None,
+        port: int = None,
+        custom_handler: Callable = None,
+        templates_dirs: list[str] = None,
+        middleware: list[str] = None,
+    ):
         """
         Create a new server on address, port. Port can be zero.
 
-        > from simple_rpc_server import WebServer, APIError, api_route
+        > from simple_rpc_server import WebServer, APIError, route
 
         Create your handlers by inheriting from WebServer and tagging them with
-        @api_route("/path"). Alternately, you can use the WebServer() directly
+        @route("/path"). Alternately, you can use the WebServer() directly
         by calling `add_handler("path", function)`.
-
-        Raise network errors by raising `APIError(code, message, description=None)`.
-
-        Return responses by simply returning a dict() or str() object.
-
-        Parameter to handlers is a dict().
-
-        Query arguments are shoved into the dict via urllib.parse_qs.
         """
+        addr = addr if addr else "localhost"
+        port = port if port else 7777
+        self.templates_dirs = templates_dirs
+        if self.templates_dirs:
+            self.env = Environment(loader=FileSystemLoader(self.templates_dirs))
+        else:
+            self.env = None
         server_address = (addr, port)
         self.__addr = addr
 
@@ -90,20 +106,53 @@ class WebServer(HTTPServer):
             pass
 
         self.handler_class = custom_handler if custom_handler else HandlerClass
+        self.handler_class.env = self.env
 
         # routed methods map into handler
         for method in type(self).__dict__.values():
             if hasattr(method, "_routes"):
                 for route in method._routes:
                     self.add_route(route, method)
-
         try:
             super().__init__(server_address, self.handler_class)
         except OSError:
             raise GeneralException("Port already in use.")
 
+    def check_for_route_duplicates(self, path: str):
+        if convert_path(path) in self.handler_class._routes:
+            raise ConfigError(f"Route '{path}' already exists.")
+
     def add_route(self, path: str, method: Callable):
+        """Add a route to the server."""
+        if not hasattr(self.handler_class, "_routes"):
+            setattr(self.handler_class, "_routes", [])
+        self.check_for_route_duplicates(path)
         self.handler_class._routes[convert_path(path)] = method
+
+    def route(self, path) -> Callable:
+        """
+        Decorator for adding a route to a view.
+
+        Usage:
+
+        app = WebServer()
+
+        @app.route("/hello")
+        def index(request):
+            return HttpResponse(content="Hello, world!")
+
+        :param path: str
+        :return: Callable
+        """
+
+        def outer(func):
+            if not hasattr(self.handler_class, "_routes"):
+                setattr(self.handler_class, "_routes", [])
+            self.check_for_route_duplicates(path)
+            self.handler_class._routes[convert_path(path)] = func
+            return func
+
+        return outer
 
     def port(self):
         """Return current port."""
@@ -113,9 +162,10 @@ class WebServer(HTTPServer):
         """Return current IP address."""
         return self.socket.getsockname()[0]
 
-    def uri(self, path):
+    def uri(self, path=None):
         """Make a URI pointing at myself."""
-        if path[0] == "/":
+        path = path if path else ""
+        if path.startswith("/"):
             path = path[1:]
         return "http://" + self.__addr + ":" + str(self.port()) + "/" + path
 
@@ -130,7 +180,7 @@ class WebServer(HTTPServer):
                 print("Stopping server!")
                 return
 
-    def shutdown(self):
+    def stop(self):
         super().shutdown()
         self.socket.close()
 
@@ -146,7 +196,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             body="",
             method=self.command,
             headers=self.headers,
-            path=self.path
+            path=self.path,
         )
 
     def do_GET(self):
@@ -212,13 +262,17 @@ class RequestHandler(BaseHTTPRequestHandler):
                         raise NoResponseError(f"View {handler} returned None.")
                     if isinstance(resp, dict):
                         self.fire_response(JsonResponse(data=resp))
+                    if isinstance(resp, TemplateResponse):
+                        if hasattr(self, "env"):  # injected from above
+                            resp.set_template_loader(self.env)
+                    self.fire_response(resp)
                 except APIError:
                     raise
                 except ConnectionAbortedError as e:
                     log.error(f"GET {self.path} : {e}")
-                except Exception as e:
-                    log.error(e.__traceback__)
-                    self.fire_response(self.get_error_route(500)(self, request))
+                except Exception:
+                    log.error(traceback.format_exc())
+                    self.fire_response(self.get_error_route(500)(request))
 
             else:
                 raise APIError(404)

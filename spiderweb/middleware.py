@@ -18,12 +18,15 @@ class SpiderwebMiddleware:
     and the response will be returned immediately. `process_response` will not be called.
 
     """
+
     def process_request(self, request: Request) -> HttpResponse | None:
         # example of a middleware that sets a flag on the request
         request.spiderweb = True
 
-    def process_response(self, request: Request, response: HttpResponse) -> HttpResponse | None:
+    def process_response(
+        self, request: Request, response: HttpResponse
+    ) -> HttpResponse | None:
         # example of a middleware that sets a header on the resp
-        if hasattr(request, 'spiderweb'):
-            response.headers['X-Spiderweb'] = 'true'
+        if hasattr(request, "spiderweb"):
+            response.headers["X-Spiderweb"] = "true"
         return response
