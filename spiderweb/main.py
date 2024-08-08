@@ -94,6 +94,7 @@ class WebServer(HTTPServer):
         addr = addr if addr else "localhost"
         port = port if port else 7777
         self.templates_dirs = templates_dirs
+        self.middleware = middleware if middleware else []
         if self.templates_dirs:
             self.env = Environment(loader=FileSystemLoader(self.templates_dirs))
         else:
