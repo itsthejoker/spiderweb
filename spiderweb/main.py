@@ -23,7 +23,7 @@ from spiderweb.exceptions import (
     ConfigError,
     ParseError,
     GeneralException,
-    NoResponseError,
+    NoResponseError, UnusedMiddleware,
 )
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse, JsonResponse, TemplateResponse, RedirectResponse
@@ -301,7 +301,11 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def process_request_middleware(self, request: Request) -> None | bool:
         for middleware in self.middleware:
-            resp = middleware.process_request(request)
+            try:
+                resp = middleware.process_request(request)
+            except UnusedMiddleware:
+                self.middleware.remove(middleware)
+                continue
             if resp:
                 self.process_response_middleware(request, resp)
                 self.fire_response(request, resp)
@@ -309,7 +313,11 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def process_response_middleware(self, request: Request, response: HttpResponse) -> None:
         for middleware in self.middleware:
-            middleware.process_response(request, response)
+            try:
+                middleware.process_response(request, response)
+            except UnusedMiddleware:
+                self.middleware.remove(middleware)
+                continue
 
     def prepare_response(self, request, resp) -> HttpResponse:
         try:
@@ -322,7 +330,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             for middleware in self.middleware:
                 middleware.process_response(request, resp)
 
-            self.fire_response(resp)
+            self.fire_response(request, resp)
 
         except APIError:
             raise

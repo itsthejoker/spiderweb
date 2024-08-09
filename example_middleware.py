@@ -1,3 +1,4 @@
+from spiderweb.exceptions import UnusedMiddleware
 from spiderweb.middleware import SpiderwebMiddleware
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse, RedirectResponse
@@ -20,3 +21,8 @@ class RedirectMiddleware(SpiderwebMiddleware):
     def process_request(self, request: Request) -> HttpResponse | None:
         if request.path == "/middleware":
             return RedirectResponse("/")
+
+
+class ExplodingMiddleware(SpiderwebMiddleware):
+    def process_request(self, request: Request) -> HttpResponse | None:
+        raise UnusedMiddleware("Unfinished!")
