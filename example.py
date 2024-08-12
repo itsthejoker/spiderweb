@@ -1,4 +1,5 @@
 from spiderweb import WebServer
+from spiderweb.exceptions import ServerError
 from spiderweb.response import HttpResponse, JsonResponse, TemplateResponse, RedirectResponse
 
 
@@ -30,7 +31,7 @@ def json(request):
 
 @app.route("/error")
 def error(request):
-    return HttpResponse(status_code=500, body="Internal Server Error")
+    raise ServerError
 
 
 @app.route("/middleware")

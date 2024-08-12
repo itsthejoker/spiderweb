@@ -5,7 +5,6 @@
 import json
 import re
 import signal
-import sys
 import time
 import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -23,7 +22,7 @@ from spiderweb.exceptions import (
     ConfigError,
     ParseError,
     GeneralException,
-    NoResponseError, UnusedMiddleware,
+    NoResponseError, UnusedMiddleware, SpiderwebNetworkException, NotFound,
 )
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse, JsonResponse, TemplateResponse, RedirectResponse
@@ -125,7 +124,7 @@ class WebServer(HTTPServer):
 
     def convert_path(self, path: str):
         """Convert a path to a regex."""
-        parts = path.split("/")            
+        parts = path.split("/")
         for i, part in enumerate(parts):
             if part.startswith("<") and part.endswith(">"):
                 name = part[1:-1]
@@ -142,11 +141,8 @@ class WebServer(HTTPServer):
                         raise ParseError(f"Unknown converter {converter}")
                 else:
                     converter = StrConverter  # noqa: F405
-                parts[i] = r"(?P<%s>%s)" % (
-                    f"{name}__{str(converter.__name__)}",
-                    converter.regex,
-                )
-        return re.compile(r"^%s$" % "/".join(parts))
+                parts[i] = rf"(?P<{name}__{str(converter.__name__)}>{converter.regex})"
+        return re.compile(rf"^{'/'.join(parts)}$")
 
     def check_for_route_duplicates(self, path: str):
         if self.convert_path(path) in self.handler_class._routes:
@@ -233,6 +229,9 @@ class WebServer(HTTPServer):
 class RequestHandler(BaseHTTPRequestHandler):
     # I can't help the naming convention of these because that's what
     # BaseHTTPRequestHandler uses for some weird reason
+
+    # These stop pycharm from complaining about these not existing. They're
+    # injected by the WebServer class at runtime
     _routes = {}
     middleware = []
 
@@ -269,7 +268,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 return self._routes[option], convert_match_to_dict(
                     match_data.groupdict()
                 )
-        raise APIError(404, "No route found")
+        raise NotFound()
 
     def get_error_route(self, code: int) -> Callable:
         try:
@@ -319,10 +318,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.middleware.remove(middleware)
                 continue
 
-    def prepare_response(self, request, resp) -> HttpResponse:
+    def prepare_and_fire_response(self, request, resp) -> None:
         try:
             if isinstance(resp, dict):
-                self.fire_response(JsonResponse(data=resp))
+                self.fire_response(request, JsonResponse(data=resp))
             if isinstance(resp, TemplateResponse):
                 if hasattr(self, "env"):  # injected from above
                     resp.set_template_loader(self.env)
@@ -335,17 +334,25 @@ class RequestHandler(BaseHTTPRequestHandler):
         except APIError:
             raise
 
-        except ConnectionAbortedError as e:
-            log.error(f"GET {self.path} : {e}")
         except Exception:
             log.error(traceback.format_exc())
             self.fire_response(request, self.get_error_route(500)(request))
+
+    def send_error_response(self, request: Request, e: SpiderwebNetworkException):
+        try:
+            self.send_error(e.code, e.msg, e.desc)
+        except ConnectionAbortedError as e:
+            log.error(f"{request.method} {self.path} : {e}")
 
     def handle_request(self, request):
 
         request.url = urlparse.urlparse(request.path)
 
-        handler, additional_args = self.get_route(request.url.path)
+        try:
+            handler, additional_args = self.get_route(request.url.path)
+        except NotFound:
+            handler = self.get_error_route(404)
+            additional_args = {}
 
         if request.url.query:
             params = urlparse.parse_qs(request.url.query)
@@ -363,18 +370,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                 resp = handler(request, **additional_args)
                 if resp is None:
                     raise NoResponseError(f"View {handler} returned None.")
-                if isinstance(resp, dict):
-                    self.fire_response(request, JsonResponse(data=resp))
-                if isinstance(resp, TemplateResponse):
-                    if hasattr(self, "env"):  # injected from above
-                        resp.set_template_loader(self.env)
-
-                self.process_response_middleware(request, resp)
-                self.fire_response(request, resp)
+                # run the response through the middleware and send it
+                self.prepare_and_fire_response(request, resp)
             else:
-                raise APIError(404)
-        except APIError as e:
-            try:
-                self.send_error(e.code, e.msg, e.desc)
-            except ConnectionAbortedError as e:
-                log.error(f"GET {self.path} : {e}")
+                raise SpiderwebNetworkException(404)
+        except SpiderwebNetworkException as e:
+            self.send_error_response(request, e)
