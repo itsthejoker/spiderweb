@@ -1,6 +1,11 @@
 from spiderweb import WebServer
 from spiderweb.exceptions import ServerError
-from spiderweb.response import HttpResponse, JsonResponse, TemplateResponse, RedirectResponse
+from spiderweb.response import (
+    HttpResponse,
+    JsonResponse,
+    TemplateResponse,
+    RedirectResponse,
+)
 
 
 app = WebServer(
@@ -11,7 +16,7 @@ app = WebServer(
         "example_middleware.RedirectMiddleware",
         "example_middleware.ExplodingMiddleware",
     ],
-    append_slash=False  # default
+    append_slash=False,  # default
 )
 
 

@@ -11,7 +11,11 @@ class CSRFMiddleware(SpiderwebMiddleware):
 
     def process_request(self, request: Request) -> HttpResponse | None:
         if request.method == "POST":
-            csrf_token = request.headers.get("X-CSRF-TOKEN") or request.GET.get("csrf_token") or request.POST.get("csrf_token")
+            csrf_token = (
+                request.headers.get("X-CSRF-TOKEN")
+                or request.GET.get("csrf_token")
+                or request.POST.get("csrf_token")
+            )
             if self.is_csrf_valid(csrf_token):
                 return None
             else:
@@ -25,12 +29,16 @@ class CSRFMiddleware(SpiderwebMiddleware):
         request.csrf_token = token
 
     def get_csrf_token(self):
-        return self.server.encrypt(str(datetime.now().isoformat())).decode(self.server.DEFAULT_ENCODING)
+        return self.server.encrypt(str(datetime.now().isoformat())).decode(
+            self.server.DEFAULT_ENCODING
+        )
 
     def is_csrf_valid(self, key):
         try:
             decoded = self.server.decrypt(key)
-            if datetime.now() - timedelta(seconds=self.CSRF_EXPIRY) > datetime.fromisoformat(decoded):
+            if datetime.now() - timedelta(
+                seconds=self.CSRF_EXPIRY
+            ) > datetime.fromisoformat(decoded):
                 return False
             return True
         except Exception:

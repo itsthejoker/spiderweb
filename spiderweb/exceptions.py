@@ -28,7 +28,9 @@ class BadRequest(SpiderwebNetworkException):
     def __init__(self, desc=None):
         self.code = 400
         self.msg = "Bad Request"
-        self.desc = desc if desc else "The request could not be understood by the server"
+        self.desc = (
+            desc if desc else "The request could not be understood by the server"
+        )
 
 
 class Unauthorized(SpiderwebNetworkException):
@@ -57,7 +59,6 @@ class CSRFError(SpiderwebNetworkException):
         self.code = 403
         self.msg = "Forbidden"
         self.desc = desc if desc else "CSRF token is invalid"
-
 
 
 class ConfigError(SpiderwebException):

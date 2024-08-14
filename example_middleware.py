@@ -9,9 +9,7 @@ class TestMiddleware(SpiderwebMiddleware):
         # example of a middleware that sets a flag on the request
         request.spiderweb = True
 
-    def process_response(
-        self, request: Request, response: HttpResponse
-    ) -> None:
+    def process_response(self, request: Request, response: HttpResponse) -> None:
         # example of a middleware that sets a header on the resp
         if hasattr(request, "spiderweb"):
             response.headers["X-Spiderweb"] = "true"
