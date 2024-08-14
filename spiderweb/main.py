@@ -2,8 +2,10 @@
 # https://gist.github.com/earonesty/ab07b4c0fea2c226e75b3d538cc0dc55
 #
 # Extensively modified by @itsthejoker
-from datetime import datetime, timedelta
+import inspect
+import os
 import re
+import pathlib
 import signal
 import time
 import traceback
@@ -16,6 +18,7 @@ from typing import Callable, Any, NoReturn
 from cryptography.fernet import Fernet
 from jinja2 import Environment, FileSystemLoader
 
+from spiderweb.constants import DEFAULT_ENCODING, DEFAULT_ALLOWED_METHODS
 from spiderweb.converters import *  # noqa: F403
 from spiderweb.default_responses import *  # noqa: F403
 from spiderweb.exceptions import (
@@ -33,16 +36,12 @@ from spiderweb.response import (
     HttpResponse,
     JsonResponse,
     TemplateResponse,
-    RedirectResponse,
+    RedirectResponse, FileResponse,
 )
-from spiderweb.utils import import_by_string
-
+from spiderweb.utils import import_by_string, is_safe_path
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
-DEFAULT_ALLOWED_METHODS = ["GET"]
-DEFAULT_ENCODING = "utf-8"
 
 
 def route(path):
@@ -53,6 +52,16 @@ def route(path):
         return func
 
     return outer
+
+
+def send_file(request, filename: str) -> HttpResponse:
+    for folder in request.server.staticfiles_dirs:
+        requested_path = request.server.BASE_DIR / folder / filename
+        if os.path.exists(requested_path):
+            if not is_safe_path(requested_path):
+                raise NotFound
+            return FileResponse(filename=requested_path)
+    raise NotFound
 
 
 class DummyRedirectRoute:
@@ -80,6 +89,7 @@ class WebServer(HTTPServer):
         templates_dirs: list[str] = None,
         middleware: list[str] = None,
         append_slash: bool = False,
+        staticfiles_dirs: list[str] = None,
         secret_key: str = None,
     ):
         """
@@ -95,12 +105,15 @@ class WebServer(HTTPServer):
         port = port if port else 8000
         self.append_slash = append_slash
         self.templates_dirs = templates_dirs
+        self.staticfiles_dirs = staticfiles_dirs
         self.middleware = middleware if middleware else []
         self.secret_key = secret_key if secret_key else self._create_secret_key()
         self.fernet = Fernet(self.key)
         self.DEFAULT_ENCODING = DEFAULT_ENCODING
         self.DEFAULT_ALLOWED_METHODS = DEFAULT_ALLOWED_METHODS
         self._thread = None
+
+        self.BASE_DIR = self.get_caller_filepath()
 
         if self.middleware:
             middleware_by_reference = []
@@ -115,6 +128,7 @@ class WebServer(HTTPServer):
             self.env = Environment(loader=FileSystemLoader(self.templates_dirs))
         else:
             self.env = None
+
         server_address = (addr, port)
         self.__addr = addr
 
@@ -131,10 +145,24 @@ class WebServer(HTTPServer):
                 for route in method._routes:
                     self.add_route(route, method)
 
+        if self.staticfiles_dirs:
+            for static_dir in self.staticfiles_dirs:
+                static_dir = pathlib.Path(static_dir)
+                if not pathlib.Path(self.BASE_DIR / static_dir).exists():
+                    log.error(f"Static files directory '{str(static_dir)}' does not exist.")
+                    raise ConfigError
+            self.add_route(r"/static/<str:filename>", send_file)
+
         try:
             super().__init__(server_address, self.handler_class)
         except OSError:
             raise GeneralException("Port already in use.")
+
+    def get_caller_filepath(self):
+        """Figure out who called us and return their path."""
+        stack = inspect.stack()
+        caller_frame = stack[1]
+        return pathlib.Path(caller_frame.filename).parent.parent
 
     def convert_path(self, path: str):
         """Convert a path to a regex."""
@@ -162,10 +190,12 @@ class WebServer(HTTPServer):
         if self.convert_path(path) in self.handler_class._routes:
             raise ConfigError(f"Route '{path}' already exists.")
 
-    def add_route(self, path: str, method: Callable, allowed_methods: list[str]):
+    def add_route(self, path: str, method: Callable, allowed_methods: None|list[str] = None):
         """Add a route to the server."""
         if not hasattr(self.handler_class, "_routes"):
             setattr(self.handler_class, "_routes", {})
+
+        allowed_methods = allowed_methods if allowed_methods else DEFAULT_ALLOWED_METHODS
 
         if self.append_slash and not path.endswith("/"):
             updated_path = path + "/"
@@ -300,6 +330,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             method=self.command,
             headers=self.headers,
             path=self.path,
+            server=self.server,
         )
 
     # I can't help the naming convention of these because that's what
@@ -319,6 +350,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         request.content = content
         self.handle_request(request)
 
+
+
     def get_route(self, path) -> tuple[Callable, dict[str, Any], list[str]]:
         for option in self._routes.keys():
             if match_data := option.match(path):
@@ -335,19 +368,18 @@ class RequestHandler(BaseHTTPRequestHandler):
             return http500
         return view
 
-    def _fire_response(self, resp: HttpResponse):
-        self.send_response(resp.status_code)
-        content = resp.render()
+    def _fire_response(self, status: int=200, content: str=None, headers: dict[str, str | int]=None):
+        self.send_response(status)
         self.send_header("Content-Length", str(len(content)))
-        if resp.headers:
-            for key, value in resp.headers.items():
+        if headers:
+            for key, value in headers.items():
                 self.send_header(key, value)
         self.end_headers()
         self.wfile.write(bytes(content, DEFAULT_ENCODING))
 
     def fire_response(self, request: Request, resp: HttpResponse):
         try:
-            self._fire_response(resp)
+            self._fire_response(status=resp.status_code, content=resp.render(), headers=resp.headers)
         except APIError:
             raise
         except ConnectionAbortedError as e:

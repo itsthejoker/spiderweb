@@ -1,9 +1,14 @@
 import datetime
 import json
 from typing import Any
+import mimetypes
 
+from spiderweb.constants import DEFAULT_ENCODING
 from spiderweb.exceptions import GeneralException
 from spiderweb.request import Request
+
+
+mimetypes.init()
 
 
 class HttpResponse:
@@ -20,7 +25,8 @@ class HttpResponse:
         self.context = context if context else {}
         self.status_code = status_code
         self.headers = headers if headers else {}
-        self.headers["Content-Type"] = "text/html; charset=utf-8"
+        if not self.headers.get("Content-Type"):
+            self.headers["Content-Type"] = "text/html; charset=utf-8"
         self.headers["Server"] = "Spiderweb"
         self.headers["Date"] = datetime.datetime.now(tz=datetime.UTC).strftime(
             "%a, %d %b %Y %H:%M:%S GMT"
@@ -31,6 +37,19 @@ class HttpResponse:
 
     def render(self) -> str:
         return str(self.body)
+
+
+class FileResponse(HttpResponse):
+    def __init__(self, filename, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.filename = filename
+        self.content_type = mimetypes.guess_type(self.filename)[0]
+        self.headers["Content-Type"] = self.content_type
+
+    def render(self) -> str:
+        with open(self.filename, 'rb') as f:
+            self.body = f.read().decode(DEFAULT_ENCODING)
+        return self.body
 
 
 class JsonResponse(HttpResponse):

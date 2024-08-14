@@ -11,6 +11,7 @@ class Request:
         path=None,
         url=None,
         query_params=None,
+        server=None
     ):
         self.content: str = content
         self.body: str = body
@@ -19,6 +20,7 @@ class Request:
         self.path: str = path
         self.url = url
         self.query_params = query_params
+        self.server = server
         self.GET = {}
         self.POST = {}
 

@@ -1,7 +1,7 @@
 class SpiderwebException(Exception):
     # parent error class; all child exceptions should inherit from this
     def __str__(self):
-        return f"{self.__class__.__name__}({self.code}, {self.msg})"
+        return f"{self.__class__.__name__}()"
 
 
 class SpiderwebNetworkException(SpiderwebException):
@@ -12,6 +12,8 @@ class SpiderwebNetworkException(SpiderwebException):
         self.msg = msg
         self.desc = desc
 
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.code}, {self.msg})"
 
 class APIError(SpiderwebNetworkException):
     pass

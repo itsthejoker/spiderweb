@@ -16,12 +16,14 @@ app = WebServer(
         "example_middleware.RedirectMiddleware",
         "example_middleware.ExplodingMiddleware",
     ],
+    staticfiles_dirs=["static_files"],
     append_slash=False,  # default
 )
 
 
 @app.route("/")
 def index(request):
+    print(app.BASE_DIR)
     return TemplateResponse(request, "test.html", context={"value": "TEST!"})
 
 
