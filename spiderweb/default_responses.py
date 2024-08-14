@@ -11,5 +11,9 @@ def http404(request):
     )
 
 
+def http405(request):
+    return JsonResponse(data={"error": "Method not allowed"}, status_code=405)
+
+
 def http500(request):
     return JsonResponse(data={"error": "Internal server error"}, status_code=500)

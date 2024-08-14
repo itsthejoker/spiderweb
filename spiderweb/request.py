@@ -19,6 +19,8 @@ class Request:
         self.path: str = path
         self.url = url
         self.query_params = query_params
+        self.GET = {}
+        self.POST = {}
 
     def json(self):
         return json.loads(self.content)

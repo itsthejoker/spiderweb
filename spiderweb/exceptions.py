@@ -52,6 +52,14 @@ class ServerError(SpiderwebNetworkException):
         self.desc = desc if desc else "The server has encountered an error"
 
 
+class CSRFError(SpiderwebNetworkException):
+    def __init__(self, desc=None):
+        self.code = 403
+        self.msg = "Forbidden"
+        self.desc = desc if desc else "CSRF token is invalid"
+
+
+
 class ConfigError(SpiderwebException):
     pass
 

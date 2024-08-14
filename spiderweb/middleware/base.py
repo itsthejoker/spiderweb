@@ -17,6 +17,8 @@ class SpiderwebMiddleware:
     If `process_request` returns a HttpResponse, the request will be short-circuited
     and the response will be returned immediately. `process_response` will not be called.
     """
+    def __init__(self, server):
+        self.server = server
 
     def process_request(self, request: Request) -> HttpResponse | None:
         pass

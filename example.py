@@ -6,6 +6,7 @@ from spiderweb.response import HttpResponse, JsonResponse, TemplateResponse, Red
 app = WebServer(
     templates_dirs=["templates"],
     middleware=[
+        "spiderweb.middleware.csrf.CSRFMiddleware",
         "example_middleware.TestMiddleware",
         "example_middleware.RedirectMiddleware",
         "example_middleware.ExplodingMiddleware",
@@ -44,6 +45,19 @@ def middleware(request):
 @app.route("/example/<int:id>")
 def example(request, id):
     return HttpResponse(body=f"Example with id {id}")
+
+
+@app.error(405)
+def http405(request) -> HttpResponse:
+    return HttpResponse(body="Method not allowed", status_code=405)
+
+
+@app.route("/form", allowed_methods=["POST"])
+def form(request):
+    if request.method == "POST":
+        return JsonResponse(data=request.POST)
+    else:
+        return TemplateResponse(request, "form.html")
 
 
 if __name__ == "__main__":
