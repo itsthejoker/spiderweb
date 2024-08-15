@@ -70,4 +70,4 @@ def form(request):
 if __name__ == "__main__":
     # can also add routes like this:
     # app.add_route("/", index)
-    app.start()
+    app.start(blocking=True)

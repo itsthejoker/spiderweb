@@ -350,8 +350,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         request.content = content
         self.handle_request(request)
 
-
-
     def get_route(self, path) -> tuple[Callable, dict[str, Any], list[str]]:
         for option in self._routes.keys():
             if match_data := option.match(path):
@@ -443,8 +441,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             log.error(f"{request.method} {self.path} : {e}")
 
     def handle_request(self, request):
-
-        request.url = urlparse.urlparse(request.path)
 
         try:
             handler, additional_args, allowed_methods = self.get_route(request.url.path)

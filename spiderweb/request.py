@@ -1,4 +1,5 @@
 import json
+from urllib.parse import urlparse
 
 
 class Request:
@@ -9,7 +10,6 @@ class Request:
         method=None,
         headers=None,
         path=None,
-        url=None,
         query_params=None,
         server=None
     ):
@@ -18,7 +18,7 @@ class Request:
         self.method: str = method
         self.headers: dict[str] = headers
         self.path: str = path
-        self.url = url
+        self.url = urlparse(path)
         self.query_params = query_params
         self.server = server
         self.GET = {}
