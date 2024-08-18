@@ -14,6 +14,7 @@ import urllib.parse as urlparse
 import threading
 import logging
 from typing import Callable, Any, NoReturn
+from wsgiref.simple_server import WSGIRequestHandler, WSGIServer
 
 from cryptography.fernet import Fernet
 from jinja2 import Environment, FileSystemLoader
@@ -36,7 +37,8 @@ from spiderweb.response import (
     HttpResponse,
     JsonResponse,
     TemplateResponse,
-    RedirectResponse, FileResponse,
+    RedirectResponse,
+    FileResponse,
 )
 from spiderweb.utils import import_by_string, is_safe_path
 
@@ -149,7 +151,9 @@ class WebServer(HTTPServer):
             for static_dir in self.staticfiles_dirs:
                 static_dir = pathlib.Path(static_dir)
                 if not pathlib.Path(self.BASE_DIR / static_dir).exists():
-                    log.error(f"Static files directory '{str(static_dir)}' does not exist.")
+                    log.error(
+                        f"Static files directory '{str(static_dir)}' does not exist."
+                    )
                     raise ConfigError
             self.add_route(r"/static/<str:filename>", send_file)
 
@@ -190,12 +194,16 @@ class WebServer(HTTPServer):
         if self.convert_path(path) in self.handler_class._routes:
             raise ConfigError(f"Route '{path}' already exists.")
 
-    def add_route(self, path: str, method: Callable, allowed_methods: None|list[str] = None):
+    def add_route(
+        self, path: str, method: Callable, allowed_methods: None | list[str] = None
+    ):
         """Add a route to the server."""
         if not hasattr(self.handler_class, "_routes"):
             setattr(self.handler_class, "_routes", {})
 
-        allowed_methods = allowed_methods if allowed_methods else DEFAULT_ALLOWED_METHODS
+        allowed_methods = (
+            allowed_methods if allowed_methods else DEFAULT_ALLOWED_METHODS
+        )
 
         if self.append_slash and not path.endswith("/"):
             updated_path = path + "/"
@@ -366,7 +374,12 @@ class RequestHandler(BaseHTTPRequestHandler):
             return http500
         return view
 
-    def _fire_response(self, status: int=200, content: str=None, headers: dict[str, str | int]=None):
+    def _fire_response(
+        self,
+        status: int = 200,
+        content: str = None,
+        headers: dict[str, str | int] = None,
+    ):
         self.send_response(status)
         self.send_header("Content-Length", str(len(content)))
         if headers:
@@ -377,7 +390,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def fire_response(self, request: Request, resp: HttpResponse):
         try:
-            self._fire_response(status=resp.status_code, content=resp.render(), headers=resp.headers)
+            self._fire_response(
+                status=resp.status_code, content=resp.render(), headers=resp.headers
+            )
         except APIError:
             raise
         except ConnectionAbortedError as e:

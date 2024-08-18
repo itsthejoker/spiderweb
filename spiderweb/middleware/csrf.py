@@ -11,6 +11,9 @@ class CSRFMiddleware(SpiderwebMiddleware):
 
     def process_request(self, request: Request) -> HttpResponse | None:
         if request.method == "POST":
+            if hasattr(request.handler, "csrf_exempt"):
+                if request.handler.csrf_exempt is True:
+                    return
             csrf_token = (
                 request.headers.get("X-CSRF-TOKEN")
                 or request.GET.get("csrf_token")
@@ -26,7 +29,10 @@ class CSRFMiddleware(SpiderwebMiddleware):
         token = self.get_csrf_token()
         # do we need it in both places?
         response.headers["X-CSRF-TOKEN"] = token
-        request.csrf_token = token
+        response.context |= {
+            "csrf_token": f"""<input type="hidden" name="csrf_token" value="{token}">""",
+            "raw_csrf_token": token,  # in case they want to format it themselves
+        }
 
     def get_csrf_token(self):
         return self.server.encrypt(str(datetime.now().isoformat())).decode(

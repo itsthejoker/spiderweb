@@ -15,6 +15,7 @@ class SpiderwebNetworkException(SpiderwebException):
     def __str__(self):
         return f"{self.__class__.__name__}({self.code}, {self.msg})"
 
+
 class APIError(SpiderwebNetworkException):
     pass
 

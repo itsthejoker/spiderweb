@@ -9,6 +9,43 @@ from spiderweb.response import (
 )
 
 
+def index(request):
+    return TemplateResponse(request, "test.html", context={"value": "TEST!"})
+
+
+def redirect(request):
+    return RedirectResponse("/")
+
+
+def json(request):
+    return JsonResponse(data={"key": "value"})
+
+
+def error(request):
+    raise ServerError
+
+
+def middleware(request):
+    return HttpResponse(
+        body="We'll never hit this because it's redirected in middleware"
+    )
+
+
+def example(request, id):
+    return HttpResponse(body=f"Example with id {id}")
+
+
+def http405(request) -> HttpResponse:
+    return HttpResponse(body="Method not allowed", status_code=405)
+
+
+def form(request):
+    if request.method == "POST":
+        return JsonResponse(data=request.POST)
+    else:
+        return TemplateResponse(request, "form.html")
+
+
 app = SpiderwebRouter(
     templates_dirs=["templates"],
     middleware=[
@@ -18,54 +55,17 @@ app = SpiderwebRouter(
         "example_middleware.ExplodingMiddleware",
     ],
     staticfiles_dirs=["static_files"],
-    append_slash=False,  # default
+    routes=[
+        ["/", index],
+        ["/redirect", redirect],
+        ["/json", json],
+        ["/error", error],
+        ["/middleware", middleware],
+        ["/example/<int:id>", example],
+        ["/form", form, {"allowed_methods": ["GET", "POST"], "csrf_exempt": True}],
+    ],
+    error_routes={"405": http405},
 )
-
-
-@app.route("/")
-def index(request):
-    return TemplateResponse(request, "test.html", context={"value": "TEST!"})
-
-
-@app.route("/redirect")
-def redirect(request):
-    return RedirectResponse("/")
-
-
-@app.route("/json")
-def json(request):
-    return JsonResponse(data={"key": "value"})
-
-
-@app.route("/error")
-def error(request):
-    raise ServerError
-
-
-@app.route("/middleware")
-def middleware(request):
-    return HttpResponse(
-        body="We'll never hit this because it's redirected in middleware"
-    )
-
-
-@app.route("/example/<int:id>")
-def example(request, id):
-    return HttpResponse(body=f"Example with id {id}")
-
-
-@app.error(405)
-def http405(request) -> HttpResponse:
-    return HttpResponse(body="Method not allowed", status_code=405)
-
-
-@csrf_exempt
-@app.route("/form", allowed_methods=["GET", "POST"])
-def form(request):
-    if request.method == "POST":
-        return JsonResponse(data=request.POST)
-    else:
-        return TemplateResponse(request, "form.html")
 
 
 if __name__ == "__main__":

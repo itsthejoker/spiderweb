@@ -2,6 +2,7 @@ import datetime
 import json
 from typing import Any
 import mimetypes
+from wsgiref.util import FileWrapper
 
 from spiderweb.constants import DEFAULT_ENCODING
 from spiderweb.exceptions import GeneralException
@@ -46,9 +47,9 @@ class FileResponse(HttpResponse):
         self.content_type = mimetypes.guess_type(self.filename)[0]
         self.headers["Content-Type"] = self.content_type
 
-    def render(self) -> str:
-        with open(self.filename, 'rb') as f:
-            self.body = f.read().decode(DEFAULT_ENCODING)
+    def render(self) -> list[bytes]:
+        with open(self.filename, "rb") as f:
+            self.body = [chunk for chunk in FileWrapper(f)]
         return self.body
 
 
