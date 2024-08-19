@@ -1,10 +1,12 @@
 import datetime
 import json
+import re
 from typing import Any
+import urllib.parse
 import mimetypes
 from wsgiref.util import FileWrapper
 
-from spiderweb.constants import DEFAULT_ENCODING
+from spiderweb.constants import REGEX_COOKIE_NAME
 from spiderweb.exceptions import GeneralException
 from spiderweb.request import Request
 
@@ -35,6 +37,63 @@ class HttpResponse:
 
     def __str__(self):
         return self.body
+
+    def set_cookie(
+            self,
+            name: str,
+            value: str,
+            domain: str=None,
+            expires: datetime.datetime = None,
+            http_only: bool=None,
+            max_age: int=None,
+            partitioned: bool=None,
+            path: str=None,
+            secure: bool=False,
+            same_site: str=None
+    ):
+        if not bool(re.match(REGEX_COOKIE_NAME, name)):
+            url = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#attributes"
+            raise GeneralException(
+                f"Cookie name has illegal characters. See {url} for information on"
+                f" allowed characters."
+            )
+        additions = {}
+        booleans = []
+
+        if domain:
+            additions["Domain"] = domain
+        if expires:
+            additions["Expires"] = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        if max_age:
+            additions["Max-Age"] = int(max_age)
+        if path:
+            additions["Path"] = path
+        if same_site:
+            valid_values = ["strict", "lax", "none"]
+            if same_site.lower() not in valid_values:
+                raise GeneralException(
+                    f"Invalid value {same_site} for `same_site` cookie attribute. Valid"
+                    f" options are 'strict', 'lax', or 'none'."
+                )
+            additions["SameSite"] = same_site.title()
+
+        if http_only:
+            booleans.append("HttpOnly")
+        if partitioned:
+            booleans.append("Partitioned")
+        if secure:
+            booleans.append("Secure")
+
+        attrs = [f"{k}={v}" for k, v in additions.items()]
+        attrs += booleans
+        attrs = [urllib.parse.quote_plus(value)] + attrs
+        cookie = f"{name}={'; '.join(attrs)}"
+
+        if "Set-Cookie" in self.headers:
+            self.headers["Set-Cookie"].append(cookie)
+        else:
+            self.headers["Set-Cookie"] = [cookie]
+
 
     def render(self) -> str:
         return str(self.body)

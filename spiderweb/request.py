@@ -26,9 +26,11 @@ class Request:
         self.GET = {}
         self.POST = {}
         self.META = {}
+        self.COOKIES = {}
 
         self.populate_headers()
         self.populate_meta()
+        self.populate_cookies()
 
         content_length = int(self.headers.get("CONTENT_LENGTH") or 0)
         if content_length:
@@ -62,6 +64,10 @@ class Request:
         ]
         for f in fields:
             self.META[f] = self.environ.get(f)
+
+    def populate_cookies(self) -> None:
+        if cookies := self.environ.get("HTTP_COOKIE"):
+            self.COOKIES = {l.split("=")[0]: l.split("=")[1] for l in cookies.split("; ")}
 
     def json(self):
         return json.loads(self.content)

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from spiderweb.decorators import csrf_exempt
 from spiderweb.main import SpiderwebRouter
 from spiderweb.exceptions import ServerError
@@ -66,6 +68,21 @@ def form(request):
         return JsonResponse(data=request.POST)
     else:
         return TemplateResponse(request, "form.html")
+
+@app.route("/cookies")
+def cookies(request):
+    print("request.COOKIES: ", request.COOKIES)
+    resp = HttpResponse(body="COOKIES! NOM NOM NOM")
+    resp.set_cookie(name='nom', value="everyonelovescookies")
+    resp.set_cookie(name="nom2", value="seriouslycookies")
+    resp.set_cookie(
+        name="nom3",
+        value="yumyum",
+        partitioned=True,
+        expires=datetime.utcnow()+timedelta(seconds=10),
+        max_age=15
+    )
+    return resp
 
 
 if __name__ == "__main__":

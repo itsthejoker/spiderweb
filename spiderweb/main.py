@@ -92,7 +92,13 @@ class SpiderwebRouter(
     def fire_response(self, start_response, request: Request, resp: HttpResponse):
         try:
             status = get_http_status_by_code(resp.status_code)
+            cookies = []
+            if "Set-Cookie" in resp.headers:
+                cookies = resp.headers['Set-Cookie']
+                del resp.headers['Set-Cookie']
             headers = list(resp.headers.items())
+            for c in cookies:
+                headers.append(("Set-Cookie", c))
 
             start_response(status, headers)
 
