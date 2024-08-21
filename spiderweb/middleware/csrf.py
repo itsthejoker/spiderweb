@@ -7,6 +7,20 @@ from spiderweb.response import HttpResponse
 
 
 class CSRFMiddleware(SpiderwebMiddleware):
+    """
+    tl;dr: this is a naive implementation going off just what I could think of
+    at the time. It is very vulnerable to CSRF Forgery and should be updated.
+
+    Eventually I'll probably just pull everything out of Django and use their
+    implementation, as it's written by people who know a lot more about these
+    things than I do, but in the meantime, this is still here until I get
+    around to making it more solid.
+
+    todo: fix
+
+    https://en.wikipedia.org/wiki/Cross-site_request_forgery
+    """
+
     CSRF_EXPIRY = 60 * 60  # 1 hour
 
     def process_request(self, request: Request) -> HttpResponse | None:
