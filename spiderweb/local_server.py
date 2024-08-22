@@ -3,7 +3,7 @@ import threading
 import time
 from logging import Logger
 from threading import Thread
-from typing import NoReturn, Callable, Any
+from typing import NoReturn
 from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
 
 from spiderweb.constants import __version__

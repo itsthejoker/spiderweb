@@ -15,7 +15,7 @@ def import_by_string(name):
 
 def is_safe_path(path: str) -> bool:
     # this cannot possibly catch all issues
-    return not ".." in str(path)
+    return ".." not in str(path)
 
 
 def get_http_status_by_code(code: int) -> Optional[str]:

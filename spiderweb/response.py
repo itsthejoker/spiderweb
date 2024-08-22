@@ -39,17 +39,17 @@ class HttpResponse:
         return self.body
 
     def set_cookie(
-            self,
-            name: str,
-            value: str,
-            domain: str=None,
-            expires: datetime.datetime = None,
-            http_only: bool=None,
-            max_age: int=None,
-            partitioned: bool=None,
-            path: str=None,
-            secure: bool=False,
-            same_site: str=None
+        self,
+        name: str,
+        value: str,
+        domain: str = None,
+        expires: datetime.datetime = None,
+        http_only: bool = None,
+        max_age: int = None,
+        partitioned: bool = None,
+        path: str = None,
+        secure: bool = False,
+        same_site: str = None,
     ):
         if not bool(re.match(REGEX_COOKIE_NAME, name)):
             url = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#attributes"
@@ -93,7 +93,6 @@ class HttpResponse:
             self.headers["Set-Cookie"].append(cookie)
         else:
             self.headers["Set-Cookie"] = [cookie]
-
 
     def render(self) -> str:
         return str(self.body)

@@ -1,7 +1,7 @@
 from typing import Callable, ClassVar
 
-from .base import SpiderwebMiddleware
-from .csrf import CSRFMiddleware
+from .base import SpiderwebMiddleware as SpiderwebMiddleware
+from .csrf import CSRFMiddleware as CSRFMiddleware
 from ..exceptions import ConfigError, UnusedMiddleware
 from ..request import Request
 from ..response import HttpResponse
@@ -33,8 +33,7 @@ class MiddlewareMiddleware:
                 continue
             if resp:
                 self.process_response_middleware(request, resp)
-                self.fire_response(request, resp)
-                return True  # abort further processing
+                return resp  # abort further processing
 
     def process_response_middleware(
         self, request: Request, response: HttpResponse

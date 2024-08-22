@@ -21,7 +21,7 @@ from spiderweb.exceptions import (
 )
 from spiderweb.local_server import LocalServerMiddleware
 from spiderweb.request import Request
-from spiderweb.response import HttpResponse, TemplateResponse
+from spiderweb.response import HttpResponse, TemplateResponse, JsonResponse
 from spiderweb.routes import RoutesMiddleware
 from spiderweb.secrets import FernetMiddleware
 from spiderweb.utils import get_http_status_by_code
@@ -87,15 +87,15 @@ class SpiderwebRouter(
                         f"Static files directory '{str(static_dir)}' does not exist."
                     )
                     raise ConfigError
-            self.add_route(r"/static/<str:filename>", send_file)
+            self.add_route(r"/static/<str:filename>", send_file)  # noqa: F405
 
     def fire_response(self, start_response, request: Request, resp: HttpResponse):
         try:
             status = get_http_status_by_code(resp.status_code)
             cookies = []
             if "Set-Cookie" in resp.headers:
-                cookies = resp.headers['Set-Cookie']
-                del resp.headers['Set-Cookie']
+                cookies = resp.headers["Set-Cookie"]
+                del resp.headers["Set-Cookie"]
             headers = list(resp.headers.items())
             for c in cookies:
                 headers.append(("Set-Cookie", c))
@@ -157,7 +157,7 @@ class SpiderwebRouter(
     def prepare_and_fire_response(self, start_response, request, resp) -> list[bytes]:
         try:
             if isinstance(resp, dict):
-                self.fire_response(request, JsonResponse(data=resp))
+                self.fire_response(start_response, request, JsonResponse(data=resp))
             if isinstance(resp, TemplateResponse):
                 resp.set_template_loader(self.env)
 
@@ -200,9 +200,11 @@ class SpiderwebRouter(
 
         try:
             if handler:
-                abort = self.process_request_middleware(request)
-                if abort:
-                    return
+                abort_view = self.process_request_middleware(request)
+                if abort_view:
+                    return self.prepare_and_fire_response(
+                        start_response, request, abort_view
+                    )
                 resp = handler(request, **additional_args)
                 if resp is None:
                     raise NoResponseError(f"View {handler} returned None.")

@@ -85,7 +85,7 @@ class RoutesMiddleware:
     def get_error_route(self, code: int) -> Callable:
         view = self._error_routes.get(code) or globals().get(f"http{code}")
         if not view:
-            return http500
+            return http500  # noqa: F405
         return view
 
     def check_for_route_duplicates(self, path: str):
