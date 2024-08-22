@@ -1,4 +1,3 @@
-from spiderweb.decorators import csrf_exempt
 from spiderweb.main import SpiderwebRouter
 from spiderweb.exceptions import ServerError
 from spiderweb.response import (

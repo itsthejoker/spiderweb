@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from spiderweb.decorators import csrf_exempt
+from spiderweb.example_validator import CommentForm
 from spiderweb.main import SpiderwebRouter
 from spiderweb.exceptions import ServerError
 from spiderweb.response import (
@@ -17,6 +18,7 @@ app = SpiderwebRouter(
         "spiderweb.middleware.csrf.CSRFMiddleware",
         "example_middleware.TestMiddleware",
         "example_middleware.RedirectMiddleware",
+        "spiderweb.middleware.pydantic.PydanticMiddleware",
         "example_middleware.ExplodingMiddleware",
     ],
     staticfiles_dirs=["static_files"],
@@ -63,24 +65,25 @@ def http405(request) -> HttpResponse:
 
 @csrf_exempt
 @app.route("/form", allowed_methods=["GET", "POST"])
-def form(request):
+def form(request: CommentForm):
     if request.method == "POST":
-        return JsonResponse(data=request.POST)
+        return JsonResponse(data=request.validated_data.dict())
     else:
         return TemplateResponse(request, "form.html")
+
 
 @app.route("/cookies")
 def cookies(request):
     print("request.COOKIES: ", request.COOKIES)
     resp = HttpResponse(body="COOKIES! NOM NOM NOM")
-    resp.set_cookie(name='nom', value="everyonelovescookies")
+    resp.set_cookie(name="nom", value="everyonelovescookies")
     resp.set_cookie(name="nom2", value="seriouslycookies")
     resp.set_cookie(
         name="nom3",
         value="yumyum",
         partitioned=True,
-        expires=datetime.utcnow()+timedelta(seconds=10),
-        max_age=15
+        expires=datetime.utcnow() + timedelta(seconds=10),
+        max_age=15,
     )
     return resp
 

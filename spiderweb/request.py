@@ -27,6 +27,8 @@ class Request:
         self.POST = {}
         self.META = {}
         self.COOKIES = {}
+        # only used for the pydantic middleware and only on POST requests
+        self.validated_data = {}
 
         self.populate_headers()
         self.populate_meta()
@@ -67,7 +69,10 @@ class Request:
 
     def populate_cookies(self) -> None:
         if cookies := self.environ.get("HTTP_COOKIE"):
-            self.COOKIES = {l.split("=")[0]: l.split("=")[1] for l in cookies.split("; ")}
+            self.COOKIES = {
+                option.split("=")[0]: option.split("=")[1]
+                for option in cookies.split("; ")
+            }
 
     def json(self):
         return json.loads(self.content)
