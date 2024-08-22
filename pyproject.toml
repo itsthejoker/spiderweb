@@ -1,9 +1,31 @@
 [tool.poetry]
-name = "spiderweb"
+name = "spiderweb-framework"
 version = "0.10.0"
-description = "A small web framework, just big enough to hold your average spider."
+description = "A small web framework, just big enough for a spider."
 authors = ["Joe Kaufeld <opensource@joekaufeld.com>"]
 readme = "README.md"
+packages = [{include = "spiderweb"}]
+exclude = [
+    "tests/*",
+    "example.py",
+    "example2.py",
+    "static_files/*",
+    "templates/*",
+    "example_middleware.py",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Internet :: WWW/HTTP :: WSGI",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -24,3 +46,9 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry_bumpversion.file."spiderweb/constants.py"]
+
+[project.urls]
+Homepage = "https://github.com/itsthejoker/spiderweb"
+Documentation = "https://github.com/itsthejoker/spiderweb"
+Repository = "https://git.joekaufeld.com/jkaufeld/spiderweb"
+"Bug Tracker" = "https://github.com/itsthejoker/spiderweb/issues"
