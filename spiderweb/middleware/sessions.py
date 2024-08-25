@@ -12,13 +12,16 @@ from spiderweb.utils import generate_key, is_jsonable
 
 class Session(SpiderwebModel):
     session_key = CharField(max_length=64)
+    csrf_token = CharField(max_length=64, null=True)
     user_id = CharField(max_length=64, null=True)
-    is_authenticated = BooleanField(default=False)
     session_data = TextField()
     created_at = DateTimeField()
     last_active = DateTimeField()
     ip_address = CharField(max_length=30)
     user_agent = TextField()
+
+    class Meta:
+        table_name = 'spiderweb_sessions'
 
 
 class SessionMiddleware(SpiderwebMiddleware):
@@ -46,9 +49,11 @@ class SessionMiddleware(SpiderwebMiddleware):
             request.SESSION = {}
             request._session["id"] = generate_key()
             request._session["new_session"] = True
+            request.META["SESSION"] = None
             return
 
         request.SESSION = json.loads(existing_session.session_data)
+        request.META["SESSION"] = existing_session
         request._session["id"] = existing_session.session_key
         existing_session.save()
 
@@ -83,7 +88,7 @@ class SessionMiddleware(SpiderwebMiddleware):
             return
 
         # Otherwise, we can save the one we already have.
-        session_key = request._session["id"]
+        session_key = request.META["SESSION"].session_key
         # update the session expiration time
         response.set_cookie(
             self.server.session_cookie_name,
@@ -91,15 +96,7 @@ class SessionMiddleware(SpiderwebMiddleware):
             **cookie_settings,
         )
 
-        session = (
-            Session.select()
-            .where(
-                Session.session_key == session_key,
-                Session.ip_address == request.META.get("client_address"),
-                Session.user_agent == request.headers.get("HTTP_USER_AGENT"),
-            )
-            .first()
-        )
+        session = request.META["SESSION"]
         if not session:
             if not is_jsonable(request.SESSION):
                 raise ValueError("Session data is not JSON serializable.")
