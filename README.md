@@ -49,13 +49,13 @@ And, honestly, I think I got there. Here's a non-exhaustive list of things this 
   * Optional append_slash (with automatic redirects!)
   * ~~CSRF middleware implementation~~ (it's there, but it's crappy and unsafe. I'm working on it.)
   * Optional POST data validation middleware with Pydantic
+  * Database support (using Peewee, but the end user can use whatever they want as long as there's a Peewee driver for it)
+  * Session middleware
 
 The TODO list:
 
   * Tests (important)
-  * Database support
-  * Session middleware
-  * Fix CSRF middleware once database support is included
+  * Fix CSRF middleware
 
 Once tests are in and proven to work, then I'll release as version 1.0.
 
