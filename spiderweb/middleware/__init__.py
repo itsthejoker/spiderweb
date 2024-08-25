@@ -2,13 +2,14 @@ from typing import Callable, ClassVar
 
 from .base import SpiderwebMiddleware as SpiderwebMiddleware
 from .csrf import CSRFMiddleware as CSRFMiddleware
+from .sessions import SessionMiddleware as SessionMiddleware
 from ..exceptions import ConfigError, UnusedMiddleware
 from ..request import Request
 from ..response import HttpResponse
 from ..utils import import_by_string
 
 
-class MiddlewareMiddleware:
+class MiddlewareMixin:
     """Cannot be called on its own. Requires context of SpiderwebRouter."""
 
     middleware: list[ClassVar]

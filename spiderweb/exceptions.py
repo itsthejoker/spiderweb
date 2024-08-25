@@ -1,6 +1,10 @@
 class SpiderwebException(Exception):
     # parent error class; all child exceptions should inherit from this
     def __str__(self):
+        name = self.__class__.__name__
+        msg = self.args[0] if len(self.args) > 0 else ""
+        if msg:
+            return f"{name}() - {msg}"
         return f"{self.__class__.__name__}()"
 
 

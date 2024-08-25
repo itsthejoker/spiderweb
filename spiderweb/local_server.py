@@ -16,7 +16,7 @@ class SpiderwebRequestHandler(WSGIRequestHandler):
         super().__init__(*args, **kwargs)
 
 
-class LocalServerMiddleware:
+class LocalServerMixin:
     """Cannot be called on its own. Requires context of SpiderwebRouter."""
 
     addr: str

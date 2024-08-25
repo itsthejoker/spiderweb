@@ -15,6 +15,7 @@ from spiderweb.response import (
 app = SpiderwebRouter(
     templates_dirs=["templates"],
     middleware=[
+        "spiderweb.middleware.sessions.SessionMiddleware",
         "spiderweb.middleware.csrf.CSRFMiddleware",
         "example_middleware.TestMiddleware",
         "example_middleware.RedirectMiddleware",
@@ -70,6 +71,15 @@ def form(request: CommentForm):
         return JsonResponse(data=request.validated_data.dict())
     else:
         return TemplateResponse(request, "form.html")
+
+
+@app.route("/session")
+def session(request):
+    if "test" not in request.SESSION:
+        request.SESSION["test"] = 0
+    else:
+        request.SESSION["test"] += 1
+    return HttpResponse(body=f"Session test: {request.SESSION['test']}")
 
 
 @app.route("/cookies")

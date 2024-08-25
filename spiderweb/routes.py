@@ -24,7 +24,7 @@ class DummyRedirectRoute:
         return RedirectResponse(self.location)
 
 
-class RoutesMiddleware:
+class RoutesMixin:
     """Cannot be called on its own. Requires context of SpiderwebRouter."""
 
     # ones that start with underscores are the compiled versions, non-underscores

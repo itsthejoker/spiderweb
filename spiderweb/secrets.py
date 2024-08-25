@@ -3,7 +3,7 @@ from cryptography.fernet import Fernet
 from spiderweb.constants import DEFAULT_ENCODING
 
 
-class FernetMiddleware:
+class FernetMixin:
     """Cannot be called on its own. Requires context of SpiderwebRouter."""
 
     fernet: Fernet

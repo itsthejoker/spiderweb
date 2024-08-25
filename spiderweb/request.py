@@ -2,6 +2,7 @@ import json
 from urllib.parse import urlparse
 
 from spiderweb.constants import DEFAULT_ENCODING
+from spiderweb.utils import get_client_address
 
 
 class Request:
@@ -27,6 +28,9 @@ class Request:
         self.POST = {}
         self.META = {}
         self.COOKIES = {}
+        # only used for the session middleware
+        self.SESSION = {}
+        self._session: dict = {"new_session": False, "id": None}
         # only used for the pydantic middleware and only on POST requests
         self.validated_data = {}
 
@@ -50,6 +54,8 @@ class Request:
                 self.headers[k] = v
 
     def populate_meta(self) -> None:
+        # all caps fields are from WSGI, lowercase names
+        # are custom
         fields = [
             "SERVER_PROTOCOL",
             "SERVER_SOFTWARE",
@@ -66,6 +72,7 @@ class Request:
         ]
         for f in fields:
             self.META[f] = self.environ.get(f)
+        self.META["client_address"] = get_client_address(self.environ)
 
     def populate_cookies(self) -> None:
         if cookies := self.environ.get("HTTP_COOKIE"):

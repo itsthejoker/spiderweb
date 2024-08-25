@@ -8,9 +8,15 @@ from typing import Optional, Callable
 from wsgiref.simple_server import WSGIServer
 
 from jinja2 import Environment, FileSystemLoader
+from peewee import Database, SqliteDatabase
 
-from spiderweb.middleware import MiddlewareMiddleware
-from spiderweb.constants import DEFAULT_ENCODING, DEFAULT_ALLOWED_METHODS
+from spiderweb.middleware import MiddlewareMixin
+from spiderweb.constants import (
+    DATABASE_PROXY,
+    DEFAULT_ENCODING,
+    DEFAULT_ALLOWED_METHODS,
+)
+from spiderweb.db import SpiderwebModel
 from spiderweb.default_views import *  # noqa: F403
 from spiderweb.exceptions import (
     ConfigError,
@@ -19,24 +25,23 @@ from spiderweb.exceptions import (
     NoResponseError,
     SpiderwebNetworkException,
 )
-from spiderweb.local_server import LocalServerMiddleware
+from spiderweb.local_server import LocalServerMixin
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse, TemplateResponse, JsonResponse
-from spiderweb.routes import RoutesMiddleware
-from spiderweb.secrets import FernetMiddleware
+from spiderweb.routes import RoutesMixin
+from spiderweb.secrets import FernetMixin
 from spiderweb.utils import get_http_status_by_code
 
 file_logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-class SpiderwebRouter(
-    LocalServerMiddleware, MiddlewareMiddleware, RoutesMiddleware, FernetMiddleware
-):
+class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixin):
     def __init__(
         self,
         addr: str = None,
         port: int = None,
+        db: Optional[Database] = None,
         templates_dirs: list[str] = None,
         middleware: list[str] = None,
         append_slash: bool = False,
@@ -44,6 +49,12 @@ class SpiderwebRouter(
         routes: list[list[str | Callable | dict]] = None,
         error_routes: dict[str, Callable] = None,
         secret_key: str = None,
+        session_max_age=60 * 60 * 24 * 14,  # 2 weeks
+        session_cookie_name="swsession",
+        session_cookie_secure=False,  # should be true if serving over HTTPS
+        session_cookie_http_only=True,
+        session_cookie_same_site="lax",
+        session_cookie_path="/",
         log=None,
     ):
         self._routes = {}
@@ -59,9 +70,17 @@ class SpiderwebRouter(
         self.middleware = middleware if middleware else []
         self.secret_key = secret_key if secret_key else self.generate_key()
 
+        # session middleware
+        self.session_max_age = session_max_age
+        self.session_cookie_name = session_cookie_name
+        self.session_cookie_secure = session_cookie_secure
+        self.session_cookie_http_only = session_cookie_http_only
+        self.session_cookie_same_site = session_cookie_same_site
+        self.session_cookie_path = session_cookie_path
+
         self.DEFAULT_ENCODING = DEFAULT_ENCODING
         self.DEFAULT_ALLOWED_METHODS = DEFAULT_ALLOWED_METHODS
-        self.log = log if log else file_logger
+        self.log: logging.Logger = log if log else file_logger
 
         # for using .start() and .stop()
         self._thread: Optional[Thread] = None
@@ -70,6 +89,13 @@ class SpiderwebRouter(
 
         self.init_fernet()
         self.init_middleware()
+
+        self.db = db or SqliteDatabase(self.BASE_DIR / "spiderweb.db")
+        # give the models the db connection
+        DATABASE_PROXY.initialize(self.db)
+        self.db.create_tables(SpiderwebModel.__subclasses__())
+        for model in SpiderwebModel.__subclasses__():
+            model.check_for_needed_migration()
 
         if self.routes:
             self.add_routes()

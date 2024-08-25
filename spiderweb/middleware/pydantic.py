@@ -7,7 +7,7 @@ from spiderweb.request import Request
 from spiderweb.response import JsonResponse
 
 
-class SpiderwebModel(BaseModel, Request):
+class RequestModel(BaseModel, Request):
     # type hinting shenanigans that allow us to annotate Request objects
     # with the pydantic models we want to validate them with, but doesn't
     # break the Request object's ability to be used as a Request object

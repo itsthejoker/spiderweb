@@ -1,8 +1,8 @@
 from pydantic import EmailStr
 
-from spiderweb.middleware.pydantic import SpiderwebModel
+from spiderweb.middleware.pydantic import RequestModel
 
 
-class CommentForm(SpiderwebModel):
+class CommentForm(RequestModel):
     email: EmailStr
     comment: str
