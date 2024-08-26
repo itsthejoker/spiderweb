@@ -56,6 +56,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         session_cookie_same_site="lax",
         session_cookie_path="/",
         log=None,
+        **kwargs
     ):
         self._routes = {}
         self.routes = routes
@@ -69,6 +70,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.staticfiles_dirs = staticfiles_dirs
         self.middleware = middleware if middleware else []
         self.secret_key = secret_key if secret_key else self.generate_key()
+
+        self.extra_data = kwargs
 
         # session middleware
         self.session_max_age = session_max_age

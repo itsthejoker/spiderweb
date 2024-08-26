@@ -1,6 +1,7 @@
 import datetime
 import json
 import re
+from os import PathLike
 from typing import Any
 import urllib.parse
 import mimetypes
@@ -20,7 +21,7 @@ class HttpResponse:
         data: dict[str, Any] = None,
         context: dict[str, Any] = None,
         status_code: int = 200,
-        headers=None,
+        headers: dict[str, Any] = None,
     ):
         self.body = body
         self.data = data
@@ -130,7 +131,7 @@ class TemplateResponse(HttpResponse):
     def __init__(
         self,
         request: Request,
-        template_path: str = None,
+        template_path: PathLike | str = None,
         template_string: str = None,
         *args,
         **kwargs,
