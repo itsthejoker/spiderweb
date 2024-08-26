@@ -55,15 +55,15 @@ app = SpiderwebRouter(
     ],
     staticfiles_dirs=["static_files"],
     routes=[
-        ["/", index],
-        ["/redirect", redirect],
-        ["/json", json],
-        ["/error", error],
-        ["/middleware", middleware],
-        ["/example/<int:id>", example],
-        ["/form", form, {"allowed_methods": ["GET", "POST"], "csrf_exempt": True}],
+        ("/", index),
+        ("/redirect", redirect),
+        ("/json", json),
+        ("/error", error),
+        ("/middleware", middleware),
+        ("/example/<int:id>", example),
+        ("/form", form, {"allowed_methods": ["GET", "POST"], "csrf_exempt": True}),
     ],
-    error_routes={"405": http405},
+    error_routes={405: http405},
 )
 
 

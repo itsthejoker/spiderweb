@@ -5,18 +5,12 @@ class IntConverter:
     def to_python(self, value):
         return int(value)
 
-    def to_url(self, value):
-        return str(value)
-
 
 class StrConverter:
     regex = r"[^/]+"
     name = "str"
 
     def to_python(self, value):
-        return str(value)
-
-    def to_url(self, value):
         return str(value)
 
 
@@ -26,6 +20,3 @@ class FloatConverter:
 
     def to_python(self, value):
         return float(value)
-
-    def to_url(self, value):
-        return str(value)

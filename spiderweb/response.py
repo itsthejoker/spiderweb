@@ -10,7 +10,6 @@ from spiderweb.constants import REGEX_COOKIE_NAME
 from spiderweb.exceptions import GeneralException
 from spiderweb.request import Request
 
-
 mimetypes.init()
 
 
@@ -128,20 +127,39 @@ class RedirectResponse(HttpResponse):
 
 
 class TemplateResponse(HttpResponse):
-    def __init__(self, request: Request, template=None, *args, **kwargs):
+    def __init__(
+        self,
+        request: Request,
+        template_path: str = None,
+        template_string: str = None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.context["request"] = request
-        self.template = template
-        self.loader = None
+        self.template_path = template_path
+        self.template_string = template_string
+        self.template_loader = None
+        self.string_loader = None
         self._template = None
-        if not template:
+        if not template_path and not template_string:
             raise GeneralException("TemplateResponse requires a template.")
 
     def render(self) -> str:
-        if self.loader is None:
-            raise GeneralException("TemplateResponse requires a template loader.")
-        self._template = self.loader.get_template(self.template)
+        if self.template_loader is None:
+            if not self.template_string:
+                raise GeneralException(
+                    "TemplateResponse has no loader. Did you set templates_dirs?"
+                )
+            else:
+                self._template = self.string_loader.from_string(self.template_string)
+        else:
+            self._template = self.template_loader.get_template(self.template_path)
+
         return self._template.render(**self.context)
 
-    def set_template_loader(self, env):
-        self.loader = env
+    def set_template_loader(self, loader):
+        self.template_loader = loader
+
+    def set_string_loader(self, loader):
+        self.string_loader = loader

@@ -7,7 +7,7 @@ from threading import Thread
 from typing import Optional, Callable
 from wsgiref.simple_server import WSGIServer
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import BaseLoader, Environment, FileSystemLoader
 from peewee import Database, SqliteDatabase
 
 from spiderweb.middleware import MiddlewareMixin
@@ -46,8 +46,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         middleware: list[str] = None,
         append_slash: bool = False,
         staticfiles_dirs: list[str] = None,
-        routes: list[list[str | Callable | dict]] = None,
-        error_routes: dict[str, Callable] = None,
+        routes: list[tuple[str, Callable] | tuple[str, Callable, dict]] = None,
+        error_routes: dict[int, Callable] = None,
         secret_key: str = None,
         session_max_age=60 * 60 * 24 * 14,  # 2 weeks
         session_cookie_name="swsession",
@@ -100,10 +100,14 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         if self.routes:
             self.add_routes()
 
+        if self.error_routes:
+            self.add_error_routes()
+
         if self.templates_dirs:
-            self.env = Environment(loader=FileSystemLoader(self.templates_dirs))
+            self.template_loader = Environment(loader=FileSystemLoader(self.templates_dirs))
         else:
-            self.env = None
+            self.template_loader = None
+        self.string_loader = Environment(loader=BaseLoader())
 
         if self.staticfiles_dirs:
             for static_dir in self.staticfiles_dirs:
@@ -131,7 +135,6 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             rendered_output = resp.render()
             if not isinstance(rendered_output, list):
                 rendered_output = [rendered_output]
-
             encoded_resp = [
                 chunk.encode(DEFAULT_ENCODING) if isinstance(chunk, str) else chunk
                 for chunk in rendered_output
@@ -183,12 +186,12 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
     def prepare_and_fire_response(self, start_response, request, resp) -> list[bytes]:
         try:
             if isinstance(resp, dict):
-                self.fire_response(start_response, request, JsonResponse(data=resp))
+                return self.fire_response(start_response, request, JsonResponse(data=resp))
             if isinstance(resp, TemplateResponse):
-                resp.set_template_loader(self.env)
+                resp.set_template_loader(self.template_loader)
+                resp.set_string_loader(self.string_loader)
 
-            for middleware in self.middleware:
-                middleware.process_response(request, resp)
+            self.process_response_middleware(request, resp)
 
             return self.fire_response(start_response, request, resp)
 

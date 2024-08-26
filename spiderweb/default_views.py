@@ -11,7 +11,7 @@ def http403(request):
 
 def http404(request):
     return JsonResponse(
-        data={"error": f"Route {request.url} not found"}, status_code=404
+        data={"error": f"Route `{request.path}` not found"}, status_code=404
     )
 
 

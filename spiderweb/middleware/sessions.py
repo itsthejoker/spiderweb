@@ -21,7 +21,7 @@ class Session(SpiderwebModel):
     user_agent = TextField()
 
     class Meta:
-        table_name = 'spiderweb_sessions'
+        table_name = "spiderweb_sessions"
 
 
 class SessionMiddleware(SpiderwebMiddleware):
@@ -68,7 +68,7 @@ class SessionMiddleware(SpiderwebMiddleware):
         }
 
         # if a new session has been requested, ignore everything else and make that happen
-        if request._session["new_session"]:
+        if request._session["new_session"] is True:
             # we generated a new one earlier, so we can use it now
             session_key = request._session["id"]
             response.set_cookie(
@@ -76,6 +76,8 @@ class SessionMiddleware(SpiderwebMiddleware):
                 session_key,
                 **cookie_settings,
             )
+            if not is_jsonable(request.SESSION):
+                raise ValueError("Session data is not JSON serializable.")
             session = Session(
                 session_key=session_key,
                 session_data=json.dumps(request.SESSION),
@@ -97,18 +99,6 @@ class SessionMiddleware(SpiderwebMiddleware):
         )
 
         session = request.META["SESSION"]
-        if not session:
-            if not is_jsonable(request.SESSION):
-                raise ValueError("Session data is not JSON serializable.")
-            session = Session(
-                session_key=session_key,
-                session_data=json.dumps(request.SESSION),
-                created_at=datetime.now(),
-                last_active=datetime.now(),
-                ip_address=request.META.get("client_address"),
-                user_agent=request.META.get("HTTP_USER_AGENT"),
-            )
-        else:
-            session.session_data = json.dumps(request.SESSION)
-            session.last_active = datetime.now()
+        session.session_data = json.dumps(request.SESSION)
+        session.last_active = datetime.now()
         session.save()

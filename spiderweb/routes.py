@@ -1,5 +1,5 @@
 import re
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 
 from spiderweb.constants import DEFAULT_ALLOWED_METHODS
 from spiderweb.converters import *  # noqa: F403
@@ -30,9 +30,9 @@ class RoutesMixin:
     # ones that start with underscores are the compiled versions, non-underscores
     # are the user-supplied versions
     _routes: dict
-    routes: list[list[str | Callable | dict]]
+    routes: list[tuple[str, Callable] | tuple[str, Callable, dict]] = None,
     _error_routes: dict
-    error_routes: dict[str, Callable]
+    error_routes: dict[int, Callable]
     append_slash: bool
 
     def route(self, path, allowed_methods=None) -> Callable:
