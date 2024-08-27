@@ -39,7 +39,7 @@ class MiddlewareMixin:
     def process_response_middleware(
         self, request: Request, response: HttpResponse
     ) -> None:
-        for middleware in self.middleware:
+        for middleware in reversed(self.middleware):
             try:
                 middleware.process_response(request, response)
             except UnusedMiddleware:

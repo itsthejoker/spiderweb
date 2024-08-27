@@ -39,6 +39,7 @@ logging.basicConfig(level=logging.INFO)
 class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixin):
     def __init__(
         self,
+        *,
         addr: str = None,
         port: int = None,
         db: Optional[Database] = None,

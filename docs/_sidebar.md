@@ -1,6 +1,8 @@
 - [home](README.md)
 - [quickstart](quickstart.md)
 - [responses](responses.md)
-- Middleware
-  - [middleware](middleware/test.md)
-  - [middleware2](middleware/test2.md)
+- middleware
+  - [overview](middleware/overview.md)
+  - [csrf](middleware/csrf.md)
+  - [pydantic](middleware/pydantic.md)
+  - [session](middleware/sessions.md)
