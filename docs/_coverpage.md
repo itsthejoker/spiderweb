@@ -1,4 +1,4 @@
-![logo](_media/spiderweb_logo.png)
+![logo](_media/spiderweb_logo_cleaned.png)
 
 > the web framework just big enough for a spider
 
