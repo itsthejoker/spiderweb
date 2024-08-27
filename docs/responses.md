@@ -101,6 +101,9 @@ def index(request):
     )
 ```
 
+> [!TIP]
+> You can [read more about crafting templates for Jinja here!](https://jinja.palletsprojects.com/en/3.0.x/templates/)
+
 ## RedirectResponse
 
 ```python
