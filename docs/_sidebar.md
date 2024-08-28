@@ -3,6 +3,7 @@
 - [responses](responses.md)
 - middleware
   - [overview](middleware/overview.md)
+  - [session](middleware/sessions.md)
   - [csrf](middleware/csrf.md)
   - [pydantic](middleware/pydantic.md)
-  - [session](middleware/sessions.md)
+  - [writing your own](middleware/custom_middleware.md)

@@ -16,7 +16,8 @@ app = SpiderwebRouter(
 
 Cross-site request forgery, put simply, is a method for attackers to make legitimate-looking requests in your name to a service or system that you've previously authenticated to. Ways that we can protect against this involve aggressively expiring session cookies, special IDs for forms that are keyed to a specific user, and more.
 
-Notice that in the example above, SessionMiddleware is also included in the middleware list. The CSRF middleware requires the SessionMiddleware to function, and SessionMiddleware must be placed above it in the middleware list.
+> [!TIP]
+> Notice that in the example above, SessionMiddleware is also included in the middleware list. The CSRF middleware requires the SessionMiddleware to function, and SessionMiddleware must be placed above it in the middleware list.
 
 ## CSRF and Forms
 
@@ -52,12 +53,13 @@ def form(request):
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap demo</title>
+    <title>Form Demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 </head>
 <body>
 <div class="container">
+    <h1>Example Form</h1>
     <form action="" method="post">
     <div class="mb-3">
         <input type="email" class="form-control" name="email" id="emailInput" placeholder="name@example.com">

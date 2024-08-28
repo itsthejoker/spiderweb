@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import json
 
-from peewee import CharField, TextField, DateTimeField, BooleanField
+from peewee import CharField, TextField, DateTimeField
 
 from spiderweb.middleware import SpiderwebMiddleware
 from spiderweb.request import Request
