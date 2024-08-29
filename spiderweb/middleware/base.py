@@ -28,3 +28,6 @@ class SpiderwebMiddleware:
         self, request: Request, response: HttpResponse
     ) -> HttpResponse | None:
         pass
+
+    def on_error(self, request: Request, e: Exception) -> HttpResponse | None:
+        pass
