@@ -4,9 +4,7 @@
 from spiderweb import SpiderwebRouter
 
 app = SpiderwebRouter(
-    middleware=[
-            "spiderweb.middleware.sessions.SessionMiddleware",
-        ],
+    middleware=["spiderweb.middleware.sessions.SessionMiddleware"],
 )
 ```
 
@@ -16,7 +14,7 @@ Visitors are assigned a random value when they visit for the first time, and tha
 
 ## request.SESSION
 
-When the sessions middleware is enabled, the request object will have a new attribute labeled `SESSION`. This is a dictionary, and you can put pretty much anything you want in it as long as its serializable to JSON! When the user visits again with an active session, the data will automatically be available on the `SESSION` object again. Here's an example of a complete server using sessions:
+When the sessions middleware is enabled, the request object will have a new attribute labeled `SESSION`. This is a dictionary, and you can put pretty much anything you want in it as long as it's serializable to JSON! When the user visits again with an active session, the data will automatically be available on the `SESSION` object again. Here's an example of a complete server using sessions:
 
 ```python
 from spiderweb import SpiderwebRouter, HttpResponse
@@ -70,7 +68,7 @@ This marks that the cookie will only be sent back to the server with a valid HTT
 
 ### session_cookie_http_only
 
-This marks whether the session cookie will have the `HttpOnly` attribute. This makes it invisible to client-side javascript. The default is `False`.
+This marks whether the session cookie will have the `HttpOnly` attribute. This makes it unreadable to client-side javascript. The default is `False`.
 
 ### session_cookie_same_site
 

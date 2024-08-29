@@ -53,6 +53,10 @@ This function is called after the view has run and returned a response. You will
 
 Unlike `process_request`, returning a value here doesn't change anything. We're already processing a request, and there are opportunities to turn away requests / change the response at both the `process_request` layer and the view layer, so Spiderweb assumes that whatever it is working on here is what you mean to return to the user. The response object that you receive in the middleware is still prerendered, so any changes you make to it will take effect after it finishes the middleware and renders the response.
 
+## on_error(self, request, triggered_exception):
+
+This is a helper function that is available for you to override; it's not often used by middleware, but there are some ([like the pydantic middleware](pydantic.md)) that call `on_error` when there is a validation failure.
+
 ## UnusedMiddleware
 
 ```python
