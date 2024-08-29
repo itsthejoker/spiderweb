@@ -5,7 +5,7 @@ class SpiderwebException(Exception):
         msg = self.args[0] if len(self.args) > 0 else ""
         if msg:
             return f"{name}() - {msg}"
-        return f"{self.__class__.__name__}()"
+        return f"{name}()"
 
 
 class SpiderwebNetworkException(SpiderwebException):

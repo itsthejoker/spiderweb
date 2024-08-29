@@ -32,7 +32,7 @@ from spiderweb.routes import RoutesMixin
 from spiderweb.secrets import FernetMixin
 from spiderweb.utils import get_http_status_by_code
 
-file_logger = logging.getLogger(__name__)
+console_logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
@@ -57,7 +57,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         session_cookie_same_site="lax",
         session_cookie_path="/",
         log=None,
-        **kwargs
+        **kwargs,
     ):
         self._routes = {}
         self.routes = routes
@@ -69,7 +69,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.append_slash = append_slash
         self.templates_dirs = templates_dirs
         self.staticfiles_dirs = staticfiles_dirs
-        self.middleware = middleware if middleware else []
+        self._middleware: list[str] = middleware if middleware else []
+        self.middleware: list[Callable] = []
         self.secret_key = secret_key if secret_key else self.generate_key()
 
         self.extra_data = kwargs
@@ -84,7 +85,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
 
         self.DEFAULT_ENCODING = DEFAULT_ENCODING
         self.DEFAULT_ALLOWED_METHODS = DEFAULT_ALLOWED_METHODS
-        self.log: logging.Logger = log if log else file_logger
+        self.log: logging.Logger = log if log else console_logger
 
         # for using .start() and .stop()
         self._thread: Optional[Thread] = None
@@ -108,7 +109,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             self.add_error_routes()
 
         if self.templates_dirs:
-            self.template_loader = Environment(loader=FileSystemLoader(self.templates_dirs))
+            self.template_loader = Environment(
+                loader=FileSystemLoader(self.templates_dirs)
+            )
         else:
             self.template_loader = None
         self.string_loader = Environment(loader=BaseLoader())
@@ -117,11 +120,15 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             for static_dir in self.staticfiles_dirs:
                 static_dir = pathlib.Path(static_dir)
                 if not pathlib.Path(self.BASE_DIR / static_dir).exists():
-                    log.error(
+                    self.log.error(
                         f"Static files directory '{str(static_dir)}' does not exist."
                     )
                     raise ConfigError
             self.add_route(r"/static/<str:filename>", send_file)  # noqa: F405
+
+        # finally, run the startup checks to verify everything is correct and happy.
+        self.log.info("Run startup checks...")
+        self.run_middleware_checks()
 
     def fire_response(self, start_response, request: Request, resp: HttpResponse):
         try:
@@ -190,7 +197,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
     def prepare_and_fire_response(self, start_response, request, resp) -> list[bytes]:
         try:
             if isinstance(resp, dict):
-                return self.fire_response(start_response, request, JsonResponse(data=resp))
+                return self.fire_response(
+                    start_response, request, JsonResponse(data=resp)
+                )
             if isinstance(resp, TemplateResponse):
                 resp.set_template_loader(self.template_loader)
                 resp.set_string_loader(self.string_loader)

@@ -12,18 +12,25 @@ from ..utils import import_by_string
 class MiddlewareMixin:
     """Cannot be called on its own. Requires context of SpiderwebRouter."""
 
+    _middleware: list[str]
     middleware: list[ClassVar]
     fire_response: Callable
 
     def init_middleware(self):
-        if self.middleware:
+        if self._middleware:
             middleware_by_reference = []
-            for m in self.middleware:
+            for m in self._middleware:
                 try:
                     middleware_by_reference.append(import_by_string(m)(server=self))
                 except ImportError:
                     raise ConfigError(f"Middleware '{m}' not found.")
             self.middleware = middleware_by_reference
+
+    def run_middleware_checks(self):
+        for middleware in self.middleware:
+            if hasattr(middleware, "checks"):
+                for check in middleware.checks:
+                    check(server=self).check()
 
     def process_request_middleware(self, request: Request) -> None | bool:
         for middleware in self.middleware:

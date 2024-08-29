@@ -3,7 +3,12 @@ import pytest
 from spiderweb import SpiderwebRouter
 from spiderweb.constants import DEFAULT_ENCODING
 from spiderweb.exceptions import ParseError, ConfigError
-from spiderweb.response import HttpResponse, JsonResponse, TemplateResponse, RedirectResponse
+from spiderweb.response import (
+    HttpResponse,
+    JsonResponse,
+    TemplateResponse,
+    RedirectResponse,
+)
 from hypothesis import given, strategies as st, assume
 
 from peewee import SqliteDatabase
@@ -43,6 +48,7 @@ def test_unknown_converter():
     app, environ, start_response = setup()
 
     with pytest.raises(ParseError):
+
         @app.route("/<asdf:test_input>")
         def index(request, test_input: str):
             return HttpResponse(test_input)
@@ -52,19 +58,19 @@ def test_duplicate_route():
     app, environ, start_response = setup()
 
     @app.route("/")
-    def index(request):
-        ...
+    def index(request): ...
 
     with pytest.raises(ConfigError):
+
         @app.route("/")
-        def index(request):
-            ...
+        def index(request): ...
 
 
 def test_url_with_double_underscore():
     app, environ, start_response = setup()
 
     with pytest.raises(ConfigError):
+
         @app.route("/<asdf:test__input>")
         def index(request, test_input: str):
             return HttpResponse(test_input)

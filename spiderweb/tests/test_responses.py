@@ -3,7 +3,12 @@ import pytest
 from spiderweb import SpiderwebRouter, ConfigError
 from spiderweb.constants import DEFAULT_ENCODING
 from spiderweb.exceptions import NoResponseError, SpiderwebNetworkException
-from spiderweb.response import HttpResponse, JsonResponse, TemplateResponse, RedirectResponse
+from spiderweb.response import (
+    HttpResponse,
+    JsonResponse,
+    TemplateResponse,
+    RedirectResponse,
+)
 from hypothesis import given, strategies as st
 
 from spiderweb.tests.helpers import setup
@@ -27,7 +32,9 @@ def test_json_response():
     def index(request):
         return JsonResponse(data={"message": "text"})
 
-    assert app(environ, start_response) == [bytes('{"message": "text"}', DEFAULT_ENCODING)]
+    assert app(environ, start_response) == [
+        bytes('{"message": "text"}', DEFAULT_ENCODING)
+    ]
 
 
 def test_dict_response():
@@ -51,7 +58,9 @@ def test_template_response(text):
             request, template_string=template, context={"message": text}
         )
 
-    assert app(environ, start_response) == [b"MESSAGE: " + bytes(text, DEFAULT_ENCODING)]
+    assert app(environ, start_response) == [
+        b"MESSAGE: " + bytes(text, DEFAULT_ENCODING)
+    ]
 
 
 def test_redirect_response():
@@ -61,7 +70,7 @@ def test_redirect_response():
     def index(request):
         return RedirectResponse(location="/redirected")
 
-    assert app(environ, start_response) == [b'None']
+    assert app(environ, start_response) == [b"None"]
     assert start_response.get_headers()["Location"] == "/redirected"
 
 
@@ -74,12 +83,14 @@ def test_add_route_at_server_start():
     def view2(request):
         return HttpResponse("View 2")
 
-    app = SpiderwebRouter(routes=[
-        ("/", index, {"allowed_methods": ["GET", "POST"], "csrf_exempt": True}),
-        ("/view2", view2),
-    ])
+    app = SpiderwebRouter(
+        routes=[
+            ("/", index, {"allowed_methods": ["GET", "POST"], "csrf_exempt": True}),
+            ("/view2", view2),
+        ]
+    )
 
-    assert app(environ, start_response) == [b'None']
+    assert app(environ, start_response) == [b"None"]
     assert start_response.get_headers()["Location"] == "/redirected"
 
 
@@ -92,7 +103,7 @@ def test_redirect_on_append_slash():
         pass
 
     environ["PATH_INFO"] = f"/hello"
-    assert app(environ, start_response) == [b'None']
+    assert app(environ, start_response) == [b"None"]
     assert start_response.get_headers()["Location"] == "/hello/"
 
 
@@ -104,11 +115,11 @@ def test_template_response_with_template(text):
 
     @app.route("/")
     def index(request):
-        return TemplateResponse(
-            request, "test.html", context={"message": text}
-        )
+        return TemplateResponse(request, "test.html", context={"message": text})
 
-    assert app(environ, start_response) == [b"TEMPLATE! " + bytes(text, DEFAULT_ENCODING)]
+    assert app(environ, start_response) == [
+        b"TEMPLATE! " + bytes(text, DEFAULT_ENCODING)
+    ]
 
 
 def test_view_returns_none():
@@ -119,7 +130,7 @@ def test_view_returns_none():
         pass
 
     with pytest.raises(NoResponseError):
-        assert app(environ, start_response) == [b'None']
+        assert app(environ, start_response) == [b"None"]
 
 
 def test_exploding_view():
@@ -130,8 +141,9 @@ def test_exploding_view():
         raise SpiderwebNetworkException("Boom!")
 
     assert app(environ, start_response) == [
-        b'Something went wrong.\n\nCode: Boom!\n\nMsg: None\n\nDesc: None'
+        b"Something went wrong.\n\nCode: Boom!\n\nMsg: None\n\nDesc: None"
     ]
+
 
 def test_missing_view():
     app, environ, start_response = setup()
@@ -146,20 +158,19 @@ def test_missing_view_with_custom_404():
     def custom_404(request):
         return HttpResponse("Custom 404")
 
-    assert app(environ, start_response) == [b'Custom 404']
+    assert app(environ, start_response) == [b"Custom 404"]
 
 
 def test_duplicate_error_view():
     app, environ, start_response = setup()
 
     @app.error(404)
-    def custom_404(request):
-        ...
+    def custom_404(request): ...
 
     with pytest.raises(ConfigError):
+
         @app.error(404)
-        def custom_404(request):
-            ...
+        def custom_404(request): ...
 
 
 def test_missing_view_with_custom_404_alt():
@@ -170,4 +181,4 @@ def test_missing_view_with_custom_404_alt():
 
     app = SpiderwebRouter(error_routes={404: custom_404})
 
-    assert app(environ, start_response) == [b'Custom 404 2']
+    assert app(environ, start_response) == [b"Custom 404 2"]

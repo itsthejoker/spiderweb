@@ -1,1 +1,4 @@
-from spiderweb.tests.middleware import ExplodingResponseMiddleware, ExplodingRequestMiddleware
+from spiderweb.tests.middleware import (
+    ExplodingResponseMiddleware,
+    ExplodingRequestMiddleware,
+)

@@ -7,5 +7,7 @@ class ExplodingRequestMiddleware(SpiderwebMiddleware):
 
 
 class ExplodingResponseMiddleware(SpiderwebMiddleware):
-    def process_response(self, request: Request, response: HttpResponse) -> HttpResponse | None:
+    def process_response(
+        self, request: Request, response: HttpResponse
+    ) -> HttpResponse | None:
         raise UnusedMiddleware("Unfinished!")

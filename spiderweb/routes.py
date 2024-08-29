@@ -30,7 +30,7 @@ class RoutesMixin:
     # ones that start with underscores are the compiled versions, non-underscores
     # are the user-supplied versions
     _routes: dict
-    routes: list[tuple[str, Callable] | tuple[str, Callable, dict]] = None,
+    routes: list[tuple[str, Callable] | tuple[str, Callable, dict]] = (None,)
     _error_routes: dict
     error_routes: dict[int, Callable]
     append_slash: bool
