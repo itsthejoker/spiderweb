@@ -1,3 +1,4 @@
+import inspect
 from typing import get_type_hints
 
 from pydantic import BaseModel
@@ -19,13 +20,15 @@ class PydanticMiddleware(SpiderwebMiddleware):
         if not request.method == "POST":
             return
         types = get_type_hints(request.handler)
-        if "request" not in types:
-            return
-        try:
-            data = types["request"].parse_obj(request.POST)
-            request.validated_data = data
-        except ValidationError as e:
-            return self.on_error(request, e)
+        # we don't know what the user named the request object, but
+        # we know that it's first in the list, and it's always an arg.
+        request_arg_name = inspect.getfullargspec(request.handler).args[0]
+        if types.get(request_arg_name) in RequestModel.__subclasses__():
+            try:
+                data = types[request_arg_name].parse_obj(request.POST)
+                request.validated_data = data
+            except ValidationError as e:
+                return self.on_error(request, e)
 
     def on_error(self, request: Request, e: ValidationError):
         # Separated out into its own method so that it can be overridden
