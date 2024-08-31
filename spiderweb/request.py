@@ -72,6 +72,9 @@ class Request:
         ]
         for f in fields:
             self.META[f] = self.environ.get(f)
+        for f in self.environ.keys():
+            if f.startswith("HTTP_"):
+                self.META[f] = self.environ[f]
         self.META["client_address"] = get_client_address(self.environ)
 
     def populate_cookies(self) -> None:

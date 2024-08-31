@@ -49,6 +49,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         staticfiles_dirs: list[str] = None,
         routes: list[tuple[str, Callable] | tuple[str, Callable, dict]] = None,
         error_routes: dict[int, Callable] = None,
+        allowed_hosts=None,
         secret_key: str = None,
         session_max_age=60 * 60 * 24 * 14,  # 2 weeks
         session_cookie_name="swsession",
@@ -69,9 +70,10 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.append_slash = append_slash
         self.templates_dirs = templates_dirs
         self.staticfiles_dirs = staticfiles_dirs
-        self._middleware: list[str] = middleware if middleware else []
+        self._middleware: list[str] = middleware or []
         self.middleware: list[Callable] = []
         self.secret_key = secret_key if secret_key else self.generate_key()
+        self.allowed_hosts = allowed_hosts or ["*"]
 
         self.extra_data = kwargs
 
