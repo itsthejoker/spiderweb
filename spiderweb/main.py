@@ -42,6 +42,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         *,
         addr: str = None,
         port: int = None,
+        allowed_hosts=None,
+        cors_allowed_origins=None,
+        cors_allow_all_origins=False,
         db: Optional[Database] = None,
         templates_dirs: list[str] = None,
         middleware: list[str] = None,
@@ -49,7 +52,6 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         staticfiles_dirs: list[str] = None,
         routes: list[tuple[str, Callable] | tuple[str, Callable, dict]] = None,
         error_routes: dict[int, Callable] = None,
-        allowed_hosts=None,
         secret_key: str = None,
         session_max_age=60 * 60 * 24 * 14,  # 2 weeks
         session_cookie_name="swsession",
@@ -74,6 +76,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.middleware: list[Callable] = []
         self.secret_key = secret_key if secret_key else self.generate_key()
         self.allowed_hosts = allowed_hosts or ["*"]
+
+        self.cors_allowed_origins = cors_allowed_origins or []
+        self.cors_allow_all_origins = cors_allow_all_origins
 
         self.extra_data = kwargs
 
@@ -136,12 +141,19 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         try:
             status = get_http_status_by_code(resp.status_code)
             cookies = []
-            if "Set-Cookie" in resp.headers:
-                cookies = resp.headers["Set-Cookie"]
-                del resp.headers["Set-Cookie"]
+            varies = []
+            if "set-cookie" in resp.headers:
+                cookies = resp.headers["set-cookie"]
+                del resp.headers["set-cookie"]
+            if "vary" in resp.headers:
+                varies = resp.headers["vary"]
+                del resp.headers["vary"]
             headers = list(resp.headers.items())
             for c in cookies:
                 headers.append(("Set-Cookie", c))
+            for v in varies:
+                headers.append(("Vary", v))
+
 
             start_response(status, headers)
 
@@ -182,7 +194,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
     ):
         try:
             status = get_http_status_by_code(500)
-            headers = [("Content-type", "text/plain; charset=utf-8")]
+            headers = [("Content-Type", "text/plain; charset=utf-8")]
 
             start_response(status, headers)
 
