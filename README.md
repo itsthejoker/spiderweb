@@ -1,5 +1,18 @@
 # spiderweb
 
+<p align="center">
+    <img
+    src="https://img.shields.io/pypi/v/spiderweb-framework.svg?style=for-the-badge"
+    alt="PyPI release version for Spiderweb"
+    />
+    <a href="https://gitmoji.dev">
+      <img
+        src="https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=for-the-badge"
+        alt="Gitmoji"
+      />
+    </a>
+</p>
+
 As a professional web developer focusing on arcane uses of Django for arcane purposes, it occurred to me a little while ago that I didn't actually know how a web framework _worked_.
 
 So I built one.
