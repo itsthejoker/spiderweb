@@ -11,6 +11,10 @@
         alt="Gitmoji"
       />
     </a>
+    <img 
+        src="https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge"
+        alt="Code style: Black"
+    />
 </p>
 
 As a professional web developer focusing on arcane uses of Django for arcane purposes, it occurred to me a little while ago that I didn't actually know how a web framework _worked_.
