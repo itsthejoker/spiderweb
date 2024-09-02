@@ -15,7 +15,7 @@ class StartResponse:
         self.headers = headers
 
     def get_headers(self):
-        return {h[0]: h[1] for h in self.headers}
+        return {h[0]: h[1] for h in self.headers} if self.headers else {}
 
 
 def setup(**kwargs):

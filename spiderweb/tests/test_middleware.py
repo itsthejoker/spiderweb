@@ -6,26 +6,23 @@ from peewee import SqliteDatabase
 
 from spiderweb import SpiderwebRouter, HttpResponse, StartupErrors
 from spiderweb.constants import DEFAULT_ENCODING
+from spiderweb.middleware.cors import (
+    ACCESS_CONTROL_ALLOW_ORIGIN,
+    ACCESS_CONTROL_ALLOW_HEADERS,
+    ACCESS_CONTROL_ALLOW_METHODS,
+    ACCESS_CONTROL_EXPOSE_HEADERS,
+    ACCESS_CONTROL_ALLOW_CREDENTIALS,
+    ACCESS_CONTROL_MAX_AGE,
+    ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK,
+)
 from spiderweb.middleware.sessions import Session
 from spiderweb.middleware import csrf
 from spiderweb.tests.helpers import setup
 from spiderweb.tests.views_for_tests import (
     form_view_with_csrf,
     form_csrf_exempt,
-    form_view_without_csrf,
+    form_view_without_csrf, text_view, unauthorized_view,
 )
-
-
-# app = SpiderwebRouter(
-#     middleware=[
-#         "spiderweb.middleware.sessions.SessionMiddleware",
-#         "spiderweb.middleware.csrf.CSRFMiddleware",
-#         "example_middleware.TestMiddleware",
-#         "example_middleware.RedirectMiddleware",
-#         "spiderweb.middleware.pydantic.PydanticMiddleware",
-#         "example_middleware.ExplodingMiddleware",
-#     ],
-# )
 
 
 def index(request):
@@ -169,8 +166,8 @@ def test_csrf_middleware():
     b_handle = BytesIO()
     b_handle.write(formdata.encode(DEFAULT_ENCODING))
     b_handle.seek(0)
-
     environ["wsgi.input"] = BufferedReader(b_handle)
+    environ["HTTP_X_CSRF_TOKEN"] = None
     resp3 = app(environ, start_response)[0].decode(DEFAULT_ENCODING)
     assert "CSRF token is invalid" in resp3
 
@@ -290,3 +287,448 @@ def test_csrf_trusted_origins():
     environ["HTTP_ORIGIN"] = "example.com"
     resp2 = app(environ, start_response)[0].decode(DEFAULT_ENCODING)
     assert resp2 == '{"name": "bob"}'
+
+
+class TestCorsMiddleware:
+    # adapted from:
+    # https://github.com/adamchainz/django-cors-headers/blob/main/tests/test_middleware.py
+    # to make sure I didn't miss anything
+    middleware = {"middleware": ["spiderweb.middleware.cors.CorsMiddleware"]}
+
+    def test_get_no_origin(self):
+        app, environ, start_response = setup(
+            **self.middleware, cors_allow_all_origins=True
+        )
+        app(environ, start_response)
+        assert ACCESS_CONTROL_ALLOW_ORIGIN not in start_response.get_headers()
+
+    def test_get_origin_vary_by_default(self):
+        app, environ, start_response = setup(
+            **self.middleware, cors_allow_all_origins=True
+        )
+        app(environ, start_response)
+        assert start_response.get_headers()["vary"] == "origin"
+
+    def test_get_invalid_origin(self):
+        app, environ, start_response = setup(
+            **self.middleware, cors_allow_all_origins=True
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com]"
+        app(environ, start_response)
+        assert ACCESS_CONTROL_ALLOW_ORIGIN not in start_response.get_headers()
+
+    def test_get_not_in_allowed_origins(self):
+        app, environ, start_response = setup(
+            **self.middleware, cors_allowed_origins=["https://example.com"]
+        )
+        environ["HTTP_ORIGIN"] = "https://example.org"
+        app(environ, start_response)
+        assert ACCESS_CONTROL_ALLOW_ORIGIN not in start_response.get_headers()
+
+    def test_get_not_in_allowed_origins_due_to_wrong_scheme(self):
+        app, environ, start_response = setup(
+            **self.middleware, cors_allowed_origins=["http://example.org"]
+        )
+        environ["HTTP_ORIGIN"] = "https://example.org"
+        app(environ, start_response)
+        assert ACCESS_CONTROL_ALLOW_ORIGIN not in start_response.get_headers()
+
+    def test_get_in_allowed_origins(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origins=["https://example.com", "https://example.org"],
+        )
+        environ["HTTP_ORIGIN"] = "https://example.org"
+        app(environ, start_response)
+        assert (
+            start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN]
+            == "https://example.org"
+        )
+
+    def test_null_in_allowed_origins(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origins=["https://example.com", "null"],
+        )
+        environ["HTTP_ORIGIN"] = "null"
+        app(environ, start_response)
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN] == "null"
+
+    def test_file_in_allowed_origins(self):
+        """
+        'file://' should be allowed as an origin since Chrome on Android
+        mistakenly sends it
+        """
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origins=["https://example.com", "file://"],
+        )
+        environ["HTTP_ORIGIN"] = "file://"
+        app(environ, start_response)
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN] == "file://"
+
+    def test_get_expose_headers(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_all_origins=True,
+            cors_expose_headers=["accept", "content-type"]
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        app(environ, start_response)
+        assert start_response.get_headers()[ACCESS_CONTROL_EXPOSE_HEADERS] == "accept, content-type"
+
+    def test_get_dont_expose_headers(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_all_origins=True,
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        app(environ, start_response)
+        assert ACCESS_CONTROL_EXPOSE_HEADERS not in start_response.get_headers()
+
+    def test_get_allow_credentials(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origins=["https://example.com"],
+            cors_allow_credentials=True,
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        app(environ, start_response)
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_CREDENTIALS] == "true"
+
+    def test_get_allow_credentials_bad_origin(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origins=["https://example.com"],
+            cors_allow_credentials=True,
+        )
+        environ["HTTP_ORIGIN"] = "https://example.org"
+        app(environ, start_response)
+        assert ACCESS_CONTROL_ALLOW_CREDENTIALS not in start_response.get_headers()
+
+    def test_get_allow_credentials_disabled(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origins=["https://example.com"],
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        app(environ, start_response)
+        assert ACCESS_CONTROL_ALLOW_CREDENTIALS not in start_response.get_headers()
+
+    def test_allow_private_network_added_if_enabled_and_requested(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_private_network=True,
+            cors_allow_all_origins=True
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK"] = "true"
+        environ["HTTP_ORIGIN"] = "http://example.com"
+        app(environ, start_response)
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK] == "true"
+
+    def test_allow_private_network_not_added_if_enabled_and_not_requested(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_private_network=True,
+            cors_allow_all_origins=True
+        )
+        environ["HTTP_ORIGIN"] = "http://example.com"
+        app(environ, start_response)
+        assert ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK not in start_response.get_headers()
+
+    def test_allow_private_network_not_added_if_enabled_and_no_cors_origin(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_private_network=True,
+            cors_allowed_origins=["http://example.com"]
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK"] = "true"
+        environ["HTTP_ORIGIN"] = "http://example.org"
+        app(environ, start_response)
+        assert ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK not in start_response.get_headers()
+
+
+    def test_allow_private_network_not_added_if_disabled_and_requested(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_private_network=False,
+            cors_allow_all_origins=True
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK"] = "true"
+        environ["HTTP_ORIGIN"] = "http://example.com"
+        app(environ, start_response)
+        assert ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK not in start_response.get_headers()
+
+    def test_options_allowed_origin(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_headers=["content-type"],
+            cors_allow_methods=["GET", "OPTIONS"],
+            cors_preflight_max_age=1002,
+            cors_allow_all_origins=True
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+
+        headers = start_response.get_headers()
+
+        assert start_response.status == '200 OK'
+        assert headers[ACCESS_CONTROL_ALLOW_HEADERS] == "content-type"
+        assert headers[ACCESS_CONTROL_ALLOW_METHODS] == "GET, OPTIONS"
+        assert headers[ACCESS_CONTROL_MAX_AGE] == "1002"
+
+
+    def test_options_no_max_age(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_headers=["content-type"],
+            cors_allow_methods=["GET", "OPTIONS"],
+            cors_preflight_max_age=0,
+            cors_allow_all_origins=True
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+
+
+        headers = start_response.get_headers()
+        assert headers[ACCESS_CONTROL_ALLOW_HEADERS] == "content-type"
+        assert headers[ACCESS_CONTROL_ALLOW_METHODS] == "GET, OPTIONS"
+        assert ACCESS_CONTROL_MAX_AGE not in headers
+
+    def test_options_allowed_origins_with_port(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origins=["https://localhost:9000"]
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["HTTP_ORIGIN"] = "https://localhost:9000"
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN] == "https://localhost:9000"
+
+    def test_options_adds_origin_when_domain_found_in_allowed_regexes(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origin_regexes=[r"^https://\w+\.example\.com$"]
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["HTTP_ORIGIN"] = "https://foo.example.com"
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN] == "https://foo.example.com"
+
+    def test_options_adds_origin_when_domain_found_in_allowed_regexes_second(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origin_regexes=[
+               r"^https://\w+\.example\.org$",
+               r"^https://\w+\.example\.com$",
+            ],
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["HTTP_ORIGIN"] = "https://foo.example.com"
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN] == "https://foo.example.com"
+
+    def test_options_doesnt_add_origin_when_domain_not_found_in_allowed_regexes(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origin_regexes=[r"^https://\w+\.example\.org$"],
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["HTTP_ORIGIN"] = "https://foo.example.com"
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+
+        assert ACCESS_CONTROL_ALLOW_ORIGIN not in start_response.get_headers()
+
+    def test_options_empty_request_method(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_all_origins=True,
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = ""
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+
+        assert start_response.status == "200 OK"
+
+
+    def test_options_no_headers(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_all_origins=True,
+            routes=[
+                ("/", text_view)
+            ]
+        )
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+        assert start_response.status == "405 Method Not Allowed"
+
+    def test_allow_all_origins_get(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_credentials=True,
+            cors_allow_all_origins=True,
+            routes=[("/", text_view)]
+        )
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["REQUEST_METHOD"] = "GET"
+        app(environ, start_response)
+
+        assert start_response.status == "200 OK"
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN] == "https://example.com"
+        assert start_response.get_headers()["vary"] == "origin"
+
+    def test_allow_all_origins_options(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_credentials=True,
+            cors_allow_all_origins=True,
+            routes=[("/", text_view)]
+        )
+
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+
+        assert start_response.status == "200 OK"
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN] == "https://example.com"
+        assert start_response.get_headers()["vary"] == "origin"
+
+    def test_non_200_headers_still_set(self):
+        """
+        It's not clear whether the header should still be set for non-HTTP200
+        when not a preflight request. However, this is the existing behavior for
+        django-cors-middleware, and Spiderweb should mirror it.
+        """
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_credentials=True,
+            cors_allow_all_origins=True,
+            routes=[("/unauthorized", unauthorized_view)]
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["PATH_INFO"] = "/unauthorized"
+        app(environ, start_response)
+
+
+        assert start_response.status == "401 Unauthorized"
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN] == "https://example.com"
+
+    def test_auth_view_options(self):
+        """
+        Ensure HTTP200 and header still set, for preflight requests to views requiring
+        authentication. See: https://github.com/adamchainz/django-cors-headers/issues/3
+        """
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allow_credentials=True,
+            cors_allow_all_origins=True,
+            routes=[("/unauthorized", unauthorized_view)]
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["PATH_INFO"] = "/unauthorized"
+        environ["REQUEST_METHOD"] = "OPTIONS"
+        app(environ, start_response)
+
+        assert start_response.status == "200 OK"
+        assert start_response.get_headers()[ACCESS_CONTROL_ALLOW_ORIGIN] == "https://example.com"
+        assert start_response.get_headers()["content-length"] == "0"
+
+
+    def test_get_short_circuit(self):
+        """
+        Test a scenario when a middleware that returns a response is run before
+        the `CorsMiddleware`. In this case
+        `CorsMiddleware.process_response()` should ignore the request.
+        """
+        app, environ, start_response = setup(
+            middleware=[
+                "spiderweb.tests.middleware.InterruptingMiddleware",
+                "spiderweb.middleware.cors.CorsMiddleware",
+            ],
+            cors_allow_credentials=True,
+            cors_allowed_origins=["https://example.com"],
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        app(environ, start_response)
+
+        assert ACCESS_CONTROL_ALLOW_ORIGIN not in start_response.get_headers()
+
+    def test_get_short_circuit_should_be_ignored(self):
+        app, environ, start_response = setup(
+            middleware=[
+                "spiderweb.tests.middleware.InterruptingMiddleware",
+                "spiderweb.middleware.cors.CorsMiddleware",
+            ],
+            cors_urls_regex=r"^/foo/$",
+            cors_allowed_origins=["https://example.com"],
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        app(environ, start_response)
+
+        assert ACCESS_CONTROL_ALLOW_ORIGIN not in start_response.get_headers()
+
+    def test_get_regex_matches(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_urls_regex=r"^/foo$",
+            cors_allowed_origins=["https://example.com"],
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["PATH_INFO"] = "/foo"
+        environ["REQUEST_METHOD"] = "GET"
+        app(environ, start_response)
+
+        assert ACCESS_CONTROL_ALLOW_ORIGIN in start_response.get_headers()
+
+    def test_get_regex_doesnt_match(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_urls_regex=r"^/not-foo/$",
+            cors_allowed_origins=["https://example.com"],
+        )
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["HTTP_ACCESS_CONTROL_REQUEST_METHOD"] = "GET"
+        environ["PATH_INFO"] = "/foo"
+        environ["REQUEST_METHOD"] = "GET"
+        app(environ, start_response)
+
+        assert ACCESS_CONTROL_ALLOW_ORIGIN not in start_response.get_headers()
+
+    def test_works_if_view_deletes_cors_enabled(self):
+        """
+        Just in case something crazy happens in the view or other middleware,
+        check that get_response doesn't fall over if `_cors_enabled` is removed
+        """
+        def yeet(request):
+            del request._cors_enabled
+            return HttpResponse("hahaha")
+
+        app, environ, start_response = setup(
+            **self.middleware,
+            cors_allowed_origins=["https://example.com"],
+            routes=[('/yeet', yeet)]
+        )
+
+        environ["HTTP_ORIGIN"] = "https://example.com"
+        environ["PATH_INFO"] = "/yeet"
+        environ["REQUEST_METHOD"] = "GET"
+        app(environ, start_response)
+
+        assert ACCESS_CONTROL_ALLOW_ORIGIN in start_response.get_headers()

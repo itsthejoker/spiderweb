@@ -11,3 +11,8 @@ class ExplodingResponseMiddleware(SpiderwebMiddleware):
         self, request: Request, response: HttpResponse
     ) -> HttpResponse | None:
         raise UnusedMiddleware("Unfinished!")
+
+
+class InterruptingMiddleware(SpiderwebMiddleware):
+    def process_request(self, request: Request) -> HttpResponse:
+        return HttpResponse("Moo!")

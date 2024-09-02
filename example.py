@@ -25,6 +25,7 @@ app = SpiderwebRouter(
     ],
     staticfiles_dirs=["static_files"],
     append_slash=False,  # default
+    cors_allow_all_origins=True,
 )
 
 

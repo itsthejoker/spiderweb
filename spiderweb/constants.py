@@ -1,8 +1,8 @@
 from peewee import DatabaseProxy
 
-DEFAULT_ALLOWED_METHODS = ["GET"]
+DEFAULT_ALLOWED_METHODS = ["POST", "GET", "PUT", "PATCH", "DELETE"]
 DEFAULT_ENCODING = "UTF-8"
-__version__ = "0.12.0"
+__version__ = "1.0.0"
 
 # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
 REGEX_COOKIE_NAME = r"^[a-zA-Z0-9\s\(\)<>@,;:\/\\\[\]\?=\{\}\"\t]*$"

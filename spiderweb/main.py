@@ -50,7 +50,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         port: int = None,
         allowed_hosts: Sequence[str | re.Pattern] = None,
         cors_allowed_origins: Sequence[str] = None,
-        cors_allowed_origins_regexes: Sequence[str] = None,
+        cors_allowed_origin_regexes: Sequence[str] = None,
         cors_allow_all_origins: bool = False,
         cors_urls_regex: str | re.Pattern[str] = r"^.*$",
         cors_allow_methods: Sequence[str] = None,
@@ -94,7 +94,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.allowed_hosts = [convert_url_to_regex(i) for i in self._allowed_hosts]
 
         self.cors_allowed_origins = cors_allowed_origins or []
-        self.cors_allowed_origins_regexes = cors_allowed_origins_regexes or []
+        self.cors_allowed_origin_regexes = cors_allowed_origin_regexes or []
         self.cors_allow_all_origins = cors_allow_all_origins
         self.cors_urls_regex = cors_urls_regex
         self.cors_allow_methods = cors_allow_methods or DEFAULT_CORS_ALLOW_METHODS
@@ -171,17 +171,19 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             status = get_http_status_by_code(resp.status_code)
             cookies = []
             varies = []
+            resp.headers = {k.replace("_", "-"): v for k, v in resp.headers.items()}
             if "set-cookie" in resp.headers:
                 cookies = resp.headers["set-cookie"]
                 del resp.headers["set-cookie"]
             if "vary" in resp.headers:
                 varies = resp.headers["vary"]
                 del resp.headers["vary"]
+            resp.headers = {k: str(v) for k, v in resp.headers.items()}
             headers = list(resp.headers.items())
             for c in cookies:
-                headers.append(("Set-Cookie", c))
+                headers.append(("set-cookie", str(c)))
             for v in varies:
-                headers.append(("Vary", v))
+                headers.append(("vary", str(v)))
 
             start_response(status, headers)
 
@@ -271,7 +273,6 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
     def __call__(self, environ, start_response, *args, **kwargs):
         """Entry point for WSGI apps."""
         request = self.get_request(environ)
-
         try:
             handler, additional_args, allowed_methods = self.get_route(request.path)
         except NotFound:

@@ -38,7 +38,7 @@ class MiddlewareMixin:
 
         if errors:
             # just show the messages
-            sys.tracebacklimit = 0
+            sys.tracebacklimit = 1
             raise StartupErrors(
                 "Problems were identified during startup — cannot continue.", errors
             )

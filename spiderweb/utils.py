@@ -67,15 +67,35 @@ def is_jsonable(data: str) -> bool:
 
 
 class Headers(dict):
-    # special dict that forces lowercase for all keys
+    # special dict that forces lowercase and snake_case for all keys
     def __getitem__(self, key):
-        return super().__getitem__(key.lower())
+        key = key.replace("-", "_")
+        try:
+            regular = super().__getitem__(key.lower())
+        except KeyError:
+            regular = None
+        try:
+            http_version = super().__getitem__(f"http_{key.lower()}")
+        except KeyError:
+            http_version = None
+        return regular or http_version
+
+    def __contains__(self, item):
+        item = item.lower().replace("-", "_")
+
+        regular = super().__contains__(item)
+        http = super().__contains__(f"http_{item}")
+
+        return regular or http
 
     def __setitem__(self, key, value):
-        return super().__setitem__(key.lower(), value)
+        return super().__setitem__(key.lower().replace("-", "_"), value)
 
     def get(self, key, default=None):
-        return super().get(key.lower(), default)
+        key = key.replace("-", "_")
+        regular = super().get(key.lower(), default)
+        http_version = super().get(f"http_{key.lower()}", default)
+        return regular or http_version
 
     def setdefault(self, key, default=None):
         return super().setdefault(key.lower(), default)

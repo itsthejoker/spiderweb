@@ -1,3 +1,4 @@
+from spiderweb import HttpResponse
 from spiderweb.decorators import csrf_exempt
 from spiderweb.response import JsonResponse, TemplateResponse
 
@@ -38,3 +39,11 @@ def form_view_with_csrf(request):
         return JsonResponse(data=request.POST)
     else:
         return TemplateResponse(request, template_string=EXAMPLE_HTML_FORM_WITH_CSRF)
+
+
+def text_view(request):
+    return HttpResponse("Hi!")
+
+
+def unauthorized_view(request):
+    return HttpResponse("Unauthorized", status_code=401)

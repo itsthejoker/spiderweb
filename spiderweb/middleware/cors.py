@@ -25,12 +25,9 @@ class VerifyValidCorsSetting(ServerCheck):
     )
 
     def check(self):
-        # - `cors_allowed_origins`
-        # - `cors_allowed_origin_regexes`
-        # - `cors_allow_all_origins`
         if (
             not self.server.cors_allowed_origins
-            and not self.server.cors.allowed_origin_regexes
+            and not self.server.cors_allowed_origin_regexes
             and not self.server.cors_allow_all_origins
         ):
             return ConfigError(self.INVALID_BASE_CONFIG)
@@ -52,7 +49,6 @@ class CorsMiddleware(SpiderwebMiddleware):
         enabled = getattr(request, "_cors_enabled", None)
         if enabled is None:
             enabled = self.is_enabled(request)
-
         if not enabled:
             return response
 
@@ -61,7 +57,7 @@ class CorsMiddleware(SpiderwebMiddleware):
         else:
             response.headers["vary"] = ["origin"]
 
-        origin = request.headers.get("origin")
+        origin = request.headers.get("http_origin")
         if not origin:
             return response
 
@@ -103,10 +99,9 @@ class CorsMiddleware(SpiderwebMiddleware):
                 response.headers[ACCESS_CONTROL_MAX_AGE] = str(
                     self.server.cors_preflight_max_age
                 )
-
         if (
             self.server.cors_allow_private_network
-            and request.headers.get(ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK) == "true"
+            and request.headers.get(ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK.replace("-", "_")) == "true"
         ):
             response.headers[ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK] = "true"
 
@@ -134,8 +129,8 @@ class CorsMiddleware(SpiderwebMiddleware):
 
     def process_request(self, request: Request) -> HttpResponse | None:
         # Identify and handle a preflight request
-        # origin = request.META.get("HTTP_ORIGIN")
         request._cors_enabled = self.is_enabled(request)
+        request.META["cors_ran"] = True
         if (
             request._cors_enabled
             and request.method == "OPTIONS"
@@ -152,6 +147,11 @@ class CorsMiddleware(SpiderwebMiddleware):
             return resp
 
     def process_response(self, request: Request, response: HttpResponse) -> None:
+        if not request.META.get("cors_ran"):
+            # something happened and process_request didn't run. Abort early.
+            # We're not relying on request._cors_enabled because it's more
+            # visible and the view may have destroyed it accidentally.
+            return
         self.add_response_headers(request, response)
 
 
