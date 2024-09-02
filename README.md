@@ -43,6 +43,8 @@ if __name__ == "__main__":
     app.start()
 ```
 
+## [View the docs here!](https://itsthejoker/github.io/spiderweb)
+
 My goal with this framework was to do three things:
 
   1. Learn a lot
@@ -51,31 +53,28 @@ My goal with this framework was to do three things:
 
 And, honestly, I think I got there. Here's a non-exhaustive list of things this can do:
 
-  * Function-based views
-  * Optional Flask-style URL routing
-  * Optional Django-style URL routing
-  * URLs with variables in them a lá Django
-  * Gunicorn support
-  * Full middleware implementation
-  * Limit routes by HTTP verbs
-  * Custom error routes
-  * Built-in dev server
-  * HTML templates with Jinja2
-  * Static files support
-  * Cookies (reading and setting)
-  * Optional append_slash (with automatic redirects!)
-  * ~~CSRF middleware implementation~~ (it's there, but it's crappy and unsafe. I'm working on it.)
-  * Optional POST data validation middleware with Pydantic
-  * Database support (using Peewee, but the end user can use whatever they want as long as there's a Peewee driver for it)
-  * Session middleware
-
-The TODO list:
-
-  * Tests (important)
-  * Fix CSRF middleware
+- Function-based views
+- Optional Flask-style URL routing
+- Optional Django-style URL routing
+- URLs with variables in them a lá Django
+- Full middleware implementation
+- Limit routes by HTTP verbs
+- Custom error routes
+- Built-in dev server
+- Gunicorn support
+- HTML templates with Jinja2
+- Static files support
+- Cookies (reading and setting)
+- Optional append_slash (with automatic redirects!)
+- CSRF middleware
+- CORS middleware
+- Optional POST data validation middleware with Pydantic
+- Session middleware with built-in session store
+- Database support (using Peewee, but you can use whatever you want as long as there's a Peewee driver for it)
+- Tests (currently a little over 80% coverage)
 
 Once tests are in and proven to work, then I'll release as version 1.0.
 
-More documentation to follow!
+- currently missing tests for cors middleware
 
 If you're reading this on GitHub, this repository is a public mirror of https://git.joekaufeld.com/jkaufeld/spiderweb.
