@@ -58,6 +58,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         cors_expose_headers: Sequence[str] = None,
         cors_preflight_max_age: int = 86400,
         cors_allow_credentials: bool = False,
+        cors_allow_private_network: bool = False,
         csrf_trusted_origins: Sequence[str] = None,
         db: Optional[Database] = None,
         templates_dirs: Sequence[str] = None,
@@ -101,6 +102,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.cors_expose_headers = cors_expose_headers or []
         self.cors_preflight_max_age = cors_preflight_max_age
         self.cors_allow_credentials = cors_allow_credentials
+        self.cors_allow_private_network = cors_allow_private_network
 
         self._csrf_trusted_origins = csrf_trusted_origins or []
         self.csrf_trusted_origins = [

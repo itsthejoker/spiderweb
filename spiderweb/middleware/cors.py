@@ -1,9 +1,11 @@
 import re
 from urllib.parse import urlsplit, SplitResult
 
+from spiderweb.exceptions import ConfigError
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse
 from spiderweb.middleware import SpiderwebMiddleware
+from spiderweb.server_checks import ServerCheck
 
 ACCESS_CONTROL_ALLOW_ORIGIN = "access-control-allow-origin"
 ACCESS_CONTROL_EXPOSE_HEADERS = "access-control-expose-headers"
@@ -15,6 +17,24 @@ ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK = "access-control-request-private-network
 ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK = "access-control-allow-private-network"
 
 
+class VerifyValidCorsSetting(ServerCheck):
+    INVALID_BASE_CONFIG = (
+        "To enable CORS, one of the three primary configurations must be set:"
+        " `cors_allowed_origins`, `cors_allowed_origin_regexes`, or"
+        " `cors_allow_all_origins`.",
+    )
+    def check(self):
+        # - `cors_allowed_origins`
+        # - `cors_allowed_origin_regexes`
+        # - `cors_allow_all_origins`
+        if (
+            not self.server.cors_allowed_origins
+            and not self.server.cors.allowed_origin_regexes
+            and not self.server.cors_allow_all_origins
+        ):
+            return ConfigError(self.INVALID_BASE_CONFIG)
+
+
 class CorsMiddleware(SpiderwebMiddleware):
     # heavily 'based' on https://github.com/adamchainz/django-cors-headers,
     # which is provided under the MIT license. This is essentially a direct
@@ -22,6 +42,7 @@ class CorsMiddleware(SpiderwebMiddleware):
     # around for a long time and it works well. Shoutouts to Otto, Adam, and
     # crew for helping make this a complete non-issue in Django for a very long
     # time.
+    checks = [VerifyValidCorsSetting]
 
     def is_enabled(self, request: Request):
         return bool(re.match(self.server.cors_urls_regex, request.path))

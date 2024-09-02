@@ -3,7 +3,7 @@
 > the web framework just big enough for a spider
 
 [GitHub](https://github.com/itsthejoker/spiderweb/)
-[Get Started](#spiderweb)
+[Get Started](/README)
 
 
 ![color](#222)

@@ -1,5 +1,3 @@
-from spiderweb import HttpResponse
-
 # writing your own middleware
 
 Sometimes you want to run the same code on every request or every response (or both!). Lots of processing happens in the middleware layer, and if you want to write your own, all you have to do is write a quick class and put it in a place that Spiderweb can find it. A piece of middleware only needs two things to be successful:
@@ -56,6 +54,54 @@ Unlike `process_request`, returning a value here doesn't change anything. We're 
 ## on_error(self, request, triggered_exception):
 
 This is a helper function that is available for you to override; it's not often used by middleware, but there are some ([like the pydantic middleware](pydantic.md)) that call `on_error` when there is a validation failure.
+
+## checks
+
+If you want to have runtime verifications that ensure that everything is running smoothly, you can take advantage of Spiderweb's `checks` feature.
+
+> [!TIP]
+> If you just want to run startup checks, you can also tie this in with the `UnusedMiddleware` exception, as it'll trigger after the checks run.
+
+A startup check looks like this:
+
+```python
+from spiderweb.exceptions import ConfigError
+from spiderweb.server_checks import ServerCheck
+
+
+class MyCheck(ServerCheck):
+    # You don't have to extract the message out into a top-level
+    # variable, but it does make testing your middleware easier.
+    MYMESSAGE = "Something has gone wrong!"
+
+    # The function must be called `check` and it takes no args.
+    def check(self):
+        if self.server.extra_args.get("mykeyword") != "propervalue":
+            # Note that we are returning an exception instead of
+            # raising it. All config errors are collected and then
+            # raised as a single group of all the errors that
+            # happened on startup.
+            # If everything looks good, don't return anything.
+            return ConfigError(self.MYMESSAGE)
+```
+
+> [!TIP]
+> You should have one check class per actual check that you want to run, as it will make identifying  issues much easier.
+
+You can have as many checks as you'd like, and the base Spiderweb instance is available at `self.server`. All checks must return an exception (**not** raising it!), as they will all be raised at the same time as part of an ExceptionGroup called `StartupErrors`.
+
+To enable your checks, link them to your middleware like this:
+
+```python
+class MyMiddleware(SpiderwebMiddleware):
+    
+    checks = [MyCheck, ADifferentCheck]
+
+    def process_request(self, request):
+        ...
+```
+
+List as many checks as you need there, and the server will run all of them during startup.
 
 ## UnusedMiddleware
 

@@ -70,17 +70,28 @@ class CSRFMiddleware(SpiderwebMiddleware):
 
     CSRF_EXPIRY = 60 * 60  # 1 hour
 
+    def is_trusted_origin(self, request) -> bool:
+        origin = request.headers.get("http_origin")
+        referrer = request.headers.get("http_referer") or request.headers.get("http_referrer")
+        host = request.headers.get("http_host")
+
+        if not origin and not (host == referrer):
+            return False
+
+        if not origin and (host == referrer):
+            origin = host
+
+        for re_origin in self.server.csrf_trusted_origins:
+            if re.match(re_origin, origin):
+                return True
+        return False
+
     def process_request(self, request: Request) -> HttpResponse | None:
         if request.method == "POST":
-            trusted_origin = False
+
             if hasattr(request.handler, "csrf_exempt"):
                 if request.handler.csrf_exempt is True:
                     return
-            if origin := request.headers.get("http_origin"):
-
-                for re_origin in self.server.csrf_trusted_origins:
-                    if re.match(re_origin, origin):
-                        trusted_origin = True
 
             csrf_token = (
                 request.headers.get("X-CSRF-TOKEN")
@@ -88,7 +99,7 @@ class CSRFMiddleware(SpiderwebMiddleware):
                 or request.POST.get("csrf_token")
             )
 
-            if not trusted_origin:
+            if not self.is_trusted_origin(request):
                 if self.is_csrf_valid(request, csrf_token):
                     return None
                 else:
