@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from peewee import SqliteDatabase
 
-from spiderweb import SpiderwebRouter, HttpResponse, ConfigError, StartupErrors
+from spiderweb import SpiderwebRouter, HttpResponse, StartupErrors
 from spiderweb.constants import DEFAULT_ENCODING
 from spiderweb.middleware.sessions import Session
 from spiderweb.middleware import csrf
@@ -37,10 +37,8 @@ def index(request):
 
 
 def test_session_middleware():
-    _, environ, start_response = setup()
-    app = SpiderwebRouter(
+    app, environ, start_response = setup(
         middleware=["spiderweb.middleware.sessions.SessionMiddleware"],
-        db=SqliteDatabase("spiderweb-tests.db"),
     )
 
     app.add_route("/", index)
@@ -58,10 +56,8 @@ def test_session_middleware():
 
 
 def test_expired_session():
-    _, environ, start_response = setup()
-    app = SpiderwebRouter(
+    app, environ, start_response = setup(
         middleware=["spiderweb.middleware.sessions.SessionMiddleware"],
-        db=SqliteDatabase("spiderweb-tests.db"),
     )
 
     app.add_route("/", index)
@@ -85,13 +81,11 @@ def test_expired_session():
 
 
 def test_exploding_middleware():
-    _, environ, start_response = setup()
-    app = SpiderwebRouter(
+    app, environ, start_response = setup(
         middleware=[
             "spiderweb.tests.middleware.ExplodingRequestMiddleware",
             "spiderweb.tests.middleware.ExplodingResponseMiddleware",
         ],
-        db=SqliteDatabase("spiderweb-tests.db"),
     )
 
     app.add_route("/", index)
@@ -102,7 +96,6 @@ def test_exploding_middleware():
 
 
 def test_csrf_middleware_without_session_middleware():
-    _, environ, start_response = setup()
     with pytest.raises(StartupErrors) as e:
         SpiderwebRouter(
             middleware=["spiderweb.middleware.csrf.CSRFMiddleware"],
@@ -116,15 +109,14 @@ def test_csrf_middleware_without_session_middleware():
 
 
 def test_csrf_middleware_above_session_middleware():
-    _, environ, start_response = setup()
     with pytest.raises(StartupErrors) as e:
-        SpiderwebRouter(
+        app, environ, start_response = setup(
             middleware=[
                 "spiderweb.middleware.csrf.CSRFMiddleware",
                 "spiderweb.middleware.sessions.SessionMiddleware",
             ],
-            db=SqliteDatabase("spiderweb-tests.db"),
         )
+
     exceptiongroup = e.value.args[1]
     assert (
         exceptiongroup[0].args[0]
@@ -133,13 +125,11 @@ def test_csrf_middleware_above_session_middleware():
 
 
 def test_csrf_middleware():
-    _, environ, start_response = setup()
-    app = SpiderwebRouter(
+    app, environ, start_response = setup(
         middleware=[
             "spiderweb.middleware.sessions.SessionMiddleware",
             "spiderweb.middleware.csrf.CSRFMiddleware",
         ],
-        db=SqliteDatabase("spiderweb-tests.db"),
     )
 
     app.add_route("/", form_view_with_csrf, ["GET", "POST"])
@@ -198,14 +188,13 @@ def test_csrf_middleware():
 
 
 def test_csrf_expired_token():
-    _, environ, start_response = setup()
-    app = SpiderwebRouter(
+    app, environ, start_response = setup(
         middleware=[
             "spiderweb.middleware.sessions.SessionMiddleware",
             "spiderweb.middleware.csrf.CSRFMiddleware",
         ],
-        db=SqliteDatabase("spiderweb-tests.db"),
     )
+
     app.middleware[1].CSRF_EXPIRY = -1
 
     app.add_route("/", form_view_with_csrf, ["GET", "POST"])
@@ -235,13 +224,11 @@ def test_csrf_expired_token():
 
 
 def test_csrf_exempt():
-    _, environ, start_response = setup()
-    app = SpiderwebRouter(
+    app, environ, start_response = setup(
         middleware=[
             "spiderweb.middleware.sessions.SessionMiddleware",
             "spiderweb.middleware.csrf.CSRFMiddleware",
         ],
-        db=SqliteDatabase("spiderweb-tests.db"),
     )
 
     app.add_route("/", form_csrf_exempt, ["GET", "POST"])
@@ -268,8 +255,7 @@ def test_csrf_exempt():
 
 
 def test_csrf_trusted_origins():
-    _, environ, start_response = setup()
-    app = SpiderwebRouter(
+    app, environ, start_response = setup(
         middleware=[
             "spiderweb.middleware.sessions.SessionMiddleware",
             "spiderweb.middleware.csrf.CSRFMiddleware",
@@ -277,9 +263,7 @@ def test_csrf_trusted_origins():
         csrf_trusted_origins=[
             "example.com",
         ],
-        db=SqliteDatabase("spiderweb-tests.db"),
     )
-
     app.add_route("/", form_view_without_csrf, ["GET", "POST"])
 
     environ["HTTP_USER_AGENT"] = "hi"

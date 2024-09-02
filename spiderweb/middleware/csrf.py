@@ -72,7 +72,9 @@ class CSRFMiddleware(SpiderwebMiddleware):
 
     def is_trusted_origin(self, request) -> bool:
         origin = request.headers.get("http_origin")
-        referrer = request.headers.get("http_referer") or request.headers.get("http_referrer")
+        referrer = request.headers.get("http_referer") or request.headers.get(
+            "http_referrer"
+        )
         host = request.headers.get("http_host")
 
         if not origin and not (host == referrer):

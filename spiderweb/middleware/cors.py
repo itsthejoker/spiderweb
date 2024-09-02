@@ -23,6 +23,7 @@ class VerifyValidCorsSetting(ServerCheck):
         " `cors_allowed_origins`, `cors_allowed_origin_regexes`, or"
         " `cors_allow_all_origins`.",
     )
+
     def check(self):
         # - `cors_allowed_origins`
         # - `cors_allowed_origin_regexes`
@@ -150,9 +151,8 @@ class CorsMiddleware(SpiderwebMiddleware):
             self.add_response_headers(request, resp)
             return resp
 
-    def process_response(
-        self, request: Request, response: HttpResponse
-    ) -> None:
+    def process_response(self, request: Request, response: HttpResponse) -> None:
         self.add_response_headers(request, response)
+
 
 # [204]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS#status_code

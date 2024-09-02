@@ -18,11 +18,13 @@ class StartResponse:
         return {h[0]: h[1] for h in self.headers}
 
 
-def setup():
+def setup(**kwargs):
     environ = {}
     setup_testing_defaults(environ)
+    if "db" not in kwargs:
+        kwargs["db"] = SqliteDatabase("spiderweb-tests.db")
     return (
-        SpiderwebRouter(db=SqliteDatabase("spiderweb-tests.db")),
+        SpiderwebRouter(**kwargs),
         environ,
         StartResponse(),
     )

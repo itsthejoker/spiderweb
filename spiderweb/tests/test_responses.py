@@ -75,15 +75,13 @@ def test_redirect_response():
 
 
 def test_add_route_at_server_start():
-    app, environ, start_response = setup()
-
     def index(request):
         return RedirectResponse(location="/redirected")
 
     def view2(request):
         return HttpResponse("View 2")
 
-    app = SpiderwebRouter(
+    app, environ, start_response = setup(
         routes=[
             ("/", index, {"allowed_methods": ["GET", "POST"], "csrf_exempt": True}),
             ("/view2", view2),
@@ -95,8 +93,7 @@ def test_add_route_at_server_start():
 
 
 def test_redirect_on_append_slash():
-    _, environ, start_response = setup()
-    app = SpiderwebRouter(append_slash=True)
+    app, environ, start_response = setup(append_slash=True)
 
     @app.route("/hello")
     def index(request):
@@ -109,9 +106,7 @@ def test_redirect_on_append_slash():
 
 @given(st.text())
 def test_template_response_with_template(text):
-    _, environ, start_response = setup()
-
-    app = SpiderwebRouter(templates_dirs=["spiderweb/tests"])
+    app, environ, start_response = setup(templates_dirs=["spiderweb/tests"])
 
     @app.route("/")
     def index(request):
@@ -174,11 +169,10 @@ def test_duplicate_error_view():
 
 
 def test_missing_view_with_custom_404_alt():
-    _, environ, start_response = setup()
 
     def custom_404(request):
         return HttpResponse("Custom 404 2")
 
-    app = SpiderwebRouter(error_routes={404: custom_404})
+    app, environ, start_response = setup(error_routes={404: custom_404})
 
     assert app(environ, start_response) == [b"Custom 404 2"]
