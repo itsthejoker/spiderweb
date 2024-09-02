@@ -86,3 +86,7 @@ class UnusedMiddleware(SpiderwebException):
 
 class NoResponseError(SpiderwebException):
     pass
+
+
+class StartupErrors(ExceptionGroup):
+    pass

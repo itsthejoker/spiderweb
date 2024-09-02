@@ -1,9 +1,11 @@
 from typing import Callable, ClassVar
+import sys
 
 from .base import SpiderwebMiddleware as SpiderwebMiddleware
+from .cors import CorsMiddleware as CorsMiddleware
 from .csrf import CSRFMiddleware as CSRFMiddleware
 from .sessions import SessionMiddleware as SessionMiddleware
-from ..exceptions import ConfigError, UnusedMiddleware
+from ..exceptions import ConfigError, UnusedMiddleware, StartupErrors
 from ..request import Request
 from ..response import HttpResponse
 from ..utils import import_by_string
@@ -27,10 +29,19 @@ class MiddlewareMixin:
             self.middleware = middleware_by_reference
 
     def run_middleware_checks(self):
+        errors = []
         for middleware in self.middleware:
             if hasattr(middleware, "checks"):
                 for check in middleware.checks:
-                    check(server=self).check()
+                    if issue := check(server=self).check():
+                        errors.append(issue)
+
+        if errors:
+            # just show the messages
+            sys.tracebacklimit = 0
+            raise StartupErrors(
+                "Problems were identified during startup — cannot continue.", errors
+            )
 
     def process_request_middleware(self, request: Request) -> None | bool:
         for middleware in self.middleware:

@@ -1,4 +1,5 @@
 import json
+import re
 import secrets
 import string
 from http import HTTPStatus
@@ -76,5 +77,13 @@ class Headers(dict):
     def get(self, key, default=None):
         return super().get(key.lower(), default)
 
-    def setdefault(self, key, default = None):
+    def setdefault(self, key, default=None):
         return super().setdefault(key.lower(), default)
+
+
+def convert_url_to_regex(url: str | re.Pattern) -> re.Pattern:
+    if isinstance(url, re.Pattern):
+        return url
+    url = url.replace(".", "\\.")
+    url = url.replace("*", ".+")
+    return re.compile(url)

@@ -15,6 +15,7 @@ from spiderweb.response import (
 app = SpiderwebRouter(
     templates_dirs=["templates"],
     middleware=[
+        "spiderweb.middleware.cors.CorsMiddleware",
         "spiderweb.middleware.sessions.SessionMiddleware",
         "spiderweb.middleware.csrf.CSRFMiddleware",
         "example_middleware.TestMiddleware",
