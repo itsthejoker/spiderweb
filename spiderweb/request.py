@@ -2,7 +2,7 @@ import json
 from urllib.parse import urlparse
 
 from spiderweb.constants import DEFAULT_ENCODING
-from spiderweb.utils import get_client_address
+from spiderweb.utils import get_client_address, Headers
 
 
 class Request:
@@ -38,20 +38,22 @@ class Request:
         self.populate_meta()
         self.populate_cookies()
 
-        content_length = int(self.headers.get("CONTENT_LENGTH") or 0)
+        content_length = int(self.headers.get("content_length") or 0)
         if content_length:
             self.content = (
                 self.environ["wsgi.input"].read(content_length).decode(DEFAULT_ENCODING)
             )
 
     def populate_headers(self) -> None:
-        self.headers |= {
-            "CONTENT_TYPE": self.environ.get("CONTENT_TYPE"),
-            "CONTENT_LENGTH": self.environ.get("CONTENT_LENGTH"),
+        data = self.headers
+        data |= {
+            "content_type": self.environ.get("CONTENT_TYPE"),
+            "content_length": self.environ.get("CONTENT_LENGTH"),
         }
         for k, v in self.environ.items():
             if k.startswith("HTTP_"):
-                self.headers[k] = v
+                data[k] = v
+        self.headers = Headers(**{k.lower(): v for k, v in data.items()})
 
     def populate_meta(self) -> None:
         # all caps fields are from WSGI, lowercase names
@@ -72,6 +74,9 @@ class Request:
         ]
         for f in fields:
             self.META[f] = self.environ.get(f)
+        for f in self.environ.keys():
+            if f.startswith("HTTP_"):
+                self.META[f] = self.environ[f]
         self.META["client_address"] = get_client_address(self.environ)
 
     def populate_cookies(self) -> None:
@@ -86,6 +91,6 @@ class Request:
 
     def is_form_request(self) -> bool:
         return (
-            "CONTENT_TYPE" in self.headers
-            and self.headers["CONTENT_TYPE"] == "application/x-www-form-urlencoded"
+            "content_type" in self.headers
+            and self.headers["content_type"] == "application/x-www-form-urlencoded"
         )

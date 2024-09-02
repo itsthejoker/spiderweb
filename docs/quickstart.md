@@ -80,7 +80,7 @@ This is an example view. There are a few things to note here:
 
 > See [declaring routes](routes.md) for more information.
 
-> [!TIP]
+> [!NOTE]
 > Every view must accept a `request` object as its first argument. This object contains all the information about the incoming request, including headers, cookies, and more.
 > 
 > There's more that we can pass in, but for now, we'll keep it simple.

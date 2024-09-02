@@ -8,13 +8,15 @@ This is `spiderweb`, a WSGI-compatible web framework that's just big enough to h
 
 - Learn a lot
 - Create an unholy blend of Django and Flask
-- Not look at any existing code. Go off of vibes alone and try to solve all the problems I could think of in my own way
+- Not look at any existing code[^1]. Go off of vibes alone and try to solve all the problems I could think of in my own way
 
 > [!WARNING]
 > This is a learning project. It should not be used for production without heavy auditing. It's not secure. It's not fast. It's not well-tested. It's not well-documented. It's not well-anything. It's a learning project.
 > 
 > That being said, it's fun and it works, so I'm counting that as a win.
 
+> [!TIP|style:flat]
+> To jump in with both feet, [head over to the quickstart!](quickstart.md)
 
 ## Design & Usage Decisions
 
@@ -90,6 +92,7 @@ Simply having these declared in a place that Django can find them is enough, and
 Spiderweb takes a middle ground approach: it allows you to declare framework-first arguments on the SpiderwebRouter object, and if you need to pass along other data to other parts of the system (like custom middleware), you can do so by passing in any keyword argument you'd like to the constructor.
 
 ```python
+from spiderweb import SpiderwebRouter
 from peewee import SqliteDatabase
 
 app = SpiderwebRouter(
@@ -112,7 +115,6 @@ Here's a non-exhaustive list of things this can do:
 - URLs with variables in them a lá Django
 - Full middleware implementation
 - Limit routes by HTTP verbs
-  - (Only GET and POST are implemented right now)
 - Custom error routes
 - Built-in dev server
 - Gunicorn support
@@ -120,13 +122,11 @@ Here's a non-exhaustive list of things this can do:
 - Static files support
 - Cookies (reading and setting)
 - Optional append_slash (with automatic redirects!)
-- ~~CSRF middleware implementation~~ (it's there, but it's crappy and unsafe. This might be beyond my skillset.)
+- CSRF middleware
+- CORS middleware
 - Optional POST data validation middleware with Pydantic
-- Database support (using Peewee, but you can use whatever you want as long as there's a Peewee driver for it)
 - Session middleware with built-in session store
+- Database support (using Peewee, but you can use whatever you want as long as there's a Peewee driver for it)
 - Tests (currently a little over 80% coverage)
 
-## What's left to build?
-
-- Fix CSRF middleware
-- Add more HTTP verbs
+[^1]: I mostly succeeded. The way that I'm approaching this is that I did my level best, then looked at (and copied) existing solutions where necessary. At the time of this writing, I did all of it solo except for the CORS middleware. [Read more about it here.](middleware/cors.md)

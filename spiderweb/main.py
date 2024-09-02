@@ -1,16 +1,22 @@
 import inspect
 import logging
 import pathlib
+import re
 import traceback
 import urllib.parse as urlparse
+from logging import Logger
 from threading import Thread
-from typing import Optional, Callable
+from typing import Optional, Callable, Sequence, LiteralString, Literal
 from wsgiref.simple_server import WSGIServer
 
 from jinja2 import BaseLoader, Environment, FileSystemLoader
 from peewee import Database, SqliteDatabase
 
 from spiderweb.middleware import MiddlewareMixin
+from spiderweb.constants import (
+    DEFAULT_CORS_ALLOW_METHODS,
+    DEFAULT_CORS_ALLOW_HEADERS,
+)
 from spiderweb.constants import (
     DATABASE_PROXY,
     DEFAULT_ENCODING,
@@ -30,7 +36,7 @@ from spiderweb.request import Request
 from spiderweb.response import HttpResponse, TemplateResponse, JsonResponse
 from spiderweb.routes import RoutesMixin
 from spiderweb.secrets import FernetMixin
-from spiderweb.utils import get_http_status_by_code
+from spiderweb.utils import get_http_status_by_code, convert_url_to_regex
 
 console_logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -42,21 +48,33 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         *,
         addr: str = None,
         port: int = None,
+        allowed_hosts: Sequence[str | re.Pattern] = None,
+        cors_allowed_origins: Sequence[str] = None,
+        cors_allowed_origins_regexes: Sequence[str] = None,
+        cors_allow_all_origins: bool = False,
+        cors_urls_regex: str | re.Pattern[str] = r"^.*$",
+        cors_allow_methods: Sequence[str] = None,
+        cors_allow_headers: Sequence[str] = None,
+        cors_expose_headers: Sequence[str] = None,
+        cors_preflight_max_age: int = 86400,
+        cors_allow_credentials: bool = False,
+        cors_allow_private_network: bool = False,
+        csrf_trusted_origins: Sequence[str] = None,
         db: Optional[Database] = None,
-        templates_dirs: list[str] = None,
-        middleware: list[str] = None,
+        templates_dirs: Sequence[str] = None,
+        middleware: Sequence[str] = None,
         append_slash: bool = False,
-        staticfiles_dirs: list[str] = None,
-        routes: list[tuple[str, Callable] | tuple[str, Callable, dict]] = None,
+        staticfiles_dirs: Sequence[str] = None,
+        routes: Sequence[tuple[str, Callable] | tuple[str, Callable, dict]] = None,
         error_routes: dict[int, Callable] = None,
         secret_key: str = None,
-        session_max_age=60 * 60 * 24 * 14,  # 2 weeks
-        session_cookie_name="swsession",
-        session_cookie_secure=False,  # should be true if serving over HTTPS
-        session_cookie_http_only=True,
-        session_cookie_same_site="lax",
-        session_cookie_path="/",
-        log=None,
+        session_max_age: int = 60 * 60 * 24 * 14,  # 2 weeks
+        session_cookie_name: str = "swsession",
+        session_cookie_secure: bool = False,  # should be true if serving over HTTPS
+        session_cookie_http_only: bool = True,
+        session_cookie_same_site: Literal["strict", "lax", "none"] = "lax",
+        session_cookie_path: str = "/",
+        log: Logger = None,
         **kwargs,
     ):
         self._routes = {}
@@ -69,9 +87,27 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.append_slash = append_slash
         self.templates_dirs = templates_dirs
         self.staticfiles_dirs = staticfiles_dirs
-        self._middleware: list[str] = middleware if middleware else []
+        self._middleware: list[str] = middleware or []
         self.middleware: list[Callable] = []
         self.secret_key = secret_key if secret_key else self.generate_key()
+        self._allowed_hosts = allowed_hosts or ["*"]
+        self.allowed_hosts = [convert_url_to_regex(i) for i in self._allowed_hosts]
+
+        self.cors_allowed_origins = cors_allowed_origins or []
+        self.cors_allowed_origins_regexes = cors_allowed_origins_regexes or []
+        self.cors_allow_all_origins = cors_allow_all_origins
+        self.cors_urls_regex = cors_urls_regex
+        self.cors_allow_methods = cors_allow_methods or DEFAULT_CORS_ALLOW_METHODS
+        self.cors_allow_headers = cors_allow_headers or DEFAULT_CORS_ALLOW_HEADERS
+        self.cors_expose_headers = cors_expose_headers or []
+        self.cors_preflight_max_age = cors_preflight_max_age
+        self.cors_allow_credentials = cors_allow_credentials
+        self.cors_allow_private_network = cors_allow_private_network
+
+        self._csrf_trusted_origins = csrf_trusted_origins or []
+        self.csrf_trusted_origins = [
+            convert_url_to_regex(i) for i in self._csrf_trusted_origins
+        ]
 
         self.extra_data = kwargs
 
@@ -134,12 +170,18 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         try:
             status = get_http_status_by_code(resp.status_code)
             cookies = []
-            if "Set-Cookie" in resp.headers:
-                cookies = resp.headers["Set-Cookie"]
-                del resp.headers["Set-Cookie"]
+            varies = []
+            if "set-cookie" in resp.headers:
+                cookies = resp.headers["set-cookie"]
+                del resp.headers["set-cookie"]
+            if "vary" in resp.headers:
+                varies = resp.headers["vary"]
+                del resp.headers["vary"]
             headers = list(resp.headers.items())
             for c in cookies:
                 headers.append(("Set-Cookie", c))
+            for v in varies:
+                headers.append(("Vary", v))
 
             start_response(status, headers)
 
@@ -180,7 +222,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
     ):
         try:
             status = get_http_status_by_code(500)
-            headers = [("Content-type", "text/plain; charset=utf-8")]
+            headers = [("Content-Type", "text/plain; charset=utf-8")]
 
             start_response(status, headers)
 
@@ -217,6 +259,15 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                 start_response, request, self.get_error_route(500)(request)
             )
 
+    def check_valid_host(self, request) -> bool:
+        host = request.headers.get("http_host")
+        if not host:
+            return False
+        for option in self.allowed_hosts:
+            if re.match(option, host):
+                return True
+        return False
+
     def __call__(self, environ, start_response, *args, **kwargs):
         """Entry point for WSGI apps."""
         request = self.get_request(environ)
@@ -232,6 +283,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         if request.method not in allowed_methods:
             # replace the potentially valid handler with the error route
             handler = self.get_error_route(405)
+
+        if not self.check_valid_host(request):
+            handler = self.get_error_route(403)
 
         if request.is_form_request():
             form_data = urlparse.parse_qs(request.content)

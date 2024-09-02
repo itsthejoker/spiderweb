@@ -1,4 +1,5 @@
 import json
+import re
 import secrets
 import string
 from http import HTTPStatus
@@ -63,3 +64,26 @@ def is_jsonable(data: str) -> bool:
         return True
     except (TypeError, OverflowError):
         return False
+
+
+class Headers(dict):
+    # special dict that forces lowercase for all keys
+    def __getitem__(self, key):
+        return super().__getitem__(key.lower())
+
+    def __setitem__(self, key, value):
+        return super().__setitem__(key.lower(), value)
+
+    def get(self, key, default=None):
+        return super().get(key.lower(), default)
+
+    def setdefault(self, key, default=None):
+        return super().setdefault(key.lower(), default)
+
+
+def convert_url_to_regex(url: str | re.Pattern) -> re.Pattern:
+    if isinstance(url, re.Pattern):
+        return url
+    url = url.replace(".", "\\.")
+    url = url.replace("*", ".+")
+    return re.compile(url)

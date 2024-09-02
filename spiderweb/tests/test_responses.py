@@ -71,7 +71,7 @@ def test_redirect_response():
         return RedirectResponse(location="/redirected")
 
     assert app(environ, start_response) == [b"None"]
-    assert start_response.get_headers()["Location"] == "/redirected"
+    assert start_response.get_headers()["location"] == "/redirected"
 
 
 def test_add_route_at_server_start():
@@ -91,7 +91,7 @@ def test_add_route_at_server_start():
     )
 
     assert app(environ, start_response) == [b"None"]
-    assert start_response.get_headers()["Location"] == "/redirected"
+    assert start_response.get_headers()["location"] == "/redirected"
 
 
 def test_redirect_on_append_slash():
@@ -104,7 +104,7 @@ def test_redirect_on_append_slash():
 
     environ["PATH_INFO"] = f"/hello"
     assert app(environ, start_response) == [b"None"]
-    assert start_response.get_headers()["Location"] == "/hello/"
+    assert start_response.get_headers()["location"] == "/hello/"
 
 
 @given(st.text())

@@ -10,6 +10,8 @@ from wsgiref.util import FileWrapper
 from spiderweb.constants import REGEX_COOKIE_NAME
 from spiderweb.exceptions import GeneralException
 from spiderweb.request import Request
+from spiderweb.utils import Headers
+
 
 mimetypes.init()
 
@@ -28,10 +30,11 @@ class HttpResponse:
         self.context = context if context else {}
         self.status_code = status_code
         self.headers = headers if headers else {}
-        if not self.headers.get("Content-Type"):
-            self.headers["Content-Type"] = "text/html; charset=utf-8"
-        self.headers["Server"] = "Spiderweb"
-        self.headers["Date"] = datetime.datetime.now(tz=datetime.UTC).strftime(
+        self.headers = Headers(**{k.lower(): v for k, v in self.headers.items()})
+        if not self.headers.get("content-type"):
+            self.headers["content-type"] = "text/html; charset=utf-8"
+        self.headers["server"] = "Spiderweb"
+        self.headers["date"] = datetime.datetime.now(tz=datetime.UTC).strftime(
             "%a, %d %b %Y %H:%M:%S GMT"
         )
 
@@ -89,10 +92,10 @@ class HttpResponse:
         attrs = [urllib.parse.quote_plus(value)] + attrs
         cookie = f"{name}={'; '.join(attrs)}"
 
-        if "Set-Cookie" in self.headers:
-            self.headers["Set-Cookie"].append(cookie)
+        if "set-cookie" in self.headers:
+            self.headers["set-cookie"].append(cookie)
         else:
-            self.headers["Set-Cookie"] = [cookie]
+            self.headers["set-cookie"] = [cookie]
 
     def render(self) -> str:
         return str(self.body)
@@ -103,7 +106,7 @@ class FileResponse(HttpResponse):
         super().__init__(*args, **kwargs)
         self.filename = filename
         self.content_type = mimetypes.guess_type(self.filename)[0]
-        self.headers["Content-Type"] = self.content_type
+        self.headers["content-type"] = self.content_type
 
     def render(self) -> list[bytes]:
         with open(self.filename, "rb") as f:
@@ -114,7 +117,7 @@ class FileResponse(HttpResponse):
 class JsonResponse(HttpResponse):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.headers["Content-Type"] = "application/json"
+        self.headers["content-type"] = "application/json"
 
     def render(self) -> str:
         return json.dumps(self.data)
@@ -124,7 +127,7 @@ class RedirectResponse(HttpResponse):
     def __init__(self, location: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.status_code = 302
-        self.headers["Location"] = location
+        self.headers["location"] = location
 
 
 class TemplateResponse(HttpResponse):

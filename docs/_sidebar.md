@@ -5,5 +5,6 @@
   - [overview](middleware/overview.md)
   - [session](middleware/sessions.md)
   - [csrf](middleware/csrf.md)
+  - [cors](middleware/cors.md)
   - [pydantic](middleware/pydantic.md)
   - [writing your own](middleware/custom_middleware.md)
