@@ -5,12 +5,10 @@
     src="https://img.shields.io/pypi/v/spiderweb-framework.svg?style=for-the-badge"
     alt="PyPI release version for Spiderweb"
     />
-    <a href="https://gitmoji.dev">
-      <img
+    <img
         src="https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=for-the-badge"
         alt="Gitmoji"
-      />
-    </a>
+    />
     <img 
         src="https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge"
         alt="Code style: Black"
