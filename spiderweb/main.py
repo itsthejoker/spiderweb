@@ -45,6 +45,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         allowed_hosts=None,
         cors_allowed_origins=None,
         cors_allow_all_origins=False,
+        csrf_trusted_origins: Sequence[str] = None,
         db: Optional[Database] = None,
         templates_dirs: list[str] = None,
         middleware: list[str] = None,
@@ -75,10 +76,15 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self._middleware: list[str] = middleware or []
         self.middleware: list[Callable] = []
         self.secret_key = secret_key if secret_key else self.generate_key()
-        self.allowed_hosts = allowed_hosts or ["*"]
+        self._allowed_hosts = allowed_hosts or ["*"]
+        self.allowed_hosts = [convert_url_to_regex(i) for i in self._allowed_hosts]
 
         self.cors_allowed_origins = cors_allowed_origins or []
         self.cors_allow_all_origins = cors_allow_all_origins
+        self._csrf_trusted_origins = csrf_trusted_origins or []
+        self.csrf_trusted_origins = [
+            convert_url_to_regex(i) for i in self._csrf_trusted_origins
+        ]
 
         self.extra_data = kwargs
 
@@ -153,7 +159,6 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                 headers.append(("Set-Cookie", c))
             for v in varies:
                 headers.append(("Vary", v))
-
 
             start_response(status, headers)
 
@@ -231,6 +236,15 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                 start_response, request, self.get_error_route(500)(request)
             )
 
+    def check_valid_host(self, request) -> bool:
+        host = request.headers.get("http_host")
+        if not host:
+            return False
+        for option in self.allowed_hosts:
+            if re.match(option, host):
+                return True
+        return False
+
     def __call__(self, environ, start_response, *args, **kwargs):
         """Entry point for WSGI apps."""
         request = self.get_request(environ)
@@ -246,6 +260,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         if request.method not in allowed_methods:
             # replace the potentially valid handler with the error route
             handler = self.get_error_route(405)
+
+        if not self.check_valid_host(request):
+            handler = self.get_error_route(403)
 
         if request.is_form_request():
             form_data = urlparse.parse_qs(request.content)
