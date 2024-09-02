@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spiderweb-framework"
-version = "0.12.0"
+version = "1.0.0"
 description = "A small web framework, just big enough for a spider."
 authors = ["Joe Kaufeld <opensource@joekaufeld.com>"]
 readme = "README.md"
