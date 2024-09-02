@@ -41,7 +41,7 @@ if __name__ == "__main__":
     app.start()
 ```
 
-## [View the docs here!](https://itsthejoker/github.io/spiderweb)
+## [View the docs here!](https://itsthejoker.github.io/spiderweb/#/)
 
 My goal with this framework was to do three things:
 
