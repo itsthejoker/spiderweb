@@ -13,6 +13,9 @@ class SpiderwebModel(Model):
 
     @classmethod
     def check_for_needed_migration(cls):
+        if hasattr(cls._meta, "skip_migration_check"):
+            return
+
         current_model_fields: dict[str, Field] = cls._meta.fields
         current_db_fields = {
             c.name: {
