@@ -69,10 +69,4 @@ And, honestly, I think I got there. Here's a non-exhaustive list of things this 
 - Optional POST data validation middleware with Pydantic
 - Session middleware with built-in session store
 - Database support (using Peewee, but you can use whatever you want as long as there's a Peewee driver for it)
-- Tests (currently a little over 80% coverage)
-
-Once tests are in and proven to work, then I'll release as version 1.0.
-
-- currently missing tests for cors middleware
-
-If you're reading this on GitHub, this repository is a public mirror of https://git.joekaufeld.com/jkaufeld/spiderweb.
+- Tests (currently roughly 89% coverage)
