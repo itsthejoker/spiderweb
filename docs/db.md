@@ -1,4 +1,4 @@
-# db
+# databases
 
 It's hard to find a server-side app without a database these days, and for good reason: there are a lot of things to keep track of. Spiderweb does its best to remain database-agnostic, though it does utilize `peewee` internally to handle its own data (such as session data). This means that you have three options for how to handle databases in your app.
 
