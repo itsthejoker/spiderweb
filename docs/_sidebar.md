@@ -1,6 +1,7 @@
 - [home](README.md)
 - [quickstart](quickstart.md)
 - [responses](responses.md)
+- [routes](routes.md)
 - middleware
   - [overview](middleware/overview.md)
   - [session](middleware/sessions.md)
@@ -8,3 +9,4 @@
   - [cors](middleware/cors.md)
   - [pydantic](middleware/pydantic.md)
   - [writing your own](middleware/custom_middleware.md)
+- [databases](db.md)
