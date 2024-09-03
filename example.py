@@ -34,6 +34,11 @@ def index(request):
     return TemplateResponse(request, "test.html", context={"value": "TEST!"})
 
 
+@app.route("/example/<int:id>/<str:name>")
+def example(request, id, name):
+    return HttpResponse(body=f"Example with id {id} and name {name}")
+
+
 @app.route("/redirect")
 def redirect(request):
     return RedirectResponse("/")
