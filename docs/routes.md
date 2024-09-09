@@ -150,3 +150,30 @@ app = SpiderwebRouter(
 )
 ```
 As with the `routes` argument, as many routes as you'd like can be registered here without issue.
+
+## Finding Routes Again
+
+> New in 1.1.0
+
+If you need to find the path that's associated with a route (for example, for a RedirectResponse), you can use the `app.reverse()` function to find it. This function takes the name of the view and returns the path that it's associated with. For example:
+
+```python
+@app.route("/example", name="example")
+def example(request):
+    return HttpResponse(body="Example")
+
+path = app.reverse("example")
+print(path)  # -> "/example"
+```
+
+If you have a route that takes arguments, you can pass them in as keyword arguments:
+
+```python
+@app.route("/example/<int:id>", name="example")
+def example(request, id):
+    return HttpResponse(body=f"Example with id {id}")
+
+path = app.reverse("example", id=3)
+print(path)  # -> "/example/3"
+```
+The arguments you pass in must match what the path expects, or you'll get a `SpiderwebException`. If there's no route with that name, you'll get a `ReverseNotFound` exception instead.

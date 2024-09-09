@@ -4,7 +4,13 @@ from typing import Callable, Any, Optional, Sequence
 from spiderweb.constants import DEFAULT_ALLOWED_METHODS
 from spiderweb.converters import *  # noqa: F403
 from spiderweb.default_views import *  # noqa: F403
-from spiderweb.exceptions import NotFound, ConfigError, ParseError
+from spiderweb.exceptions import (
+    NotFound,
+    ConfigError,
+    ParseError,
+    SpiderwebException,
+    ReverseNotFound,
+)
 from spiderweb.response import RedirectResponse
 
 
@@ -35,7 +41,7 @@ class RoutesMixin:
     error_routes: dict[int, Callable]
     append_slash: bool
 
-    def route(self, path, allowed_methods=None) -> Callable:
+    def route(self, path, allowed_methods=None, name=None) -> Callable:
         """
         Decorator for adding a route to a view.
 
@@ -49,11 +55,12 @@ class RoutesMixin:
 
         :param path: str
         :param allowed_methods: list[str]
+        :param name: str
         :return: Callable
         """
 
         def outer(func):
-            self.add_route(path, func, allowed_methods)
+            self.add_route(path, func, allowed_methods, name)
             return func
 
         return outer
@@ -115,7 +122,11 @@ class RoutesMixin:
         return re.compile(rf"^{'/'.join(parts)}$")
 
     def add_route(
-        self, path: str, method: Callable, allowed_methods: None | list[str] = None
+        self,
+        path: str,
+        method: Callable,
+        allowed_methods: None | list[str] = None,
+        name: str = None,
     ):
         """Add a route to the server."""
         allowed_methods = (
@@ -124,24 +135,27 @@ class RoutesMixin:
             or DEFAULT_ALLOWED_METHODS
         )
 
+        reverse_path = re.sub(r"<(.*?):(.*?)>", r"{\2}", path) if "<" in path else path
+
+        def get_packet(func):
+            return {
+                "func": func,
+                "allowed_methods": allowed_methods,
+                "name": name,
+                "reverse": reverse_path,
+            }
+
         if self.append_slash and not path.endswith("/"):
             updated_path = path + "/"
             self.check_for_route_duplicates(updated_path)
             self.check_for_route_duplicates(path)
-            self._routes[self.convert_path(path)] = {
-                "func": DummyRedirectRoute(updated_path),
-                "allowed_methods": allowed_methods,
-            }
-            self._routes[self.convert_path(updated_path)] = {
-                "func": method,
-                "allowed_methods": allowed_methods,
-            }
+            self._routes[self.convert_path(path)] = get_packet(
+                DummyRedirectRoute(updated_path)
+            )
+            self._routes[self.convert_path(updated_path)] = get_packet(method)
         else:
             self.check_for_route_duplicates(path)
-            self._routes[self.convert_path(path)] = {
-                "func": method,
-                "allowed_methods": allowed_methods,
-            }
+            self._routes[self.convert_path(path)] = get_packet(method)
 
     def add_routes(self):
         for line in self.routes:
@@ -156,3 +170,27 @@ class RoutesMixin:
     def add_error_routes(self):
         for code, func in self.error_routes.items():
             self.add_error_route(int(code), func)
+
+    def reverse(
+        self, view_name: str, data: dict[str, Any] = None, query: dict[str, Any] = None
+    ) -> str:
+        # take in a view name and return the path
+        for option in self._routes.values():
+            if option["name"] == view_name:
+                path = option["reverse"]
+                if args := re.findall(r"{(.*?)}", path):
+                    if not data:
+                        raise SpiderwebException(
+                            f"Missing arguments for reverse: {args}"
+                        )
+                    for arg in args:
+                        if arg not in data:
+                            raise SpiderwebException(
+                                f"Missing argument '{arg}' for reverse."
+                            )
+                        path = path.replace(f"{{{arg}}}", str(data[arg]))
+
+                if query:
+                    path += "?" + "&".join([f"{k}={str(v)}" for k, v in query.items()])
+                return path
+        raise ReverseNotFound(f"View '{view_name}' not found.")

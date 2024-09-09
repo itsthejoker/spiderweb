@@ -90,3 +90,7 @@ class NoResponseError(SpiderwebException):
 
 class StartupErrors(ExceptionGroup):
     pass
+
+
+class ReverseNotFound(SpiderwebException):
+    pass

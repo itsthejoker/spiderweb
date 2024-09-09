@@ -1,8 +1,13 @@
 import pytest
 
-from spiderweb import SpiderwebRouter, ConfigError
+from spiderweb import ConfigError
 from spiderweb.constants import DEFAULT_ENCODING
-from spiderweb.exceptions import NoResponseError, SpiderwebNetworkException
+from spiderweb.exceptions import (
+    NoResponseError,
+    SpiderwebNetworkException,
+    SpiderwebException,
+    ReverseNotFound,
+)
 from spiderweb.response import (
     HttpResponse,
     JsonResponse,
@@ -176,3 +181,62 @@ def test_missing_view_with_custom_404_alt():
     app, environ, start_response = setup(error_routes={404: custom_404})
 
     assert app(environ, start_response) == [b"Custom 404 2"]
+
+
+def test_getting_nonexistent_error_view():
+    app, environ, start_response = setup()
+
+    assert app.get_error_route(10101).__name__ == "http500"
+
+
+def test_view_gets_name():
+    app, environ, start_response = setup()
+
+    @app.route("/", name="asdfasdf")
+    def index(request): ...
+
+    assert [v for k, v in app._routes.items()][0]["name"] == "asdfasdf"
+
+
+def test_view_can_be_reversed():
+    app, environ, start_response = setup()
+
+    @app.route("/", name="asdfasdf")
+    def index(request): ...
+
+    @app.route("/<int:hi>", name="qwer")
+    def index(request, hi): ...
+
+    assert app.reverse("asdfasdf") == "/"
+    assert app.reverse("asdfasdf", {"id": 1}) == "/"
+    assert app.reverse("asdfasdf", {"id": 1}, query={"key": "value"}) == "/?key=value"
+
+    assert app.reverse("qwer", {"hi": 1}) == "/1"
+    assert app.reverse("qwer", {"hi": 1}, query={"key": "value"}) == "/1?key=value"
+
+
+def test_reversed_views_explode_when_missing_all_args():
+    app, environ, start_response = setup()
+
+    @app.route("/<int:hi>", name="qwer")
+    def index(request, hi): ...
+
+    with pytest.raises(SpiderwebException):
+        app.reverse("qwer")
+
+
+def test_reversed_views_explode_when_missing_some_args():
+    app, environ, start_response = setup()
+
+    @app.route("/<int:hi>/<str:bye>", name="qwer")
+    def index(request, hi, bye): ...
+
+    with pytest.raises(SpiderwebException):
+        app.reverse("qwer", {"hi": 1})
+
+
+def test_reverse_nonexistent_view():
+    app, environ, start_response = setup()
+
+    with pytest.raises(ReverseNotFound):
+        app.reverse("qwer")

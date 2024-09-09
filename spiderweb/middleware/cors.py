@@ -101,7 +101,10 @@ class CorsMiddleware(SpiderwebMiddleware):
                 )
         if (
             self.server.cors_allow_private_network
-            and request.headers.get(ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK.replace("-", "_")) == "true"
+            and request.headers.get(
+                ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK.replace("-", "_")
+            )
+            == "true"
         ):
             response.headers[ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK] = "true"
 
