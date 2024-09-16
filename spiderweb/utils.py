@@ -1,3 +1,4 @@
+import importlib
 import json
 import re
 import secrets
@@ -13,12 +14,10 @@ VALID_CHARS = string.ascii_letters + string.digits
 
 
 def import_by_string(name):
-    # https://stackoverflow.com/a/547867
-    components = name.split(".")
-    mod = __import__(components[0])
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
-    return mod
+    mod_name, klass_name = name.rsplit(".", 1)
+    module = importlib.import_module(mod_name)
+    klass = getattr(module, klass_name)
+    return klass
 
 
 def is_safe_path(path: str) -> bool:

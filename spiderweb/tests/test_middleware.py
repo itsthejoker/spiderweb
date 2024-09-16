@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from peewee import SqliteDatabase
 
-from spiderweb import SpiderwebRouter, HttpResponse, StartupErrors
+from spiderweb import SpiderwebRouter, HttpResponse, StartupErrors, ConfigError
 from spiderweb.constants import DEFAULT_ENCODING
 from spiderweb.middleware.cors import (
     ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -92,6 +92,13 @@ def test_exploding_middleware():
     assert app(environ, start_response) == [bytes(str(0), DEFAULT_ENCODING)]
     # make sure it kicked out the middleware and isn't just ignoring it
     assert len(app.middleware) == 0
+
+
+def test_invalid_middleware():
+    with pytest.raises(ConfigError) as e:
+        SpiderwebRouter(middleware=["nonexistent.middleware"])
+
+    assert e.value.args[0] == "Middleware 'nonexistent.middleware' not found."
 
 
 def test_csrf_middleware_without_session_middleware():
