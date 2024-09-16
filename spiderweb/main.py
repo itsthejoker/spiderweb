@@ -187,7 +187,14 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
 
             start_response(status, headers)
 
-            rendered_output = resp.render()
+            try:
+                rendered_output = resp.render()
+            except Exception as e:
+                self.log.error("Fatal error!")
+                self.log.error(e)
+                self.log.error(traceback.format_exc())
+                return [f"Internal Server Error: {e}".encode(DEFAULT_ENCODING)]
+
             if not isinstance(rendered_output, list):
                 rendered_output = [rendered_output]
             encoded_resp = [
