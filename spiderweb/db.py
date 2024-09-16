@@ -1,4 +1,4 @@
-from peewee import Model, Field, SchemaManager, DatabaseProxy
+from peewee import Model, Field, SchemaManager
 
 from spiderweb.constants import DATABASE_PROXY
 
@@ -67,7 +67,7 @@ class SpiderwebModel(Model):
                     )
                 )
             if field_obj.__class__.__name__ == "BooleanField":
-                if field_obj.default == False and db_version["default"] not in (
+                if field_obj.default is False and db_version["default"] not in (
                     False,
                     None,
                     0,
@@ -77,7 +77,7 @@ class SpiderwebModel(Model):
                             f"BooleanField `{field_name}` has changed the default value."
                         )
                     )
-                elif field_obj.default == True and db_version["default"] not in (
+                elif field_obj.default is True and db_version["default"] not in (
                     True,
                     1,
                 ):

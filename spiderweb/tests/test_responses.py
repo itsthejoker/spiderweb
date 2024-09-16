@@ -104,7 +104,7 @@ def test_redirect_on_append_slash():
     def index(request):
         pass
 
-    environ["PATH_INFO"] = f"/hello"
+    environ["PATH_INFO"] = "/hello"
     assert app(environ, start_response) == [b"None"]
     assert start_response.get_headers()["location"] == "/hello/"
 
@@ -205,7 +205,7 @@ def test_view_can_be_reversed():
     def index(request): ...
 
     @app.route("/<int:hi>", name="qwer")
-    def index(request, hi): ...
+    def index2(request, hi): ...
 
     assert app.reverse("asdfasdf") == "/"
     assert app.reverse("asdfasdf", {"id": 1}) == "/"

@@ -171,7 +171,7 @@ def test_csrf_middleware():
     assert "bob" in resp2
 
     # test that it raises a CSRF error on wrong token
-    formdata = f"name=bob&csrf_token=badtoken"
+    formdata = "name=bob&csrf_token=badtoken"
     b_handle = BytesIO()
     b_handle.write(formdata.encode(DEFAULT_ENCODING))
     b_handle.seek(0)

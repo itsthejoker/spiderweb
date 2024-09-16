@@ -1,5 +1,5 @@
 import re
-from typing import Callable, Any, Optional, Sequence
+from typing import Callable, Any, Sequence
 
 from spiderweb.constants import DEFAULT_ALLOWED_METHODS
 from spiderweb.converters import *  # noqa: F403

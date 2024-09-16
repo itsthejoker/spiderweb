@@ -1,17 +1,12 @@
 import pytest
 
-from spiderweb import SpiderwebRouter
 from spiderweb.constants import DEFAULT_ENCODING
 from spiderweb.exceptions import ParseError, ConfigError
 from spiderweb.response import (
     HttpResponse,
-    JsonResponse,
-    TemplateResponse,
-    RedirectResponse,
 )
 from hypothesis import given, strategies as st, assume
 
-from peewee import SqliteDatabase
 
 from spiderweb.tests.helpers import setup
 

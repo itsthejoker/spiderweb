@@ -37,7 +37,7 @@ def index(request):
 
 
 @app.route("/example/<int:id>/<str:name>")
-def example(request, id, name):
+def example_with_multiple_values(request, id, name):
     return HttpResponse(body=f"Example with id {id} and name {name}")
 
 

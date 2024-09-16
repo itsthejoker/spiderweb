@@ -23,7 +23,13 @@ from spiderweb.constants import (
     DEFAULT_ALLOWED_METHODS,
 )
 from spiderweb.db import SpiderwebModel
-from spiderweb.default_views import *  # noqa: F403
+from spiderweb.default_views import (
+    http403,  # noqa: F401
+    http404,  # noqa: F401
+    http405,  # noqa: F401
+    http500,  # noqa: F401
+    send_file,
+)
 from spiderweb.exceptions import (
     ConfigError,
     NotFound,
