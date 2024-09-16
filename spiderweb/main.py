@@ -178,7 +178,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                     raise ConfigError
             if self.debug:
                 # We don't need a log message here because this is the expected behavior
-                self.add_route(rf"/{self.static_url}/<path:filename>", send_file)  # noqa: F405
+                self.add_route(
+                    rf"/{self.static_url}/<path:filename>", send_file
+                )  # noqa: F405
             else:
                 self.log.warning(
                     "`staticfiles_dirs` is set, but `debug` is set to FALSE. Static"
