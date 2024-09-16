@@ -20,3 +20,11 @@ class FloatConverter:
 
     def to_python(self, value):
         return float(value)
+
+
+class PathConverter:
+    regex = r".+"
+    name = "path"
+
+    def to_python(self, value):
+        return str(value)

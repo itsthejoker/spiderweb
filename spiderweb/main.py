@@ -6,10 +6,10 @@ import traceback
 import urllib.parse as urlparse
 from logging import Logger
 from threading import Thread
-from typing import Optional, Callable, Sequence, LiteralString, Literal
+from typing import Optional, Callable, Sequence, Literal
 from wsgiref.simple_server import WSGIServer
 
-from jinja2 import BaseLoader, Environment, FileSystemLoader
+from jinja2 import BaseLoader, FileSystemLoader
 from peewee import Database, SqliteDatabase
 
 from spiderweb.middleware import MiddlewareMixin
@@ -31,6 +31,7 @@ from spiderweb.exceptions import (
     NoResponseError,
     SpiderwebNetworkException,
 )
+from spiderweb.jinja_core import SpiderwebEnvironment
 from spiderweb.local_server import LocalServerMixin
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse, TemplateResponse, JsonResponse
@@ -61,10 +62,12 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         cors_allow_private_network: bool = False,
         csrf_trusted_origins: Sequence[str] = None,
         db: Optional[Database] = None,
+        debug: bool = False,
         templates_dirs: Sequence[str] = None,
         middleware: Sequence[str] = None,
         append_slash: bool = False,
         staticfiles_dirs: Sequence[str] = None,
+        static_url: str = "static",
         routes: Sequence[tuple[str, Callable] | tuple[str, Callable, dict]] = None,
         error_routes: dict[int, Callable] = None,
         secret_key: str = None,
@@ -87,6 +90,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.append_slash = append_slash
         self.templates_dirs = templates_dirs
         self.staticfiles_dirs = staticfiles_dirs
+        self.static_url = static_url
         self._middleware: list[str] = middleware or []
         self.middleware: list[Callable] = []
         self.secret_key = secret_key if secret_key else self.generate_key()
@@ -108,6 +112,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.csrf_trusted_origins = [
             convert_url_to_regex(i) for i in self._csrf_trusted_origins
         ]
+
+        self.debug = debug
 
         self.extra_data = kwargs
 
@@ -144,13 +150,23 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         if self.error_routes:
             self.add_error_routes()
 
+        template_env_args = {
+            "server": self,
+            "extensions": [
+                "spiderweb.jinja_extensions.StaticFilesExtension",
+            ],
+        }
+
         if self.templates_dirs:
-            self.template_loader = Environment(
-                loader=FileSystemLoader(self.templates_dirs)
+            self.template_loader = SpiderwebEnvironment(
+                loader=FileSystemLoader(self.templates_dirs),
+                **template_env_args,
             )
         else:
             self.template_loader = None
-        self.string_loader = Environment(loader=BaseLoader())
+        self.string_loader = SpiderwebEnvironment(
+            loader=BaseLoader(), **template_env_args
+        )
 
         if self.staticfiles_dirs:
             for static_dir in self.staticfiles_dirs:
@@ -160,7 +176,14 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                         f"Static files directory '{str(static_dir)}' does not exist."
                     )
                     raise ConfigError
-            self.add_route(r"/static/<str:filename>", send_file)  # noqa: F405
+            if self.debug:
+                # We don't need a log message here because this is the expected behavior
+                self.add_route(rf"/{self.static_url}/<path:filename>", send_file)  # noqa: F405
+            else:
+                self.log.warning(
+                    "`staticfiles_dirs` is set, but `debug` is set to FALSE. Static"
+                    " files will not be served."
+                )
 
         # finally, run the startup checks to verify everything is correct and happy.
         self.log.info("Run startup checks...")
