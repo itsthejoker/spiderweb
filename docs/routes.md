@@ -103,6 +103,7 @@ You can pass integers, strings, and positive floats with the following types:
 - str
 - int
 - float
+- path (see below)
 
 A URL can also have multiple capture groups:
 
@@ -112,6 +113,15 @@ def example(request, id, name):
     return HttpResponse(body=f"Example with id {id} and name {name}")
 ```
 In this case, a valid URL might be `/example/3/james`, and both sections will be split out and passed to the view.
+
+The `path` option is special; this is used when you want to capture everything after the slash. For example:
+
+```python
+@app.route("/example/<path:rest>")
+def example(request, rest):
+    return HttpResponse(body=f"Example with {rest}")
+```
+It will come in as a string, but it will include all the slashes and other characters that are in the URL.
 
 ## Adding Error Views
 
