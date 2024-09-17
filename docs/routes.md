@@ -116,6 +116,8 @@ In this case, a valid URL might be `/example/3/james`, and both sections will be
 
 The `path` option is special; this is used when you want to capture everything after the slash. For example:
 
+> New in 1.2.0!
+
 ```python
 @app.route("/example/<path:rest>")
 def example(request, rest):

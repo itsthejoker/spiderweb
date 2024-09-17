@@ -39,11 +39,15 @@ This is the URL that Spiderweb will use to serve static files. In the example ab
 
 ## `debug`
 
+> New in 1.2.0!
+
 > default: `False`
 
 This is a boolean that tells Spiderweb whether it is running in debug mode or not. Among other things, it's used in serving static files. If this value is not included, it defaults to False, and Spiderweb will not serve static files. For local development, you will want to set it to True.
 
 ## Linking to static files
+
+> New in 1.2.0!
 
 There is a tag in the templates that you can use to link to static files. This tag will automatically generate the correct URL for the file based on the `static_url` attribute you set in the router.
 
