@@ -29,8 +29,10 @@ class HttpResponse:
         self.data = data
         self.context = context if context else {}
         self.status_code = status_code
-        self.headers = headers if headers else {}
-        self.headers = Headers(**{k.lower(): v for k, v in self.headers.items()})
+        self._headers = headers if headers else {}
+        self.headers = Headers()
+        for k, v in self._headers.items():
+            self.headers[k.lower()] = v
         if not self.headers.get("content-type"):
             self.headers["content-type"] = "text/html; charset=utf-8"
         self.headers["server"] = "Spiderweb"
