@@ -62,7 +62,7 @@ addopts = ["--maxfail=2", "-rf"]
 
 [tool.coverage.run]
 branch = true
-omit = ["conftest.py"]
+omit = ["conftest.py", "spiderweb/tests/*"]
 
 [tool.coverage.report]
 # Regexes for lines to exclude from consideration
@@ -81,6 +81,8 @@ exclude_also = [
 
     # Don't complain about abstract methods, they aren't run:
     "@(abc\\.)?abstractmethod",
-    ]
+    # Type checking lines are never run:
+    "if TYPE_CHECKING:",
+]
 
 ignore_errors = true

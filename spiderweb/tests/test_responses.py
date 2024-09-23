@@ -7,12 +7,14 @@ from spiderweb.exceptions import (
     SpiderwebNetworkException,
     SpiderwebException,
     ReverseNotFound,
+    GeneralException,
 )
 from spiderweb.response import (
     HttpResponse,
     JsonResponse,
     TemplateResponse,
     RedirectResponse,
+    FileResponse,
 )
 from hypothesis import given, strategies as st
 
@@ -240,3 +242,94 @@ def test_reverse_nonexistent_view():
 
     with pytest.raises(ReverseNotFound):
         app.reverse("qwer")
+
+
+def test_setting_content_type_header():
+    app, environ, start_response = setup()
+
+    @app.route("/")
+    def index(request):
+        resp = HttpResponse("Hello, World!", headers={"content-type": "text/html"})
+        return resp
+
+    response = app(environ, start_response)
+    assert response == [b"Hello, World!"]
+    assert start_response.get_headers()["content-type"] == "text/html"
+
+
+def test_httpresponse_str_returns_body():
+    resp = HttpResponse("Hello, World!")
+    assert str(resp) == "Hello, World!"
+
+
+def test_template_response_with_no_templates_raises_errors():
+    app, environ, start_response = setup()
+
+    @app.route("/")
+    def index(request):
+        return TemplateResponse(request, "")
+
+    with pytest.raises(GeneralException) as exc:
+        app(environ, start_response)
+
+    assert (
+        str(exc.value) == "GeneralException() - TemplateResponse requires a template."
+    )
+
+
+def test_template_response_with_no_template_dirs():
+
+    template = TemplateResponse("", "test.html")
+
+    with pytest.raises(GeneralException) as exc:
+        template.render()
+
+    assert str(exc.value) == (
+        "GeneralException() - TemplateResponse has no loader. Did you set templates_dirs?"
+    )
+
+
+def test_file_response():
+    resp = FileResponse("spiderweb/tests/staticfiles/file_for_testing_fileresponse.txt")
+    assert resp.headers["content-type"] == "text/plain"
+    assert resp.render() == [b"hi"]
+
+
+def test_requesting_static_file():
+    app, environ, start_response = setup(
+        staticfiles_dirs=["spiderweb/tests/staticfiles"], debug=True
+    )
+
+    environ["PATH_INFO"] = "/static/file_for_testing_fileresponse.txt"
+
+    assert app(environ, start_response) == [b"hi"]
+
+
+def test_requesting_nonexistent_static_file():
+    app, environ, start_response = setup(
+        staticfiles_dirs=["spiderweb/tests/staticfiles"], debug=True
+    )
+
+    environ["PATH_INFO"] = "/static/does_not_exist.txt"
+
+    assert app(environ, start_response) == [
+        b"Something went wrong.\n\n"
+        b"Code: 404\n\n"
+        b"Msg: Not Found\n\n"
+        b"Desc: The requested resource could not be found"
+    ]
+
+
+def test_static_file_with_unsafe_path():
+    app, environ, start_response = setup(
+        staticfiles_dirs=["spiderweb/tests/staticfiles"], debug=True
+    )
+
+    environ["PATH_INFO"] = "/static/../__init__.py"
+
+    assert app(environ, start_response) == [
+        b"Something went wrong.\n\n"
+        b"Code: 404\n\n"
+        b"Msg: Not Found\n\n"
+        b"Desc: The requested resource could not be found"
+    ]

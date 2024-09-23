@@ -175,6 +175,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         )
 
         if self.staticfiles_dirs:
+            if not isinstance(self.staticfiles_dirs, list):
+                self.staticfiles_dirs = [self.staticfiles_dirs]
             for static_dir in self.staticfiles_dirs:
                 static_dir = pathlib.Path(static_dir)
                 if not pathlib.Path(self.BASE_DIR / static_dir).exists():
