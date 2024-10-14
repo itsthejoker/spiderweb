@@ -1,21 +1,28 @@
 import json
+from typing import Any, Optional, TYPE_CHECKING, Callable
 from urllib.parse import urlparse
 
 from spiderweb.constants import DEFAULT_ENCODING
 from spiderweb.utils import get_client_address, Headers
 
+if TYPE_CHECKING:
+    from spiderweb import SpiderwebRouter
+
 
 class Request:
     def __init__(
         self,
-        environ=None,
-        content=None,
-        headers=None,
-        path=None,
-        server=None,
-        handler=None,
+        environ: Optional[dict[str, Any]]=None,
+        content: Optional[str]=None,
+        headers: dict[str, str]=None,
+        path: str=None,
+        server: "SpiderwebRouter"=None,
+        handler: Callable=None,
+        scope: Optional[dict[str, Any]]=None,
     ):
-        self.environ = environ
+        self._data = environ or scope
+
+        self.environ = environ or {}
         self.content: str = content
         self.method: str = environ["REQUEST_METHOD"]
         self.headers: dict[str, str] = headers if headers else {}

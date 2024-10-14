@@ -43,6 +43,7 @@ black = "^24.8.0"
 gunicorn = "^23.0.0"
 hypothesis = "^6.111.2"
 coverage = "^7.6.1"
+uvicorn = "^0.31.1"
 
 [build-system]
 requires = ["poetry-core"]

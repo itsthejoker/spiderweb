@@ -351,3 +351,25 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                 raise SpiderwebNetworkException(404)
         except SpiderwebNetworkException as e:
             return self.send_error_response(start_response, request, e)
+
+    def asgi(self, scope):
+        async def inner(receive, send):
+            if scope['path'] == '/':
+                await send({
+                    'type': 'http.response.start',
+                    'status': 200,
+                    'headers': [
+                        [b'content-type', b'text/html']
+                    ]
+                })
+                await send({
+                    'type': 'http.response.body',
+                    'body': bytes(f'<h1>Index page</h1>\n\n<p>{scope}</p><p>{receive}</p><p>{send}</p>', DEFAULT_ENCODING)
+
+                })
+            elif scope['path'] == '/hello':
+                ...
+            else:
+                ...
+
+        return inner
