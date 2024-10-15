@@ -26,7 +26,7 @@ class TestMiddleware(SpiderwebMiddleware):
 
 Middleware is run twice: once for the incoming request and once for the outgoing response. You only need to include whichever function is required for the functionality you need.
 
-## process_request(self, request):
+## process_request(self, request: Request) -> Optional[HttpResponse]:
 
 `process_request` is called before the view is reached in the execution order. You will receive the assembled Request object, and any middleware declared above this one will have already run. Because the request is the single instantiation of a class, you can modify it in-place without returning anything and your changes will stick. 
 
@@ -45,15 +45,66 @@ class JohnMiddleware(SpiderwebMiddleware):
 
 In this case, if the user John tries to access any route that starts with "/admin", he'll immediately get denied and the view will never be called. If the request does not have a user attached to it (or the user is not John), then the middleware will return None and Spiderweb will continue processing.
 
-## process_response(self, request, response):
+## process_response(self, request: Request, response: HttpResponse) -> None:
 
 This function is called after the view has run and returned a response. You will receive the request object and the response object; like with the request object, the response is also a single instantiation of a class, so any changes you make will stick automatically.
 
 Unlike `process_request`, returning a value here doesn't change anything. We're already processing a request, and there are opportunities to turn away requests / change the response at both the `process_request` layer and the view layer, so Spiderweb assumes that whatever it is working on here is what you mean to return to the user. The response object that you receive in the middleware is still prerendered, so any changes you make to it will take effect after it finishes the middleware and renders the response.
 
-## on_error(self, request, triggered_exception):
+## on_error(self, request: Request, triggered_exception: Exception) -> Optional[HttpResponse]:
 
 This is a helper function that is available for you to override; it's not often used by middleware, but there are some ([like the pydantic middleware](pydantic.md)) that call `on_error` when there is a validation failure.
+
+## post_process(self, request: Request, rendered_response: str) -> str:
+
+> New in 1.3.0!
+
+After `process_request` and `process_response` run, the response is rendered out into the raw text that is going to be sent to the client. Right before that happens, `post_process` is called on each middleware in the same order as `process_response` (so the closer something is to the beginning of the middleware list, the more important it is).
+
+Note that this function *must* return something. Each invocation of `post_process` overwrites the entire output of the response, so make sure to return everything that you want to send. For example, here's a middleware that ~~breaks~~ adjusts the capitalization of the response and also demonstrates passing variables into the middleware:
+
+```python
+import random
+
+from spiderweb.request import Request
+from spiderweb.middleware import SpiderwebMiddleware
+from spiderweb.exceptions import ConfigError
+
+
+class CaseTransformMiddleware(SpiderwebMiddleware):
+    # this breaks everything, but it's hilarious so it's worth it.
+    # Blame Sam.
+    def post_process(self, request: Request, rendered_response: str) -> str:
+        valid_options = ["spongebob", "random"]
+        # grab the value from the extra data passed into the server object
+        # during instantiation
+        method = self.server.extra_data.get("case_transform_middleware_type", "spongebob")
+        if method not in valid_options:
+            raise ConfigError(
+                f"Invalid method '{method}' for CaseTransformMiddleware."
+                f" Valid options are {', '.join(valid_options)}"
+            )
+
+        if method == "spongebob":
+            return "".join(
+                char.upper() 
+                if i % 2 == 0 
+                else char.lower() for i, char in enumerate(rendered_response)
+            )
+        else:
+            return "".join(
+                char.upper() 
+                if random.random() > 0.5 
+                else char for char in rendered_response
+            )
+
+# usage:
+
+app = SpiderwebRouter(
+    middleware=["CaseTransformMiddleware"],
+    case_transform_middleware_type="random",
+)
+```
 
 ## checks
 
@@ -109,4 +160,4 @@ List as many checks as you need there, and the server will run all of them durin
 from spiderweb.exceptions import UnusedMiddleware
 ```
 
-If you don't want your middleware to run for some reason, either `process_request` or `process_response` can raise the UnusedMiddleware exception. If this happens, Spiderweb will kick your middleware out of the processing order for the rest of the life of the server. Note that this applies to the middleware as a whole, so both functions will not be run if an UnusedMiddleware is raised. This is a great way to mark debug middleware that shouldn't run or create time-delay middleware that runs until a certain condition is met! 
+If you don't want your middleware to run for some reason, `process_request`, `process_response` and `post_process` can all raise the UnusedMiddleware exception. If this happens, Spiderweb will kick your middleware out of the processing order for the rest of the life of the server. Note that this applies to the middleware as a whole, so all functions in the middleware will not be run if an UnusedMiddleware is raised. This is a great way to mark debug middleware that shouldn't run or create time-delay middleware that runs until a certain condition is met! 

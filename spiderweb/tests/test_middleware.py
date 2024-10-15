@@ -298,6 +298,22 @@ def test_csrf_trusted_origins():
     assert resp2 == '{"name": "bob"}'
 
 
+def test_post_process_middleware():
+    app, environ, start_response = setup(
+        middleware=[
+            "spiderweb.tests.middleware.PostProcessingMiddleware",
+        ],
+    )
+
+    app.add_route("/", text_view)
+
+    environ["HTTP_USER_AGENT"] = "hi"
+    environ["REMOTE_ADDR"] = "/"
+    environ["REQUEST_METHOD"] = "GET"
+
+    assert app(environ, start_response) == [bytes("Hi! Moo!", DEFAULT_ENCODING)]
+
+
 class TestCorsMiddleware:
     # adapted from:
     # https://github.com/adamchainz/django-cors-headers/blob/main/tests/test_middleware.py

@@ -22,12 +22,14 @@ app = SpiderwebRouter(
         "example_middleware.RedirectMiddleware",
         "spiderweb.middleware.pydantic.PydanticMiddleware",
         "example_middleware.ExplodingMiddleware",
+        # "example_middleware.CaseTransformMiddleware",
     ],
     staticfiles_dirs=["static_files"],
     append_slash=False,  # default
     cors_allow_all_origins=True,
     static_url="static_stuff",
     debug=True,
+    case_transform_middleware_type="spongebob",
 )
 
 

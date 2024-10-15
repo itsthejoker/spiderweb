@@ -60,3 +60,14 @@ class MiddlewareMixin:
             except UnusedMiddleware:
                 self.middleware.remove(middleware)
                 continue
+
+    def post_process_middleware(self, request: Request, response: str) -> str:
+        # run them in reverse order, same as process_response. The top of the middleware
+        # stack should be the first and last middleware to run.
+        for middleware in reversed(self.middleware):
+            try:
+                response = middleware.post_process(request, response)
+            except UnusedMiddleware:
+                self.middleware.remove(middleware)
+                continue
+        return response
