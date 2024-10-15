@@ -53,7 +53,7 @@ Unlike `process_request`, returning a value here doesn't change anything. We're 
 
 ## on_error(self, request: Request, triggered_exception: Exception) -> Optional[HttpResponse]:
 
-This is a helper function that is available for you to override; it's not often used by middleware, but there are some ([like the pydantic middleware](pydantic.md)) that call `on_error` when there is a validation failure.
+This is a helper function that is available for you to override; it's not often used by middleware, but there are some ([like the pydantic middleware](middleware/pydantic.md)) that call `on_error` when there is a validation failure.
 
 ## post_process(self, request: Request, rendered_response: str) -> str:
 
