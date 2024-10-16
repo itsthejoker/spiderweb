@@ -36,7 +36,7 @@ class LocalServerMixin:
 
     def start(self, blocking=False):
         signal.signal(signal.SIGINT, self.signal_handler)
-        self.log.info(f"Starting server on {self.addr}:{self.port}")
+        self.log.info(f"Starting server on http://{self.addr}:{self.port}")
         self.log.info("Press CTRL+C to stop the server.")
         self._server = self.create_server()
         self._thread = threading.Thread(target=self._server.serve_forever)
