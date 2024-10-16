@@ -29,9 +29,7 @@ class SpiderwebMiddleware:
         # the request and return a response immediately.
         pass
 
-    def process_response(
-        self, request: Request, response: HttpResponse
-    ) -> None:
+    def process_response(self, request: Request, response: HttpResponse) -> None:
         # This method is called after the view has returned a response. You can modify
         # the response in this method. The response will be returned to the client after
         # all middleware has been processed.
@@ -43,7 +41,9 @@ class SpiderwebMiddleware:
         # will be re-raised.
         pass
 
-    def post_process(self, request: Request, rendered_response: str) -> str:
+    def post_process(
+        self, request: Request, response: HttpResponse, rendered_response: str
+    ) -> str:
         # This method is called after all the middleware has been processed and receives
         # the final rendered response in str form. You can modify the response here.
         return rendered_response

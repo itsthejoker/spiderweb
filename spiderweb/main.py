@@ -201,6 +201,17 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
 
     def fire_response(self, start_response, request: Request, resp: HttpResponse):
         try:
+            try:
+                rendered_output: str = resp.render()
+                final_output: str | list[str] = self.post_process_middleware(
+                    request, resp, rendered_output
+                )
+            except Exception as e:
+                self.log.error("Fatal error!")
+                self.log.error(e)
+                self.log.error(traceback.format_exc())
+                return [f"Internal Server Error: {e}".encode(DEFAULT_ENCODING)]
+
             status = get_http_status_by_code(resp.status_code)
             cookies = []
             varies = []
@@ -218,24 +229,13 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             for v in varies:
                 headers.append(("vary", str(v)))
 
-            start_response(status, headers)
-
-            try:
-                rendered_output: str = resp.render()
-                final_output: str | list[str] = self.post_process_middleware(request, rendered_output)
-            except Exception as e:
-                self.log.error("Fatal error!")
-                self.log.error(e)
-                self.log.error(traceback.format_exc())
-                return [f"Internal Server Error: {e}".encode(DEFAULT_ENCODING)]
-
             if not isinstance(final_output, list):
                 final_output = [final_output]
             encoded_resp = [
                 chunk.encode(DEFAULT_ENCODING) if isinstance(chunk, str) else chunk
                 for chunk in final_output
             ]
-
+            start_response(status, headers)
             return encoded_resp
         except APIError:
             raise

@@ -19,5 +19,22 @@ class InterruptingMiddleware(SpiderwebMiddleware):
 
 
 class PostProcessingMiddleware(SpiderwebMiddleware):
-    def post_process(self, request: Request, response: str) -> str:
-        return response + " Moo!"
+    def post_process(
+        self, request: Request, response: HttpResponse, rendered_response: str
+    ) -> str:
+        return rendered_response + " Moo!"
+
+
+class PostProcessingWithHeaderManipulation(SpiderwebMiddleware):
+    def post_process(
+        self, request: Request, response: HttpResponse, rendered_response: str
+    ) -> str:
+        response.headers["X-Moo"] = "true"
+        return rendered_response
+
+
+class ExplodingPostProcessingMiddleware(SpiderwebMiddleware):
+    def post_process(
+        self, request: Request, response: HttpResponse, rendered_response: str
+    ) -> str:
+        raise UnusedMiddleware("Unfinished!")

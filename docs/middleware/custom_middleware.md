@@ -1,3 +1,5 @@
+from spiderweb import HttpResponse
+
 # writing your own middleware
 
 Sometimes you want to run the same code on every request or every response (or both!). Lots of processing happens in the middleware layer, and if you want to write your own, all you have to do is write a quick class and put it in a place that Spiderweb can find it. A piece of middleware only needs two things to be successful:
@@ -55,13 +57,19 @@ Unlike `process_request`, returning a value here doesn't change anything. We're 
 
 This is a helper function that is available for you to override; it's not often used by middleware, but there are some ([like the pydantic middleware](middleware/pydantic.md)) that call `on_error` when there is a validation failure.
 
-## post_process(self, request: Request, rendered_response: str) -> str:
+## post_process(self, request: Request, response: HttpResponse, rendered_response: str) -> str:
 
 > New in 1.3.0!
 
 After `process_request` and `process_response` run, the response is rendered out into the raw text that is going to be sent to the client. Right before that happens, `post_process` is called on each middleware in the same order as `process_response` (so the closer something is to the beginning of the middleware list, the more important it is).
 
-Note that this function *must* return something. Each invocation of `post_process` overwrites the entire output of the response, so make sure to return everything that you want to send. For example, here's a middleware that ~~breaks~~ adjusts the capitalization of the response and also demonstrates passing variables into the middleware:
+There are three things passed to `post_process`:
+
+- `request`: the request object. It's provided here purely for reference purposes; while you can technically change it here, it won't have any effect on the response.
+- `response`: the response object. The full HTML of the response has already been rendered, but the headers can still be modified here. This object can be modified in place, like in `process_response`.
+- `rendered_response`: the full HTML of the response as a string. This is the final output that will be sent to the client. Every instance of `post_process` must return the full HTML of the response, so if you want to make changes, you'll need to return the modified string.
+
+Note that this function *must* return the full HTML of the response (provided at the start as `rendered_response`. Each invocation of `post_process` overwrites the entire output of the response, so make sure to return everything that you want to send. For example, here's a middleware that ~~breaks~~ adjusts the capitalization of the response and also demonstrates passing variables into the middleware and modifies the headers with the type of transformation:
 
 ```python
 import random
@@ -74,7 +82,7 @@ from spiderweb.exceptions import ConfigError
 class CaseTransformMiddleware(SpiderwebMiddleware):
     # this breaks everything, but it's hilarious so it's worth it.
     # Blame Sam.
-    def post_process(self, request: Request, rendered_response: str) -> str:
+    def post_process(self, request: Request, response: HttpResponse, rendered_response: str) -> str:
         valid_options = ["spongebob", "random"]
         # grab the value from the extra data passed into the server object
         # during instantiation
@@ -86,12 +94,14 @@ class CaseTransformMiddleware(SpiderwebMiddleware):
             )
 
         if method == "spongebob":
+            response.headers["X-Case-Transform"] = "spongebob"
             return "".join(
                 char.upper() 
                 if i % 2 == 0 
                 else char.lower() for i, char in enumerate(rendered_response)
             )
         else:
+            response.headers["X-Case-Transform"] = "random"
             return "".join(
                 char.upper() 
                 if random.random() > 0.5 

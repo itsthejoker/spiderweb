@@ -32,9 +32,15 @@ class ExplodingMiddleware(SpiderwebMiddleware):
 class CaseTransformMiddleware(SpiderwebMiddleware):
     # this breaks everything, but it's hilarious so it's worth it.
     # Blame Sam.
-    def post_process(self, request: Request, rendered_response: str) -> str:
+    def post_process(
+        self, request: Request, response: HttpResponse, rendered_response: str
+    ) -> str:
         valid_options = ["spongebob", "random"]
-        method = self.server.extra_data.get("case_transform_middleware_type", "spongebob")
+        # grab the value from the extra data passed into the server object
+        # during instantiation
+        method = self.server.extra_data.get(
+            "case_transform_middleware_type", "spongebob"
+        )
         if method not in valid_options:
             raise ConfigError(
                 f"Invalid method '{method}' for CaseTransformMiddleware."
@@ -42,10 +48,14 @@ class CaseTransformMiddleware(SpiderwebMiddleware):
             )
 
         if method == "spongebob":
+            response.headers["X-Case-Transform"] = "spongebob"
             return "".join(
-                char.upper() if i % 2 == 0 else char.lower() for i, char in enumerate(rendered_response)
+                char.upper() if i % 2 == 0 else char.lower()
+                for i, char in enumerate(rendered_response)
             )
         else:
+            response.headers["X-Case-Transform"] = "random"
             return "".join(
-                char.upper() if random.random() > 0.5 else char for char in rendered_response
+                char.upper() if random.random() > 0.5 else char
+                for char in rendered_response
             )

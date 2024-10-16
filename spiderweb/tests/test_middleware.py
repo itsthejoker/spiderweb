@@ -314,6 +314,41 @@ def test_post_process_middleware():
     assert app(environ, start_response) == [bytes("Hi! Moo!", DEFAULT_ENCODING)]
 
 
+def test_post_process_header_manip():
+    app, environ, start_response = setup(
+        middleware=[
+            "spiderweb.tests.middleware.PostProcessingWithHeaderManipulation",
+        ],
+    )
+
+    app.add_route("/", text_view)
+
+    environ["HTTP_USER_AGENT"] = "hi"
+    environ["REMOTE_ADDR"] = "/"
+    environ["REQUEST_METHOD"] = "GET"
+
+    assert app(environ, start_response) == [bytes("Hi!", DEFAULT_ENCODING)]
+    assert start_response.get_headers()["x-moo"] == "true"
+
+
+def test_unused_post_process_middleware():
+    app, environ, start_response = setup(
+        middleware=[
+            "spiderweb.tests.middleware.ExplodingPostProcessingMiddleware",
+        ],
+    )
+
+    app.add_route("/", text_view)
+
+    environ["HTTP_USER_AGENT"] = "hi"
+    environ["REMOTE_ADDR"] = "/"
+    environ["REQUEST_METHOD"] = "GET"
+
+    assert app(environ, start_response) == [bytes("Hi!", DEFAULT_ENCODING)]
+    # make sure it kicked out the middleware and isn't just ignoring it
+    assert len(app.middleware) == 0
+
+
 class TestCorsMiddleware:
     # adapted from:
     # https://github.com/adamchainz/django-cors-headers/blob/main/tests/test_middleware.py
