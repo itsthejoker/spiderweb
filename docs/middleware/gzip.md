@@ -12,6 +12,18 @@ app = SpiderwebRouter(
 
 If your app is serving large responses, you may want to compress them. We don't (currently) have built-in support for Brotli, deflate, zstd, or other compression methods, but we do support gzip. (Want to add support for other methods? We'd love to see a PR!)
 
+> [!NOTE]
+> `GzipMiddleware` must be the as close to the 'top' of the middleware stack as possible. If you have multiple middleware, make sure that `gzip` is the first one in the list. For example:
+> ```python
+> app = SpiderwebRouter(
+>    middleware=[
+>        "spiderweb.middleware.gzip.GzipMiddleware",
+>        "spiderweb.middleware.cors.CorsMiddleware",
+>        "spiderweb.middleware.csrf.CSRFMiddleware",
+>    ]
+> )
+> ```
+
 The implementation in Spiderweb is simple: it compresses the response body if the client indicates that it is supported. If the client doesn't support gzip, the response is sent uncompressed. Compression happens at the end of the response cycle, so it won't interfere with other middleware.
 
 Error responses and responses with status codes that indicate that the response body should not be sent (like 204, 304, etc.) will not be compressed. Responses with a `Content-Encoding` header already set (e.g. if you're serving pre-compressed files) will be handled the same way.
