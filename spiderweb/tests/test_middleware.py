@@ -24,6 +24,11 @@ from spiderweb.tests.views_for_tests import (
     form_view_without_csrf,
     text_view,
     unauthorized_view,
+    file_view,
+)
+from spiderweb.middleware.gzip import (
+    CheckValidGzipMinimumLength,
+    CheckValidGzipCompressionLevel,
 )
 
 
@@ -347,6 +352,98 @@ def test_unused_post_process_middleware():
     assert app(environ, start_response) == [bytes("Hi!", DEFAULT_ENCODING)]
     # make sure it kicked out the middleware and isn't just ignoring it
     assert len(app.middleware) == 0
+
+
+class TestGzipMiddleware:
+    middleware = {"middleware": ["spiderweb.middleware.gzip.GzipMiddleware"]}
+
+    def test_not_enabled_on_small_response(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            gzip_minimum_response_length=500,
+        )
+        app.add_route("/", text_view)
+
+        environ["HTTP_USER_AGENT"] = "hi"
+        environ["REMOTE_ADDR"] = "/"
+        environ["REQUEST_METHOD"] = "GET"
+
+        assert app(environ, start_response) == [bytes("Hi!", DEFAULT_ENCODING)]
+        assert "Content-Encoding" not in start_response.get_headers()
+
+    def test_changing_minimum_response_length(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            gzip_minimum_response_length=1,
+        )
+        app.add_route("/", text_view)
+
+        environ["HTTP_ACCEPT_ENCODING"] = "gzip"
+        environ["HTTP_USER_AGENT"] = "hi"
+        environ["REMOTE_ADDR"] = "/"
+        environ["REQUEST_METHOD"] = "GET"
+        assert str(app(environ, start_response)[0]).startswith("b'\\x1f\\x8b\\x08")
+        assert "content-encoding" in start_response.get_headers()
+
+    def test_not_enabled_on_error_response(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            gzip_minimum_response_length=1,
+        )
+        app.add_route("/", unauthorized_view)
+
+        environ["HTTP_ACCEPT_ENCODING"] = "gzip"
+        environ["HTTP_USER_AGENT"] = "hi"
+        environ["REMOTE_ADDR"] = "/"
+        environ["REQUEST_METHOD"] = "GET"
+        assert app(environ, start_response) == [bytes("Unauthorized", DEFAULT_ENCODING)]
+        assert "content-encoding" not in start_response.get_headers()
+
+    def test_not_enabled_on_bytes_response(self):
+        app, environ, start_response = setup(
+            **self.middleware,
+            gzip_minimum_response_length=1,
+        )
+        # send a file that's already in bytes form
+        app.add_route("/", file_view)
+
+        environ["HTTP_ACCEPT_ENCODING"] = "gzip"
+        environ["HTTP_USER_AGENT"] = "hi"
+        environ["REMOTE_ADDR"] = "/"
+        environ["REQUEST_METHOD"] = "GET"
+        assert app(environ, start_response) == [bytes("hi", DEFAULT_ENCODING)]
+        assert "content-encoding" not in start_response.get_headers()
+
+    def test_invalid_response_length(self):
+        class FakeServer:
+            gzip_minimum_response_length = "asdf"
+
+        with pytest.raises(ConfigError) as e:
+            CheckValidGzipMinimumLength(server=FakeServer).check()
+        assert (
+            e.value.args[0] == CheckValidGzipMinimumLength.INVALID_GZIP_MINIMUM_LENGTH
+        )
+
+    def test_negative_response_length(self):
+        class FakeServer:
+            gzip_minimum_response_length = -1
+
+        with pytest.raises(ConfigError) as e:
+            CheckValidGzipMinimumLength(server=FakeServer).check()
+        assert (
+            e.value.args[0] == CheckValidGzipMinimumLength.INVALID_GZIP_MINIMUM_LENGTH
+        )
+
+    def test_bad_compression_level(self):
+        class FakeServer:
+            gzip_compression_level = "asdf"
+
+        with pytest.raises(ConfigError) as e:
+            CheckValidGzipCompressionLevel(server=FakeServer).check()
+        assert (
+            e.value.args[0]
+            == CheckValidGzipCompressionLevel.INVALID_GZIP_COMPRESSION_LEVEL
+        )
 
 
 class TestCorsMiddleware:

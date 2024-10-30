@@ -1,5 +1,10 @@
+from typing import TYPE_CHECKING
+
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse
+
+if TYPE_CHECKING:
+    from spiderweb.server_checks import ServerCheck
 
 
 class SpiderwebMiddleware:
@@ -22,6 +27,10 @@ class SpiderwebMiddleware:
 
     def __init__(self, server):
         self.server = server
+        # If there are any startup checks that need to be run, they should be added
+        # to this list. These checks should be classes that inherit from
+        # spiderweb.server_checks.ServerCheck.
+        self.checks: list[ServerCheck]
 
     def process_request(self, request: Request) -> HttpResponse | None:
         # This method is called before the request is passed to the view. You can safely
@@ -45,5 +54,6 @@ class SpiderwebMiddleware:
         self, request: Request, response: HttpResponse, rendered_response: str
     ) -> str:
         # This method is called after all the middleware has been processed and receives
-        # the final rendered response in str form. You can modify the response here.
+        # the final rendered response in str form. You can modify the response here. This
+        # method *must* return a str version of the rendered response.
         return rendered_response
