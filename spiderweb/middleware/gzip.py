@@ -17,9 +17,13 @@ class GzipMiddleware(SpiderwebMiddleware):
     def post_process(
         self, request: Request, response: HttpResponse, rendered_response: str
     ) -> str:
-
-        # right status, length > 500, instance string (because FileResponse returns list of bytes,
-        # not already compressed, and client accepts gzip
+        # Only actually compress the response if the following attributes are true:
+        #
+        # * The response status code is a 2xx success code
+        # * The response length is at least 500 bytes
+        # * The response is not already compressed (e.g. it's not an image)
+        # * The request accepts gzip encoding
+        # * The response is not a streaming response
         if (
             not (200 <= response.status_code < 300)
             or len(rendered_response) < self.minimum_length
