@@ -417,23 +417,33 @@ class TestGzipMiddleware:
     def test_invalid_response_length(self):
         class FakeServer:
             gzip_minimum_response_length = "asdf"
+
         with pytest.raises(ConfigError) as e:
             CheckValidGzipMinimumLength(server=FakeServer).check()
-        assert e.value.args[0] == CheckValidGzipMinimumLength.INVALID_GZIP_MINIMUM_LENGTH
+        assert (
+            e.value.args[0] == CheckValidGzipMinimumLength.INVALID_GZIP_MINIMUM_LENGTH
+        )
 
     def test_negative_response_length(self):
         class FakeServer:
             gzip_minimum_response_length = -1
+
         with pytest.raises(ConfigError) as e:
             CheckValidGzipMinimumLength(server=FakeServer).check()
-        assert e.value.args[0] == CheckValidGzipMinimumLength.INVALID_GZIP_MINIMUM_LENGTH
+        assert (
+            e.value.args[0] == CheckValidGzipMinimumLength.INVALID_GZIP_MINIMUM_LENGTH
+        )
 
     def test_bad_compression_level(self):
         class FakeServer:
             gzip_compression_level = "asdf"
+
         with pytest.raises(ConfigError) as e:
             CheckValidGzipCompressionLevel(server=FakeServer).check()
-        assert e.value.args[0] == CheckValidGzipCompressionLevel.INVALID_GZIP_COMPRESSION_LEVEL
+        assert (
+            e.value.args[0]
+            == CheckValidGzipCompressionLevel.INVALID_GZIP_COMPRESSION_LEVEL
+        )
 
 
 class TestCorsMiddleware:
