@@ -1,15 +1,40 @@
 """
 Source code inspiration: https://github.com/colour-science/flask-compress/blob/master/flask_compress/flask_compress.py
 """
-
+from spiderweb.exceptions import ConfigError
 from spiderweb.middleware import SpiderwebMiddleware
+from spiderweb.server_checks import ServerCheck
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse
 
 import gzip
 
 
+class CheckValidGzipCompressionLevel(ServerCheck):
+    INVALID_GZIP_COMPRESSION_LEVEL = (
+        "`gzip_compression_level` must be an integer between 1 and 9."
+    )
+
+    def check(self):
+        if not isinstance(self.server.gzip_compression_level, int):
+            raise ConfigError(self.INVALID_GZIP_COMPRESSION_LEVEL)
+        if self.server.gzip_compression_level not in range(1, 10):
+            raise ConfigError("Gzip compression level must be an integer between 1 and 9.")
+
+
+class CheckValidGzipMinimumLength(ServerCheck):
+    INVALID_GZIP_MINIMUM_LENGTH = "`gzip_minimum_length` must be a positive integer."
+
+    def check(self):
+        if not isinstance(self.server.gzip_minimum_length, int):
+            raise ConfigError(self.INVALID_GZIP_MINIMUM_LENGTH)
+        if self.server.gzip_minimum_length < 1:
+            raise ConfigError(self.INVALID_GZIP_MINIMUM_LENGTH)
+
+
 class GzipMiddleware(SpiderwebMiddleware):
+
+    checks = [CheckValidGzipCompressionLevel, CheckValidGzipMinimumLength]
 
     algorithm = "gzip"
     minimum_length = 500
@@ -37,4 +62,4 @@ class GzipMiddleware(SpiderwebMiddleware):
         response.headers["Content-Encoding"] = self.algorithm
         response.headers["Content-Length"] = str(len(zipped))
 
-        return zipped.decode("UTF-8")
+        return zipped

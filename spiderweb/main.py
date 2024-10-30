@@ -69,6 +69,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         csrf_trusted_origins: Sequence[str] = None,
         db: Optional[Database] = None,
         debug: bool = False,
+        gzip_compression_level: int = 6,
+        gzip_minimum_response_length: int = 500,
         templates_dirs: Sequence[str] = None,
         middleware: Sequence[str] = None,
         append_slash: bool = False,
@@ -118,6 +120,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.csrf_trusted_origins = [
             convert_url_to_regex(i) for i in self._csrf_trusted_origins
         ]
+
+        self.gzip_compression_level = gzip_compression_level
+        self.gzip_minimum_response_length = gzip_minimum_response_length
 
         self.debug = debug
 
