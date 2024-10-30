@@ -9,6 +9,6 @@
   - [csrf](middleware/csrf.md)
   - [cors](middleware/cors.md)
   - [pydantic](middleware/pydantic.md)
-  - [gizp](middleware/gzip.md)
+  - [gzip](middleware/gzip.md)
   - [writing your own](middleware/custom_middleware.md)
 - [databases](db.md)
