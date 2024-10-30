@@ -30,7 +30,7 @@ class SpiderwebMiddleware:
         # If there are any startup checks that need to be run, they should be added
         # to this list. These checks should be classes that inherit from
         # spiderweb.server_checks.ServerCheck.
-        self.checks: list[ServerCheck] = []
+        self.checks: list[ServerCheck]
 
     def process_request(self, request: Request) -> HttpResponse | None:
         # This method is called before the request is passed to the view. You can safely
