@@ -19,7 +19,9 @@ class CheckValidGzipCompressionLevel(ServerCheck):
         if not isinstance(self.server.gzip_compression_level, int):
             raise ConfigError(self.INVALID_GZIP_COMPRESSION_LEVEL)
         if self.server.gzip_compression_level not in range(1, 10):
-            raise ConfigError("Gzip compression level must be an integer between 1 and 9.")
+            raise ConfigError(
+                "Gzip compression level must be an integer between 1 and 9."
+            )
 
 
 class CheckValidGzipMinimumLength(ServerCheck):
@@ -44,11 +46,12 @@ class GzipMiddleware(SpiderwebMiddleware):
     ) -> str | bytes:
         # Only actually compress the response if the following attributes are true:
         #
-        # * The response status code is a 2xx success code
-        # * The response length is at least 500 bytes
-        # * The response is not already compressed (e.g. it's not an image)
-        # * The request accepts gzip encoding
-        # * The response is not a streaming response
+        # - The response status code is a 2xx success code
+        # - The response length is at least 500 bytes
+        # - The response is not a streaming response
+        #   - (already bytes, like from FileResponse)
+        # - The response is not already compressed
+        # - The request accepts gzip encoding
         if (
             not (200 <= response.status_code < 300)
             or len(rendered_response) < self.minimum_length
