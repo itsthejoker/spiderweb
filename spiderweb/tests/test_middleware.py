@@ -23,9 +23,13 @@ from spiderweb.tests.views_for_tests import (
     form_csrf_exempt,
     form_view_without_csrf,
     text_view,
-    unauthorized_view, file_view,
+    unauthorized_view,
+    file_view,
 )
-from spiderweb.middleware.gzip import GzipMiddleware, CheckValidGzipMinimumLength, CheckValidGzipCompressionLevel
+from spiderweb.middleware.gzip import (
+    CheckValidGzipMinimumLength,
+    CheckValidGzipCompressionLevel,
+)
 
 
 def index(request):
@@ -409,6 +413,27 @@ class TestGzipMiddleware:
         environ["REQUEST_METHOD"] = "GET"
         assert app(environ, start_response) == [bytes("hi", DEFAULT_ENCODING)]
         assert "content-encoding" not in start_response.get_headers()
+
+    def test_invalid_response_length(self):
+        class FakeServer:
+            gzip_minimum_response_length = "asdf"
+        with pytest.raises(ConfigError) as e:
+            CheckValidGzipMinimumLength(server=FakeServer).check()
+        assert e.value.args[0] == CheckValidGzipMinimumLength.INVALID_GZIP_MINIMUM_LENGTH
+
+    def test_negative_response_length(self):
+        class FakeServer:
+            gzip_minimum_response_length = -1
+        with pytest.raises(ConfigError) as e:
+            CheckValidGzipMinimumLength(server=FakeServer).check()
+        assert e.value.args[0] == CheckValidGzipMinimumLength.INVALID_GZIP_MINIMUM_LENGTH
+
+    def test_bad_compression_level(self):
+        class FakeServer:
+            gzip_compression_level = "asdf"
+        with pytest.raises(ConfigError) as e:
+            CheckValidGzipCompressionLevel(server=FakeServer).check()
+        assert e.value.args[0] == CheckValidGzipCompressionLevel.INVALID_GZIP_COMPRESSION_LEVEL
 
 
 class TestCorsMiddleware:
