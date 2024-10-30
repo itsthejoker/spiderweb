@@ -41,7 +41,7 @@ class GzipMiddleware(SpiderwebMiddleware):
 
     def post_process(
         self, request: Request, response: HttpResponse, rendered_response: str
-    ) -> str:
+    ) -> str | bytes:
         # Only actually compress the response if the following attributes are true:
         #
         # * The response status code is a 2xx success code

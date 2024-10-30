@@ -63,7 +63,7 @@ class MiddlewareMixin:
 
     def post_process_middleware(
         self, request: Request, response: HttpResponse, rendered_response: str
-    ) -> str:
+    ) -> str | bytes:
         # run them in reverse order, same as process_response. The top of the middleware
         # stack should be the first and last middleware to run.
         for middleware in reversed(self.middleware):
