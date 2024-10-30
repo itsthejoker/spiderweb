@@ -1,6 +1,7 @@
 """
 Source code inspiration: https://github.com/colour-science/flask-compress/blob/master/flask_compress/flask_compress.py
 """
+
 from spiderweb.exceptions import ConfigError
 from spiderweb.middleware import SpiderwebMiddleware
 from spiderweb.server_checks import ServerCheck
@@ -28,9 +29,9 @@ class CheckValidGzipMinimumLength(ServerCheck):
     INVALID_GZIP_MINIMUM_LENGTH = "`gzip_minimum_length` must be a positive integer."
 
     def check(self):
-        if not isinstance(self.server.gzip_minimum_length, int):
+        if not isinstance(self.server.gzip_minimum_response_length, int):
             raise ConfigError(self.INVALID_GZIP_MINIMUM_LENGTH)
-        if self.server.gzip_minimum_length < 1:
+        if self.server.gzip_minimum_response_length < 1:
             raise ConfigError(self.INVALID_GZIP_MINIMUM_LENGTH)
 
 
@@ -39,7 +40,6 @@ class GzipMiddleware(SpiderwebMiddleware):
     checks = [CheckValidGzipCompressionLevel, CheckValidGzipMinimumLength]
 
     algorithm = "gzip"
-    minimum_length = 500
 
     def post_process(
         self, request: Request, response: HttpResponse, rendered_response: str
@@ -54,15 +54,17 @@ class GzipMiddleware(SpiderwebMiddleware):
         # - The request accepts gzip encoding
         if (
             not (200 <= response.status_code < 300)
-            or len(rendered_response) < self.minimum_length
+            or len(rendered_response) < self.server.gzip_minimum_response_length
             or not isinstance(rendered_response, str)
             or self.algorithm in response.headers.get("Content-Encoding", "")
             or self.algorithm not in request.headers.get("Accept-Encoding", "")
         ):
             return rendered_response
 
-        zipped = gzip.compress(rendered_response.encode("UTF-8"), compresslevel=6)
+        zipped = gzip.compress(
+            rendered_response.encode("UTF-8"),
+            compresslevel=self.server.gzip_compression_level,
+        )
         response.headers["Content-Encoding"] = self.algorithm
         response.headers["Content-Length"] = str(len(zipped))
-
         return zipped
