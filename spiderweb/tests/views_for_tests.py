@@ -1,7 +1,6 @@
 from spiderweb import HttpResponse
 from spiderweb.decorators import csrf_exempt
-from spiderweb.response import JsonResponse, TemplateResponse
-
+from spiderweb.response import JsonResponse, TemplateResponse, FileResponse
 
 EXAMPLE_HTML_FORM = """
 <form action="" method="post">
@@ -47,3 +46,7 @@ def text_view(request):
 
 def unauthorized_view(request):
     return HttpResponse("Unauthorized", status_code=401)
+
+
+def file_view(request):
+    return FileResponse("spiderweb/tests/staticfiles/file_for_testing_fileresponse.txt")
