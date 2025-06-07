@@ -1,8 +1,8 @@
-[tool.poetry]
+[project]
 name = "spiderweb-framework"
 version = "1.4.0"
 description = "A small web framework, just big enough for a spider."
-authors = ["Joe Kaufeld <opensource@joekaufeld.com>"]
+authors = [{name="Joe Kaufeld", email="opensource@joekaufeld.com"}]
 readme = "README.md"
 packages = [{include = "spiderweb"}]
 license = "LICENSE.txt"
