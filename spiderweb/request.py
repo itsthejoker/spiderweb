@@ -1,8 +1,16 @@
 import json
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 from spiderweb.constants import DEFAULT_ENCODING
+from spiderweb.files import MediaFile
 from spiderweb.utils import get_client_address, Headers
+
+from multipart import (
+    parse_form_data,
+    is_form_request as m_is_form_request,
+    MultiDict,
+    MultipartPart
+)
 
 
 class Request:
@@ -24,8 +32,9 @@ class Request:
         self.query_params = []
         self.server = server
         self.handler = handler  # the view function that will be called
-        self.GET = {}
-        self.POST = {}
+        self.GET = MultiDict()
+        self.POST = MultiDict()
+        self.FILES = MultiDict()
         self.META = {}
         self.COOKIES = {}
         # only used for the session middleware
@@ -39,10 +48,26 @@ class Request:
         self.populate_cookies()
 
         content_length = int(self.headers.get("content_length") or 0)
-        if content_length:
-            self.content = (
-                self.environ["wsgi.input"].read(content_length).decode(DEFAULT_ENCODING)
-            )
+        if self.is_form_request():
+            if self.method == "POST":
+                # this pulls from wsgi.input, so we don't have to do it ourselves
+                self.POST, self.FILES = parse_form_data(self.environ)
+                for key, value in self.FILES.items():
+                    if isinstance(value, MultipartPart):
+                        self.FILES[key] = MediaFile(self.server, value)
+        else:
+            if content_length:
+                self.content = (
+                    self.environ["wsgi.input"].read(content_length).decode(DEFAULT_ENCODING)
+                )
+            self.GET.update(parse_qs(self.content))
+
+        for group in (self.GET, self.POST):
+            for key, value in group.items():
+                if len(value) == 1 and (
+                        isinstance(value, list) or isinstance(value, tuple)
+                ):
+                    group[key] = value[0]
 
     def populate_headers(self) -> None:
         data = self.headers
@@ -90,7 +115,4 @@ class Request:
         return json.loads(self.content)
 
     def is_form_request(self) -> bool:
-        return (
-            "content_type" in self.headers
-            and self.headers["content_type"] == "application/x-www-form-urlencoded"
-        )
+        return m_is_form_request(self.environ)

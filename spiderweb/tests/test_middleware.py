@@ -300,7 +300,7 @@ def test_csrf_trusted_origins():
 
     environ["HTTP_ORIGIN"] = "example.com"
     resp2 = app(environ, start_response)[0].decode(DEFAULT_ENCODING)
-    assert resp2 == '{"name": "bob"}'
+    assert resp2 == '{"name": ["bob"]}'
 
 
 def test_post_process_middleware():

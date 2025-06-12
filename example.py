@@ -29,6 +29,7 @@ app = SpiderwebRouter(
     append_slash=False,  # default
     cors_allow_all_origins=True,
     static_url="static_stuff",
+    media_dir="media",
     debug=True,
     case_transform_middleware_type="spongebob",
 )
@@ -69,6 +70,25 @@ def middleware(request):
 @app.route("/example/<int:id>")
 def example(request, id):
     return HttpResponse(body=f"Example with id {id}")
+
+
+@app.route("file_upload/")
+def file_upload(request):
+    if request.method == "POST":
+        if "file" not in request.FILES:
+            return HttpResponse(body="No file uploaded", status_code=400)
+        file = request.FILES["file"]
+        content = file.read()
+        filepath = file.save()  # Save the file to the media directory
+        try:
+            return HttpResponse(body=f"File content: {content.decode('utf-8')}")
+        except UnicodeDecodeError:
+            return HttpResponse(
+                body=f"The file has been uploaded, but it is not a text file."
+                     f" Saved to {filepath}",
+                status_code=400)
+    else:
+        return TemplateResponse(request, "file_upload.html")
 
 
 @app.error(405)

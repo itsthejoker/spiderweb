@@ -3,8 +3,8 @@ import logging
 import pathlib
 import re
 import traceback
-import urllib.parse as urlparse
 from logging import Logger
+from pathlib import Path
 from threading import Thread
 from typing import Optional, Callable, Sequence, Literal
 from wsgiref.simple_server import WSGIServer
@@ -74,8 +74,10 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         templates_dirs: Sequence[str] = None,
         middleware: Sequence[str] = None,
         append_slash: bool = False,
-        staticfiles_dirs: Sequence[str] = None,
+        staticfiles_dirs: Sequence[str | Path] = None,
         static_url: str = "static",
+        media_dir: str | Path = None,
+        media_url: str = "media",
         routes: Sequence[tuple[str, Callable] | tuple[str, Callable, dict]] = None,
         error_routes: dict[int, Callable] = None,
         secret_key: str = None,
@@ -96,9 +98,12 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.port = port if port else 8000
         self.server_address = (self.addr, self.port)
         self.append_slash = append_slash
+        self.fix_route_starting_slash = True
         self.templates_dirs = templates_dirs
         self.staticfiles_dirs = staticfiles_dirs
+        self.media_dir = media_dir
         self.static_url = static_url
+        self.media_url = media_url
         self._middleware: list[str] = middleware or []
         self.middleware: list[Callable] = []
         self.secret_key = secret_key if secret_key else self.generate_key()
@@ -200,6 +205,21 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                     " files will not be served."
                 )
 
+        if self.media_dir:
+            self.media_dir = pathlib.Path(self.media_dir)
+            if not pathlib.Path(self.BASE_DIR / self.media_dir).exists():
+                self.log.error(f"Media directory '{str(self.media_dir)}' does not exist.")
+                raise ConfigError
+            if self.debug:
+                self.add_route(
+                    rf"/{self.media_url}/<path:filename>", send_file
+                )
+            else:
+                self.log.warning(
+                    "`media_dir` is set, but `debug` is set to FALSE."
+                    " Media files will not be served."
+                )
+
         # finally, run the startup checks to verify everything is correct and happy.
         self.log.info("Run startup checks...")
         self.run_middleware_checks()
@@ -283,6 +303,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             return resp
         except ConnectionAbortedError as e:
             self.log.error(f"{request.method} {request.path} : {e}")
+            return HttpResponse(status_code=500)
 
     def prepare_and_fire_response(self, start_response, request, resp) -> list[bytes]:
         try:
@@ -303,7 +324,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
 
         except Exception:
             self.log.error(traceback.format_exc())
-            self.fire_response(
+            return self.fire_response(
                 start_response, request, self.get_error_route(500)(request)
             )
 
@@ -333,13 +354,6 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
 
         if not self.check_valid_host(request):
             handler = self.get_error_route(403)
-
-        if request.is_form_request():
-            form_data = urlparse.parse_qs(request.content)
-            for key, value in form_data.items():
-                if len(value) == 1:
-                    form_data[key] = value[0]
-            setattr(request, request.method, form_data)
 
         try:
             if handler:
