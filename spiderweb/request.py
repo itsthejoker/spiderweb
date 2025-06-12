@@ -62,13 +62,6 @@ class Request:
                 )
             self.GET.update(parse_qs(self.content))
 
-        for group in (self.GET, self.POST):
-            for key, value in group.items():
-                if len(value) == 1 and (
-                        isinstance(value, list) or isinstance(value, tuple)
-                ):
-                    group[key] = value[0]
-
     def populate_headers(self) -> None:
         data = self.headers
         data |= {
