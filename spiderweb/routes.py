@@ -40,6 +40,7 @@ class RoutesMixin:
     _error_routes: dict
     error_routes: dict[int, Callable]
     append_slash: bool
+    fix_route_starting_slash: bool
 
     def route(self, path, allowed_methods=None, name=None) -> Callable:
         """
@@ -134,7 +135,8 @@ class RoutesMixin:
             or allowed_methods
             or DEFAULT_ALLOWED_METHODS
         )
-
+        if not path.startswith("/") and self.fix_route_starting_slash:
+            path = "/" + path
         reverse_path = re.sub(r"<(.*?):(.*?)>", r"{\2}", path) if "<" in path else path
 
         def get_packet(func):
