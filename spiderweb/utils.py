@@ -36,6 +36,7 @@ def get_http_status_by_code(code: int) -> Optional[str]:
     resp = HTTPStatus(code)
     if resp:
         return f"{resp.value} {resp.phrase}"
+    return None
 
 
 def is_form_request(request: "Request") -> bool:
