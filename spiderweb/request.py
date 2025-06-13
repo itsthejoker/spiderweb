@@ -9,7 +9,7 @@ from multipart import (
     parse_form_data,
     is_form_request as m_is_form_request,
     MultiDict,
-    MultipartPart
+    MultipartPart,
 )
 
 
@@ -58,7 +58,9 @@ class Request:
         else:
             if content_length:
                 self.content = (
-                    self.environ["wsgi.input"].read(content_length).decode(DEFAULT_ENCODING)
+                    self.environ["wsgi.input"]
+                    .read(content_length)
+                    .decode(DEFAULT_ENCODING)
                 )
             self.GET.update(parse_qs(self.content))
 

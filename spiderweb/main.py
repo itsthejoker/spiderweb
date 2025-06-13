@@ -208,12 +208,12 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         if self.media_dir:
             self.media_dir = pathlib.Path(self.media_dir)
             if not pathlib.Path(self.BASE_DIR / self.media_dir).exists():
-                self.log.error(f"Media directory '{str(self.media_dir)}' does not exist.")
+                self.log.error(
+                    f"Media directory '{str(self.media_dir)}' does not exist."
+                )
                 raise ConfigError
             if self.debug:
-                self.add_route(
-                    rf"/{self.media_url}/<path:filename>", send_file
-                )
+                self.add_route(rf"/{self.media_url}/<path:filename>", send_file)
             else:
                 self.log.warning(
                     "`media_dir` is set, but `debug` is set to FALSE."

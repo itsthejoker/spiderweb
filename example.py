@@ -85,8 +85,9 @@ def file_upload(request):
         except UnicodeDecodeError:
             return HttpResponse(
                 body=f"The file has been uploaded, but it is not a text file."
-                     f" Saved to {filepath}",
-                status_code=400)
+                f" Saved to {filepath}",
+                status_code=400,
+            )
     else:
         return TemplateResponse(request, "file_upload.html")
 
