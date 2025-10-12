@@ -1,7 +1,5 @@
 from wsgiref.util import setup_testing_defaults
 
-from peewee import SqliteDatabase
-
 from spiderweb import SpiderwebRouter
 from spiderweb.request import Request
 
@@ -23,7 +21,7 @@ def setup(**kwargs):
     environ = {}
     setup_testing_defaults(environ)
     if "db" not in kwargs:
-        kwargs["db"] = SqliteDatabase("spiderweb-tests.db")
+        kwargs["db"] = "spiderweb-tests.db"
     return (
         SpiderwebRouter(**kwargs),
         environ,

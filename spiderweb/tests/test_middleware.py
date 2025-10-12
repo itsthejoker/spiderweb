@@ -2,7 +2,6 @@ from io import BytesIO, BufferedReader
 from datetime import timedelta
 
 import pytest
-from peewee import SqliteDatabase
 
 from spiderweb import SpiderwebRouter, HttpResponse, StartupErrors, ConfigError
 from spiderweb.constants import DEFAULT_ENCODING
@@ -52,7 +51,11 @@ def test_session_middleware():
 
     assert app(environ, start_response) == [bytes(str(0), DEFAULT_ENCODING)]
 
-    session_key = Session.select().first().session_key
+    _s = app.get_db_session()
+    try:
+        session_key = _s.query(Session).order_by(Session.id.asc()).first().session_key
+    finally:
+        _s.close()
     environ["HTTP_COOKIE"] = f"swsession={session_key}"
 
     assert app(environ, start_response) == [bytes(str(1), DEFAULT_ENCODING)]
@@ -71,17 +74,25 @@ def test_expired_session():
 
     assert app(environ, start_response) == [bytes(str(0), DEFAULT_ENCODING)]
 
-    session = Session.select().first()
-    session.created_at = session.created_at - timedelta(seconds=app.session_max_age)
-    session.save()
-
-    environ["HTTP_COOKIE"] = f"swsession={session.session_key}"
+    _s = app.get_db_session()
+    try:
+        session = _s.query(Session).order_by(Session.id.asc()).first()
+        session.created_at = session.created_at - timedelta(seconds=app.session_max_age)
+        _s.add(session)
+        _s.commit()
+        environ["HTTP_COOKIE"] = f"swsession={session.session_key}"
+    finally:
+        _s.close()
 
     # it shouldn't increment because we get a new session
     assert app(environ, start_response) == [bytes(str(0), DEFAULT_ENCODING)]
 
-    session2 = list(Session.select())[-1]
-    assert session2.session_key != session.session_key
+    _s2 = app.get_db_session()
+    try:
+        session2 = _s2.query(Session).order_by(Session.id.desc()).first()
+        assert session2.session_key != session.session_key
+    finally:
+        _s2.close()
 
 
 def test_exploding_middleware():
@@ -110,7 +121,7 @@ def test_csrf_middleware_without_session_middleware():
     with pytest.raises(StartupErrors) as e:
         SpiderwebRouter(
             middleware=["spiderweb.middleware.csrf.CSRFMiddleware"],
-            db=SqliteDatabase("spiderweb-tests.db"),
+            db="spiderweb-tests.db",
         )
     exceptiongroup = e.value.args[1]
     assert (
@@ -157,9 +168,12 @@ def test_csrf_middleware():
 
     formdata = f"name=bob&csrf_token={token}"
     environ["CONTENT_TYPE"] = "application/x-www-form-urlencoded"
-    environ["HTTP_COOKIE"] = (
-        f"swsession={[i for i in Session.select().dicts()][-1]['session_key']}"
-    )
+    _s = app.get_db_session()
+    try:
+        _last = _s.query(Session).order_by(Session.id.desc()).first()
+        environ["HTTP_COOKIE"] = f"swsession={_last.session_key}"
+    finally:
+        _s.close()
     environ["REQUEST_METHOD"] = "POST"
     environ["HTTP_X_CSRF_TOKEN"] = token
     environ["CONTENT_LENGTH"] = len(formdata)
@@ -217,9 +231,12 @@ def test_csrf_expired_token():
 
     formdata = f"name=bob&csrf_token={token}"
     environ["CONTENT_TYPE"] = "application/x-www-form-urlencoded"
-    environ["HTTP_COOKIE"] = (
-        f"swsession={[i for i in Session.select().dicts()][-1]['session_key']}"
-    )
+    _s = app.get_db_session()
+    try:
+        _last = _s.query(Session).order_by(Session.id.desc()).first()
+        environ["HTTP_COOKIE"] = f"swsession={_last.session_key}"
+    finally:
+        _s.close()
     environ["REQUEST_METHOD"] = "POST"
     environ["HTTP_ORIGIN"] = "example.com"
     environ["HTTP_X_CSRF_TOKEN"] = token

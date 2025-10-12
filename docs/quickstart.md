@@ -4,10 +4,10 @@ Start by installing the package with your favorite package manager:
 
 <!-- tabs:start -->
 
-<!-- tab:poetry -->
+<!-- tab:uv -->
 
 ```shell
-poetry add spiderweb-framework
+uv add spiderweb-framework
 ```
 
 <!-- tab:pip -->

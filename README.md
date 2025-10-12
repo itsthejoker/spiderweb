@@ -22,7 +22,9 @@ So I built one.
 `spiderweb` is a small web framework, just big enough to hold a spider. Getting started is easy:
 
 ```shell
-poetry add spiderweb-framework
+uv add spiderweb-framework
+# or
+pip install spiderweb-framework
 ```
 
 Create a new file and drop this in it:
@@ -42,6 +44,17 @@ if __name__ == "__main__":
 ```
 
 ## [View the docs here!](https://itsthejoker.github.io/spiderweb/#/)
+
+### Development (using uv)
+
+This repository uses uv for local development and testing.
+
+- Create a virtual environment: `uv venv`
+- Activate it (Windows): `.venv\Scripts\activate`
+- Activate it (POSIX): `source .venv/bin/activate`
+- Install deps (editable + dev): `uv pip install -e .[dev]`
+- Run tests: `uv run python -m pytest`
+- Lint/format: `uv run ruff check .` and `uv run black .`
 
 My goal with this framework was to do three things:
 
@@ -68,5 +81,5 @@ And, honestly, I think I got there. Here's a non-exhaustive list of things this 
 - CORS middleware
 - Optional POST data validation middleware with Pydantic
 - Session middleware with built-in session store
-- Database support (using Peewee, but you can use whatever you want as long as there's a Peewee driver for it)
+- Database support (using SQLAlchemy, but you can use whatever you want as long as there's a SQLAlchemy driver for it)
 - Tests (currently roughly 89% coverage)

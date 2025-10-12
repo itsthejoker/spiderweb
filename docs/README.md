@@ -62,11 +62,12 @@ Spiderweb provides five types of responses out of the box:
 
 ### Database Agnosticism (Mostly)
 
-One of the largest selling points of Django is the Django Object Relational Mapper (ORM); while there's nothing that compares to it in functionality, there are many other ORMs and database management solutions for developers to choose from.
+Spiderweb persists its internal data (like sessions) using Advanced Alchemy built on SQLAlchemy. Your application can use this same setup out of the box, or bring any ORM you prefer.
 
-In order to use a database internally (and since this is not about writing an ORM too), Spiderweb depends on [peewee, a small ORM](https://github.com/coleifer/peewee). Applications using Spiderweb are more than welcome to use peewee models with first-class support or use whatever they're familiar with. Peewee supports PostgreSQL, MySQL, Sqlite, and CockroachDB; if you use one of these, Spiderweb can create the tables it needs in your database and stay out of the way. By default, Spiderweb creates a sqlite database in the application directory for its own use.
+- By default, Spiderweb creates a SQLite database file `spiderweb.db` next to your app.
+- You can pass the `db` argument to `SpiderwebRouter` as a filesystem path (for SQLite), a SQLAlchemy database URL string, or a SQLAlchemy Engine instance.
 
-> [Read more about the using a database in Spiderweb](db.md)
+> [Read more about databases and migrations](db.md)
 
 ### Easy to configure
 
