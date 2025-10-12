@@ -12,6 +12,8 @@ from spiderweb.exceptions import GeneralException
 from spiderweb.request import Request
 from spiderweb.utils import Headers
 
+from multipart import MultiDict
+
 
 mimetypes.init()
 
@@ -122,6 +124,8 @@ class JsonResponse(HttpResponse):
         self.headers["content-type"] = "application/json"
 
     def render(self) -> str:
+        if isinstance(self.data, MultiDict):
+            self.data = self.data.dict
         return json.dumps(self.data)
 
 

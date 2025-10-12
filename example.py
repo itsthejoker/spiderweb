@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from spiderweb.decorators import csrf_exempt
-from spiderweb.example_validator import CommentForm
+# from spiderweb.example_validator import CommentForm
 from spiderweb.main import SpiderwebRouter
 from spiderweb.exceptions import ServerError
 from spiderweb.response import (
@@ -21,7 +21,7 @@ app = SpiderwebRouter(
         "spiderweb.middleware.csrf.CSRFMiddleware",
         "example_middleware.TestMiddleware",
         "example_middleware.RedirectMiddleware",
-        "spiderweb.middleware.pydantic.PydanticMiddleware",
+        # "spiderweb.middleware.pydantic.PydanticMiddleware",
         "example_middleware.ExplodingMiddleware",
         # "example_middleware.CaseTransformMiddleware",
     ],
@@ -29,6 +29,7 @@ app = SpiderwebRouter(
     append_slash=False,  # default
     cors_allow_all_origins=True,
     static_url="static_stuff",
+    media_dir="media",
     debug=True,
     case_transform_middleware_type="spongebob",
 )
@@ -71,18 +72,38 @@ def example(request, id):
     return HttpResponse(body=f"Example with id {id}")
 
 
+@app.route("file_upload/")
+def file_upload(request):
+    if request.method == "POST":
+        if "file" not in request.FILES:
+            return HttpResponse(body="No file uploaded", status_code=400)
+        file = request.FILES["file"]
+        content = file.read()
+        filepath = file.save()  # Save the file to the media directory
+        try:
+            return HttpResponse(body=f"File content: {content.decode('utf-8')}")
+        except UnicodeDecodeError:
+            return HttpResponse(
+                body=f"The file has been uploaded, but it is not a text file."
+                f" Saved to {filepath}",
+                status_code=201,
+            )
+    else:
+        return TemplateResponse(request, "file_upload.html")
+
+
 @app.error(405)
 def http405(request) -> HttpResponse:
     return HttpResponse(body="Method not allowed", status_code=405)
 
 
-@csrf_exempt
-@app.route("/form", allowed_methods=["GET", "POST"])
-def form(request: CommentForm):
-    if request.method == "POST":
-        return JsonResponse(data=request.validated_data.dict())
-    else:
-        return TemplateResponse(request, "form.html")
+# @csrf_exempt
+# @app.route("/form", allowed_methods=["GET", "POST"])
+# def form(request: CommentForm):
+#     if request.method == "POST":
+#         return JsonResponse(data=request.validated_data.dict())
+#     else:
+#         return TemplateResponse(request, "form.html")
 
 
 @app.route("/session")

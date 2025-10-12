@@ -3,6 +3,7 @@
 - [responses](responses.md)
 - [routes](routes.md)
 - [static files](static_files.md)
+- [file uploads](file_uploads.md)
 - middleware
   - [overview](middleware/overview.md)
   - [session](middleware/sessions.md)

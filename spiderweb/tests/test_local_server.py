@@ -64,7 +64,9 @@ class DummyApp(LocalServerMixin):
         super().stop()
 
 
-@given(addr=st.ip_addresses().map(str), port=st.integers(min_value=1025, max_value=65535))
+@given(
+    addr=st.ip_addresses().map(str), port=st.integers(min_value=1025, max_value=65535)
+)
 def test_start_non_blocking_and_stop_calls_shutdown_and_close(addr, port):
     app = DummyApp(addr, port)
     thread = app.start(blocking=False)
@@ -90,5 +92,7 @@ def test_signal_handler_logs_warning_and_stops(monkeypatch):
     monkeypatch.setattr(app, "stop", _stop)
     app.signal_handler(signal.SIGINT, None)
     # one warning and one stop recorded
-    assert any(level == "warning" and "Shutting down!" in msg for level, msg in app.log.records)
+    assert any(
+        level == "warning" and "Shutting down!" in msg for level, msg in app.log.records
+    )
     assert called["stop"] == 1
