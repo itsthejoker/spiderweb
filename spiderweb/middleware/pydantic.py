@@ -1,8 +1,26 @@
 import inspect
 from typing import get_type_hints
 
-from pydantic import BaseModel
-from pydantic_core._pydantic_core import ValidationError
+try:  # pragma: no cover - import guard
+    from pydantic import BaseModel  # type: ignore
+    from pydantic_core._pydantic_core import ValidationError  # type: ignore
+    PYDANTIC_AVAILABLE = True
+except Exception:  # pragma: no cover - executed only when pydantic isn't installed
+    PYDANTIC_AVAILABLE = False
+
+    class BaseModel:  # minimal stub to allow module import without pydantic
+        @classmethod
+        def parse_obj(cls, *args, **kwargs):  # noqa: D401 - simple shim
+            raise RuntimeError(
+                "Pydantic is not installed. Install with 'pip install"
+                " spiderweb-framework[pydantic]' or 'pip install pydantic'"
+                " to use PydanticMiddleware."
+            )
+
+    class ValidationError(Exception):  # simple stand-in so type hints resolve
+        def errors(self):  # match pydantic's ValidationError API used below
+            return []
+
 from spiderweb import SpiderwebMiddleware
 from spiderweb.request import Request
 from spiderweb.response import JsonResponse
@@ -19,6 +37,12 @@ class PydanticMiddleware(SpiderwebMiddleware):
     def process_request(self, request):
         if not request.method == "POST":
             return
+        if not PYDANTIC_AVAILABLE:
+            raise RuntimeError(
+                "Pydantic is not installed. Install with 'pip install"
+                " spiderweb-framework[pydantic]' or 'pip install pydantic'"
+                " to use PydanticMiddleware."
+            )
         types = get_type_hints(request.handler)
         # we don't know what the user named the request object, but
         # we know that it's first in the list, and it's always an arg.
@@ -34,7 +58,15 @@ class PydanticMiddleware(SpiderwebMiddleware):
         # Separated out into its own method so that it can be overridden
         errors = e.errors()
         error_dict = {"message": "Validation error", "errors": []}
-        # [{'type': 'missing', 'loc': ('comment',), 'msg': 'Field required', 'input': {'email': 'a@a.com'}, 'url': 'https://errors.pydantic.dev/2.8/v/missing'}]
+        # [
+        #   {
+        #       'type': 'missing',
+        #       'loc': ('comment',),
+        #       'msg': 'Field required',
+        #       'input': {'email': 'a@a.com'},
+        #       'url': 'https://errors.pydantic.dev/2.8/v/missing'
+        #   }
+        # ]
         for error in errors:
             field = error["loc"][0]
             msg = error["msg"]

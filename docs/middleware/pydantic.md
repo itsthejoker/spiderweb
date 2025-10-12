@@ -9,6 +9,9 @@ app = SpiderwebRouter(
 ```
 When working with form data, you may not want to always have to perform your own validation on the incoming data. Spiderweb gives you a way out of the box to perform this validation using Pydantic.
 
+> [!WARNING]
+> Pydantic is not installed by default. Install it with `pip install pydantic` or `pip install spiderweb[pydantic]`.
+
 Let's assume that we have a form view that looks like this:
 
 ```python
