@@ -10,7 +10,8 @@ from typing import Optional, Callable, Sequence, Literal
 from wsgiref.simple_server import WSGIServer
 
 from jinja2 import BaseLoader, FileSystemLoader
-from peewee import Database, SqliteDatabase
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 
 from spiderweb.middleware import MiddlewareMixin
 from spiderweb.constants import (
@@ -18,11 +19,10 @@ from spiderweb.constants import (
     DEFAULT_CORS_ALLOW_HEADERS,
 )
 from spiderweb.constants import (
-    DATABASE_PROXY,
     DEFAULT_ENCODING,
     DEFAULT_ALLOWED_METHODS,
 )
-from spiderweb.db import SpiderwebModel
+from spiderweb.db import Base, create_sqlite_engine, create_session_factory
 from spiderweb.default_views import (
     http403,  # noqa: F401
     http404,  # noqa: F401
@@ -67,7 +67,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         cors_allow_credentials: bool = False,
         cors_allow_private_network: bool = False,
         csrf_trusted_origins: Sequence[str] = None,
-        db: Optional[Database] = None,
+        db: Optional[Engine | str] = None,
         debug: bool = False,
         gzip_compression_level: int = 6,
         gzip_minimum_response_length: int = 500,
@@ -148,12 +148,21 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.init_fernet()
         self.init_middleware()
 
-        self.db = db or SqliteDatabase(self.BASE_DIR / "spiderweb.db")
-        # give the models the db connection
-        DATABASE_PROXY.initialize(self.db)
-        self.db.create_tables(SpiderwebModel.__subclasses__())
-        for model in SpiderwebModel.__subclasses__():
-            model.check_for_needed_migration()
+        # Database setup (SQLAlchemy)
+        if isinstance(db, Engine):
+            self.db_engine = db
+        elif isinstance(db, str):
+            # treat as URL if it looks like one, otherwise as a filesystem path
+            if "://" in db:
+                self.db_engine = create_engine(db, future=True)
+            else:
+                self.db_engine = create_sqlite_engine(self.BASE_DIR / db)
+        else:
+            self.db_engine = create_sqlite_engine(self.BASE_DIR / "spiderweb.db")
+
+        self.db_session_factory = create_session_factory(self.db_engine)
+        # Create internal tables (e.g., sessions)
+        Base.metadata.create_all(self.db_engine)
 
         if self.routes:
             self.add_routes()
@@ -264,6 +273,10 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             environ=environ,
             server=self,
         )
+
+    def get_db_session(self):
+        """Return a new SQLAlchemy session bound to the application's engine."""
+        return self.db_session_factory()
 
     def send_error_response(
         self, start_response, request: Request, e: SpiderwebNetworkException

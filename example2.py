@@ -48,12 +48,14 @@ def form(request):
 app = SpiderwebRouter(
     templates_dirs=["templates"],
     middleware=[
+        "spiderweb.middleware.sessions.SessionMiddleware",
         "spiderweb.middleware.csrf.CSRFMiddleware",
         "example_middleware.TestMiddleware",
         "example_middleware.RedirectMiddleware",
         "example_middleware.ExplodingMiddleware",
     ],
     staticfiles_dirs=["static_files"],
+    debug=True,
     routes=[
         ("/", index),
         ("/redirect", redirect),

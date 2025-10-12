@@ -147,3 +147,71 @@ def test_setting_multiple_cookies():
     app(environ, start_response)
     assert start_response.headers[-1] == ("set-cookie", "cookie2=value2")
     assert start_response.headers[-2] == ("set-cookie", "cookie1=value1")
+
+
+
+import json as _json
+
+
+@pytest.mark.parametrize(
+    "cookie_header,expected",
+    [
+        ("", {}),
+        (" ", {}),
+        (";", {}),
+        (";; ; ", {}),
+        ("a=1", {"a": "1"}),
+        ("a=1; b=2", {"a": "1", "b": "2"}),
+        ("a=1; b", {"a": "1"}),  # flag-like segment ignored
+        ("flag", {}),  # single flag ignored
+        ("a=1; flag; c=3", {"a": "1", "c": "3"}),
+        ("a=1; c=", {"a": "1", "c": ""}),  # empty value allowed
+        ("token=abc=def==", {"token": "abc=def=="}),  # values may contain '='
+        ("   d = q   ", {"d": "q"}),  # tolerate spaces around name/value
+        ("a=1; ; ; c=3", {"a": "1", "c": "3"}),  # empty segments ignored
+        ("a=1; a=2", {"a": "2"}),  # last duplicate wins
+        ("q=\"a b c\"", {"q": '"a b c"'}),  # quotes preserved
+        ("u=hello%3Dworld", {"u": "hello%3Dworld"}),  # url-encoded preserved
+        ("=novalue; a=1", {"": "novalue", "a": "1"}),  # empty name retained per current parser
+        ("lead=1; ; trail=2;", {"lead": "1", "trail": "2"}),
+        (" spaced = value ; another= thing ", {"spaced": "value", "another": "thing"}),
+        ("a=1; b=2; flag; c=; token=abc=def==;   d = q ; ;", {"a": "1", "b": "2", "c": "", "token": "abc=def==", "d": "q"}),
+    ],
+    ids=[
+        "empty",
+        "space-only",
+        "single-semicolon",
+        "many-empty",
+        "single-pair",
+        "two-pairs",
+        "flag-after",
+        "single-flag",
+        "mix-flag",
+        "empty-value",
+        "value-with-equals",
+        "spaces-around",
+        "ignore-empty-segments",
+        "duplicate-last-wins",
+        "quoted-value",
+        "url-encoded",
+        "empty-name",
+        "lead-trail-with-empties",
+        "spaces-around-multi",
+        "mixed-case-from-original",
+    ],
+)
+
+def test_cookie_parsing_tolerates_malformed_segments(cookie_header, expected):
+    app, environ, start_response = setup()
+
+    from spiderweb.response import JsonResponse
+
+    @app.route("/")
+    def index(request):
+        return JsonResponse(data=request.COOKIES)
+
+    environ["HTTP_COOKIE"] = cookie_header
+
+    body = app(environ, start_response)[0].decode("utf-8")
+    data = _json.loads(body)
+    assert data == expected

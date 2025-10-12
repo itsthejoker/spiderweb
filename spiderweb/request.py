@@ -80,11 +80,21 @@ class Request:
         self.META["client_address"] = get_client_address(self.environ)
 
     def populate_cookies(self) -> None:
-        if cookies := self.environ.get("HTTP_COOKIE"):
-            self.COOKIES = {
-                option.split("=")[0]: option.split("=")[1]
-                for option in cookies.split("; ")
-            }
+        cookies_header = self.environ.get("HTTP_COOKIE")
+        if not cookies_header:
+            return
+        cookies: dict[str, str] = {}
+        # Split on ';' and be tolerant of optional spaces and malformed segments
+        for segment in cookies_header.split(";"):
+            part = segment.strip()
+            if not part:
+                continue
+            if "=" not in part:
+                # Ignore flag-like segments that don't conform to name=value
+                continue
+            name, _, value = part.partition("=")  # only split on first '='
+            cookies[name.strip()] = value.strip()
+        self.COOKIES = cookies
 
     def json(self):
         return json.loads(self.content)
