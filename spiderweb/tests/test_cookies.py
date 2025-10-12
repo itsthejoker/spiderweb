@@ -1,4 +1,5 @@
 from datetime import datetime
+import json as _json
 
 import pytest
 
@@ -149,10 +150,6 @@ def test_setting_multiple_cookies():
     assert start_response.headers[-2] == ("set-cookie", "cookie1=value1")
 
 
-
-import json as _json
-
-
 @pytest.mark.parametrize(
     "cookie_header,expected",
     [
@@ -170,12 +167,18 @@ import json as _json
         ("   d = q   ", {"d": "q"}),  # tolerate spaces around name/value
         ("a=1; ; ; c=3", {"a": "1", "c": "3"}),  # empty segments ignored
         ("a=1; a=2", {"a": "2"}),  # last duplicate wins
-        ("q=\"a b c\"", {"q": '"a b c"'}),  # quotes preserved
+        ('q="a b c"', {"q": '"a b c"'}),  # quotes preserved
         ("u=hello%3Dworld", {"u": "hello%3Dworld"}),  # url-encoded preserved
-        ("=novalue; a=1", {"": "novalue", "a": "1"}),  # empty name retained per current parser
+        (
+            "=novalue; a=1",
+            {"": "novalue", "a": "1"},
+        ),  # empty name retained per current parser
         ("lead=1; ; trail=2;", {"lead": "1", "trail": "2"}),
         (" spaced = value ; another= thing ", {"spaced": "value", "another": "thing"}),
-        ("a=1; b=2; flag; c=; token=abc=def==;   d = q ; ;", {"a": "1", "b": "2", "c": "", "token": "abc=def==", "d": "q"}),
+        (
+            "a=1; b=2; flag; c=; token=abc=def==;   d = q ; ;",
+            {"a": "1", "b": "2", "c": "", "token": "abc=def==", "d": "q"},
+        ),
     ],
     ids=[
         "empty",
@@ -200,7 +203,6 @@ import json as _json
         "mixed-case-from-original",
     ],
 )
-
 def test_cookie_parsing_tolerates_malformed_segments(cookie_header, expected):
     app, environ, start_response = setup()
 

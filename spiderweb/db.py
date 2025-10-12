@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine

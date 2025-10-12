@@ -4,6 +4,7 @@ from typing import get_type_hints
 try:  # pragma: no cover - import guard
     from pydantic import BaseModel  # type: ignore
     from pydantic_core._pydantic_core import ValidationError  # type: ignore
+
     PYDANTIC_AVAILABLE = True
 except Exception:  # pragma: no cover - executed only when pydantic isn't installed
     PYDANTIC_AVAILABLE = False
@@ -20,6 +21,7 @@ except Exception:  # pragma: no cover - executed only when pydantic isn't instal
     class ValidationError(Exception):  # simple stand-in so type hints resolve
         def errors(self):  # match pydantic's ValidationError API used below
             return []
+
 
 from spiderweb import SpiderwebMiddleware
 from spiderweb.request import Request
