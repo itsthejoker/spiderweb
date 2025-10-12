@@ -1,6 +1,7 @@
 import inspect
 import logging
 import pathlib
+import os
 import re
 import traceback
 import atexit
@@ -221,9 +222,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             self.media_dir = pathlib.Path(self.media_dir)
             if not pathlib.Path(self.BASE_DIR / self.media_dir).exists():
                 self.log.error(
-                    f"Media directory '{str(self.media_dir)}' does not exist."
+                    f"Media directory '{str(self.media_dir)}' does not exist. Creating."
                 )
-                raise ConfigError
+                os.makedirs(self.BASE_DIR / self.media_dir)
             if self.debug:
                 self.add_route(rf"/{self.media_url}/<path:filename>", send_file)
             else:

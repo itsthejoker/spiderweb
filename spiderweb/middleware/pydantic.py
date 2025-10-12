@@ -26,6 +26,7 @@ except Exception:  # pragma: no cover - executed only when pydantic isn't instal
 from spiderweb import SpiderwebMiddleware
 from spiderweb.request import Request
 from spiderweb.response import JsonResponse
+from spiderweb.server_checks import ServerCheck
 
 
 class RequestModel(BaseModel, Request):
@@ -35,16 +36,26 @@ class RequestModel(BaseModel, Request):
     pass
 
 
-class PydanticMiddleware(SpiderwebMiddleware):
-    def process_request(self, request):
-        if not request.method == "POST":
-            return
-        if not PYDANTIC_AVAILABLE:
-            raise RuntimeError(
+class CheckPydanticInstalled(ServerCheck):
+    def check(self):
+        try:
+            from pydantic import BaseModel as _BM  # noqa: F401
+            from pydantic_core._pydantic_core import ValidationError as _VE  # noqa: F401
+            return None
+        except Exception:
+            return RuntimeError(
                 "Pydantic is not installed. Install with 'pip install"
                 " spiderweb-framework[pydantic]' or 'pip install pydantic'"
                 " to use PydanticMiddleware."
             )
+
+
+class PydanticMiddleware(SpiderwebMiddleware):
+    checks = [CheckPydanticInstalled]
+
+    def process_request(self, request):
+        if not request.method == "POST":
+            return
         types = get_type_hints(request.handler)
         # we don't know what the user named the request object, but
         # we know that it's first in the list, and it's always an arg.
