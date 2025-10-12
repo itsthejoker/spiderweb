@@ -1,11 +1,12 @@
 [project]
 name = "spiderweb-framework"
-version = "2.0.0"
+version = "2.1.0"
 description = "A small web framework, just big enough for a spider."
 authors = [{name="Joe Kaufeld", email="opensource@joekaufeld.com"}]
 readme = "README.md"
 packages = [{include = "spiderweb"}]
 license = "MIT"
+requires-python = ">=3.11"
 exclude = [
     "tests/*",
     "example.py",
@@ -28,30 +29,29 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "advanced-alchemy (>=1.6.3,<2.0.0)"
+    "advanced-alchemy>=1.6.3,<2.0.0",
+    "cryptography>=46.0.2",
+    "email-validator>=2.3.0",
+    "jinja2>=3.1.6",
+    "sqlalchemy>=2.0.44",
 ]
-
-[tool.poetry.dependencies]
-python = "^3.11"
-SQLAlchemy = "^2.0.32"
-jinja2 = "^3.1.4"
-cryptography = "^43.0.0"
-email-validator = "^2.2.0"
 
 [project.optional-dependencies]
 pydantic = ["pydantic>=2.8.2,<3"]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.5.5"
-pytest = "^8.3.2"
-black = "^24.8.0"
-gunicorn = "^23.0.0"
-hypothesis = "^6.111.2"
-coverage = "^7.6.1"
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+    "coverage>=7.10.7",
+    "gunicorn>=23.0.0",
+    "hypothesis>=6.140.3",
+    "pytest>=8.4.2",
+    "ruff>=0.14.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["spiderweb/spiderweb-framework"]
