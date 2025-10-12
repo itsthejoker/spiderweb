@@ -58,8 +58,6 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["spiderweb/spiderweb-framework"]
 
-[tool.poetry_bumpversion.file."spiderweb/constants.py"]
-
 [project.urls]
 Homepage = "https://github.com/itsthejoker/spiderweb"
 Documentation = "https://github.com/itsthejoker/spiderweb"
