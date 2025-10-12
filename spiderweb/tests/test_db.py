@@ -4,8 +4,16 @@ from spiderweb.db import create_sqlite_engine
 
 
 @given(
-    sub1=st.text(min_size=1, max_size=8, alphabet=st.characters(min_codepoint=97, max_codepoint=122)),
-    sub2=st.text(min_size=1, max_size=8, alphabet=st.characters(min_codepoint=97, max_codepoint=122)),
+    sub1=st.text(
+        min_size=1,
+        max_size=8,
+        alphabet=st.characters(min_codepoint=97, max_codepoint=122),
+    ),
+    sub2=st.text(
+        min_size=1,
+        max_size=8,
+        alphabet=st.characters(min_codepoint=97, max_codepoint=122),
+    ),
 )
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_create_sqlite_engine_creates_parent_directories(tmp_path, sub1, sub2):

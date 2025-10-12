@@ -5,8 +5,7 @@ from spiderweb.server_checks import ServerCheck
 
 
 def test_server_check_noop():
-    class Srv:
-        ...
+    class Srv: ...
 
     sc = ServerCheck(Srv())
     # Should not raise

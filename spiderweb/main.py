@@ -3,7 +3,6 @@ import logging
 import pathlib
 import re
 import traceback
-import urllib.parse as urlparse
 import atexit
 from logging import Logger
 from pathlib import Path
