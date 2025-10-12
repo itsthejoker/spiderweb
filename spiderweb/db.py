@@ -1,101 +1,28 @@
-from peewee import Model, Field, SchemaManager
+from __future__ import annotations
 
-from spiderweb.constants import DATABASE_PROXY
+from pathlib import Path
+from typing import Optional, Union
+
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import declarative_base, sessionmaker, Session as SASession
+
+# Base class for SQLAlchemy models used internally by Spiderweb
+Base = declarative_base()
+
+# Type alias for sessions
+DBSession = SASession
 
 
-class MigrationsNeeded(ExceptionGroup): ...
+def create_sqlite_engine(db_path: Union[str, Path]) -> Engine:
+    """Create a SQLite engine from a file path."""
+    path = Path(db_path)
+    # Ensure directory exists
+    if path.parent and not path.parent.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+    return create_engine(f"sqlite:///{path}", future=True)
 
 
-class MigrationRequired(Exception): ...
-
-
-class SpiderwebModel(Model):
-
-    @classmethod
-    def check_for_needed_migration(cls):
-        if hasattr(cls._meta, "skip_migration_check"):
-            return
-
-        current_model_fields: dict[str, Field] = cls._meta.fields
-        current_db_fields = {
-            c.name: {
-                "data_type": c.data_type,
-                "null": c.null,
-                "primary_key": c.primary_key,
-                "default": c.default,
-            }
-            for c in cls._meta.database.get_columns(cls._meta.table_name)
-        }
-        problems = []
-        s = SchemaManager(cls, cls._meta.database)
-        ctx = s._create_context()
-        for field_name, field_obj in current_model_fields.items():
-            db_version = current_db_fields.get(field_obj.column_name)
-            if not db_version:
-                problems.append(
-                    MigrationRequired(f"Field {field_name} not found in DB.")
-                )
-                continue
-
-            if field_obj.field_type == "VARCHAR":
-                field_obj.max_length = field_obj.max_length or 255
-                if (
-                    cls._meta.fields[field_name].ddl_datatype(ctx).sql
-                    != db_version["data_type"]
-                ):
-                    problems.append(
-                        MigrationRequired(
-                            f"CharField `{field_name}` has changed the field type."
-                        )
-                    )
-            else:
-                if (
-                    cls._meta.database.get_context_options()["field_types"][
-                        field_obj.field_type
-                    ]
-                    != db_version["data_type"]
-                ):
-                    problems.append(
-                        MigrationRequired(
-                            f"Field `{field_name}` has changed the field type."
-                        )
-                    )
-            if field_obj.null != db_version["null"]:
-                problems.append(
-                    MigrationRequired(
-                        f"Field `{field_name}` has changed the nullability."
-                    )
-                )
-            if field_obj.__class__.__name__ == "BooleanField":
-                if field_obj.default is False and db_version["default"] not in (
-                    False,
-                    None,
-                    0,
-                ):
-                    problems.append(
-                        MigrationRequired(
-                            f"BooleanField `{field_name}` has changed the default value."
-                        )
-                    )
-                elif field_obj.default is True and db_version["default"] not in (
-                    True,
-                    1,
-                ):
-                    problems.append(
-                        MigrationRequired(
-                            f"BooleanField `{field_name}` has changed the default value."
-                        )
-                    )
-            else:
-                if field_obj.default != db_version["default"]:
-                    problems.append(
-                        MigrationRequired(
-                            f"Field `{field_name}` has changed the default value."
-                        )
-                    )
-
-        if problems:
-            raise MigrationsNeeded(f"The model {cls} requires migrations.", problems)
-
-    class Meta:
-        database = DATABASE_PROXY
+def create_session_factory(engine: Engine):
+    """Return a configured sessionmaker bound to the given engine."""
+    return sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)

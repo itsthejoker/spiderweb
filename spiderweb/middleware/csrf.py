@@ -13,7 +13,9 @@ from spiderweb.server_checks import ServerCheck
 class CheckForSessionMiddleware(ServerCheck):
     SESSION_MIDDLEWARE_NOT_FOUND = (
         "Session middleware is not enabled. It must be listed above"
-        "CSRFMiddleware in the middleware list."
+        "CSRFMiddleware in the middleware list. Add"
+        " 'spiderweb.middleware.sessions.SessionMiddleware' to your"
+        " `middleware` list."
     )
 
     def check(self) -> Optional[Exception]:
@@ -26,8 +28,8 @@ class CheckForSessionMiddleware(ServerCheck):
 
 class VerifyCorrectMiddlewarePlacement(ServerCheck):
     SESSION_MIDDLEWARE_BELOW_CSRF = (
-        "SessionMiddleware is enabled, but it must be listed above"
-        "CSRFMiddleware in the middleware list."
+        "Session middleware is enabled, but must be listed above"
+        " CSRFMiddleware in the middleware list."
     )
 
     def check(self) -> Optional[Exception]:
