@@ -1,6 +1,6 @@
 [project]
 name = "spiderweb-framework"
-version = "2.1.0"
+version = "2.2.0"
 description = "A small web framework, just big enough for a spider."
 authors = [{name="Joe Kaufeld", email="opensource@joekaufeld.com"}]
 readme = "README.md"
