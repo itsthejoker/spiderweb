@@ -50,6 +50,7 @@ dev = [
     "gunicorn>=23.0.0",
     "hypothesis>=6.140.3",
     "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
     "ruff>=0.14.0",
 ]
 

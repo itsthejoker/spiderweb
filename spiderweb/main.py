@@ -4,6 +4,7 @@ import pathlib
 import re
 import traceback
 import urllib.parse as urlparse
+import atexit
 from logging import Logger
 from threading import Thread
 from typing import Optional, Callable, Sequence, Literal
@@ -163,6 +164,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.db_session_factory = create_session_factory(self.db_engine)
         # Create internal tables (e.g., sessions)
         Base.metadata.create_all(self.db_engine)
+        # Ensure engine is disposed at process exit to avoid ResourceWarning under coverage
+        atexit.register(self.db_engine.dispose)
 
         if self.routes:
             self.add_routes()
