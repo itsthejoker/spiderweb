@@ -1,10 +1,9 @@
 [project]
 name = "spiderweb-framework"
-version = "2.2.0"
+version = "2.2.1"
 description = "A small web framework, just big enough for a spider."
 authors = [{name="Joe Kaufeld", email="opensource@joekaufeld.com"}]
 readme = "README.md"
-packages = [{include = "spiderweb"}]
 license = "MIT"
 requires-python = ">=3.11"
 exclude = [
@@ -56,7 +55,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["spiderweb/spiderweb-framework"]
+packages = ["spiderweb"]
 
 [project.urls]
 Homepage = "https://github.com/itsthejoker/spiderweb"
