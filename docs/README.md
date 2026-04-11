@@ -94,10 +94,9 @@ Spiderweb takes a middle ground approach: it allows you to declare framework-fir
 
 ```python
 from spiderweb import SpiderwebRouter
-from peewee import SqliteDatabase
 
 app = SpiderwebRouter(
-  db=SqliteDatabase("myapp.db"),
+  db="myapp.db",
   port=4500,
   session_cookie_name="myappsession",
   my_middleware_data="Test!"
@@ -127,7 +126,7 @@ Here's a non-exhaustive list of things this can do:
 - CORS middleware
 - Optional POST data validation middleware with Pydantic
 - Session middleware with built-in session store
-- Database support (using Peewee, but you can use whatever you want as long as there's a Peewee driver for it)
+- Database support (using SQLAlchemy, but you can use whatever you want as long as there's a SQLAlchemy driver for it)
 - Tests (currently a little over 80% coverage)
 
 [^1]: I mostly succeeded. The way that I'm approaching this is that I did my level best, then looked at (and copied) existing solutions where necessary. At the time of this writing, I did all of it solo except for the CORS middleware. [Read more about it here.](middleware/cors.md)

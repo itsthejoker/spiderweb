@@ -15,6 +15,7 @@ Spiderweb is a minimalist Python web framework that blends Django- and Flask-lik
 
 - Running an example app:
   - Minimal app:
+    ```
     from spiderweb import SpiderwebRouter
     from spiderweb.response import HttpResponse
 
@@ -26,6 +27,7 @@ Spiderweb is a minimalist Python web framework that blends Django- and Flask-lik
 
     if __name__ == "__main__":
         app.start()
+    ```
   - Alternatively, run the provided examples: python example.py or python example2.py.
 
 - Configuration surface (high-signal items; see SpiderwebRouter.__init__ in spiderweb/main.py):
@@ -35,7 +37,7 @@ Spiderweb is a minimalist Python web framework that blends Django- and Flask-lik
   - allowed_hosts: List or regex patterns for host checking.
   - CORS: cors_* options mirror standard CORS settings, with sane defaults (see constants.py and main.py for defaults and behavior).
   - Sessions/CSRF: session_* options define cookie properties and expiry; CSRF relies on session middleware (ordering matters; see below).
-  - DB: pass a Peewee Database (defaults to a local Sqlite file during tests via helpers.setup()).
+  - DB: pass a SQLAlchemy Engine, a database URL string, or a filesystem path for SQLite (defaults to `spiderweb-tests.db` during tests via `helpers.setup()`).
 
 2) Testing Information
 - Test runner: pytest (configured in pyproject.toml; addopts sets --maxfail=2 -rf).
@@ -53,7 +55,7 @@ Spiderweb is a minimalist Python web framework that blends Django- and Flask-lik
 - Project-specific fixtures/helpers:
   - conftest.py defines a session-scoped autouse fixture that deletes spiderweb-tests.db before and after the test session. Do not rely on persistent data between tests.
   - spiderweb.tests.helpers.setup() returns (app, environ, start_response):
-    - app is a SpiderwebRouter with a default SqliteDatabase("spiderweb-tests.db").
+    - app is a SpiderwebRouter with a default SQLite database ("spiderweb-tests.db").
     - environ is a WSGI environ seeded via wsgiref.util.setup_testing_defaults.
     - start_response is a helper capturing status and headers.
   - Use this to simulate WSGI calls without a real server.
@@ -64,6 +66,7 @@ Spiderweb is a minimalist Python web framework that blends Django- and Flask-lik
   - Prefer black/ruff-compliant style; avoid side effects that depend on execution order.
   - For routes, define them on a local SpiderwebRouter instance inside the test to avoid cross-test pollution.
   - Example pattern:
+    ```
     from spiderweb.response import HttpResponse
     from spiderweb.tests.helpers import setup
 
@@ -80,7 +83,7 @@ Spiderweb is a minimalist Python web framework that blends Django- and Flask-lik
         body_iter = app(environ, start_response)
         assert start_response.status.startswith("200")
         assert b"".join(body_iter) == b"pong"
-
+    ```
 - Demo test flow (validated during guideline creation):
   - A temporary test using helpers.setup() and a trivial route was created, executed with python -m pytest -k minimal_route_responds_200 (1 test passed), then removed. This demonstrates the idiomatic testing flow for this codebase.
 
@@ -105,7 +108,15 @@ Spiderweb is a minimalist Python web framework that blends Django- and Flask-lik
   - FileResponse sets content-type via mimetypes and streams body as bytes via wsgiref FileWrapper.
 
 - Database:
-  - spiderweb.db exposes SpiderwebModel. When using a custom Peewee database, pass it into SpiderwebRouter(db=...). In tests, a throwaway Sqlite DB is used via helpers.setup.
+  - Spiderweb uses Advanced Alchemy (built on SQLAlchemy) for internals like sessions.
+  - Pass a database URL, SQLAlchemy Engine, or path to `SpiderwebRouter(db=...)`.
+  - User models should inherit from `spiderweb.db.Base`.
+  - In tests, a throwaway SQLite DB is used via `helpers.setup()`.
+
+- Migrations:
+  - Spiderweb works with Alembic for database migrations.
+  - To use, initialize Alembic (`alembic init migrations`) and set `target_metadata = Base.metadata` in `migrations/env.py` (import `Base` from `spiderweb.db`).
+  - Generate migrations with `alembic revision --autogenerate` and apply with `alembic upgrade head`.
 
 - Debugging tips:
   - Use the StartResponse helper to inspect status and headers easily: dict(start_response.get_headers()).
