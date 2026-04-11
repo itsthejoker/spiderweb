@@ -4,12 +4,12 @@ Spiderweb framework — Development Guidelines
 Spiderweb is a minimalist Python web framework that blends Django- and Flask-like patterns. It provides function-based views, routing (Flask-style and Django-style, with variable converters), middleware, templating (Jinja2), static files, cookies, sessions, CSRF and CORS middleware, optional Pydantic validation, and a simple built-in WSGI dev server. The codebase targets Python 3.11–3.13.
 
 1) Build/Configuration Instructions
-- Supported Python: 3.11–3.13 (see pyproject.toml). The library itself has minimal runtime deps (peewee, jinja2, cryptography, email-validator, pydantic). Dev tooling uses pytest, hypothesis, coverage, ruff, black.
+- Supported Python: 3.11–3.13 (see pyproject.toml). The library itself has minimal runtime deps (sqlalchemy, jinja2, cryptography, email-validator, pydantic). Dev tooling uses pytest, hypothesis, coverage, ruff, black.
 - Dependency management:
-  - With Poetry (recommended):
-    - Install: poetry install
-    - Run commands: poetry run python -m spiderweb (if you expose an entry point) or poetry run python example.py
-  - Without Poetry:
+  - With uv (recommended):
+    - Install: uv sync
+    - Run commands: uv run python -m spiderweb (if you expose an entry point) or uv run python example.py
+  - Without uv:
     - Create venv and install: python -m venv .venv && .venv\Scripts\activate (Windows) or source .venv/bin/activate (POSIX); then pip install -e .[dev]
       Note: If extras aren’t configured, pip install -e . and then pip install the dev tools you need (pytest, coverage, black, ruff).
 
