@@ -1,3 +1,5 @@
+import asyncio
+import inspect
 from typing import Callable, ClassVar
 import sys
 
@@ -75,3 +77,68 @@ class MiddlewareMixin:
                 self.middleware.remove(middleware)
                 continue
         return rendered_response
+
+    async def process_request_middleware_async(self, request: Request) -> None | HttpResponse:
+        # Iterate over a snapshot so removals during the loop don't skip elements.
+        # Do NOT call process_response_middleware_async here — the caller (_handle_http)
+        # is responsible for running response middleware on the abort response.
+        to_remove = []
+        result = None
+        for middleware in list(self.middleware):
+            try:
+                fn = middleware.process_request
+                if inspect.iscoroutinefunction(fn):
+                    resp = await fn(request)
+                else:
+                    resp = await asyncio.to_thread(fn, request)
+            except UnusedMiddleware:
+                to_remove.append(middleware)
+                continue
+            if resp:
+                result = resp
+                break
+        for m in to_remove:
+            try:
+                self.middleware.remove(m)
+            except ValueError:
+                pass
+        return result
+
+    async def process_response_middleware_async(
+        self, request: Request, response: HttpResponse
+    ) -> None:
+        to_remove = []
+        for middleware in list(reversed(self.middleware)):
+            try:
+                fn = middleware.process_response
+                if inspect.iscoroutinefunction(fn):
+                    await fn(request, response)
+                else:
+                    await asyncio.to_thread(fn, request, response)
+            except UnusedMiddleware:
+                to_remove.append(middleware)
+        for m in to_remove:
+            try:
+                self.middleware.remove(m)
+            except ValueError:
+                pass
+
+    async def post_process_middleware_async(
+        self, request: Request, response: HttpResponse, rendered: str
+    ) -> str | bytes:
+        to_remove = []
+        for middleware in list(reversed(self.middleware)):
+            try:
+                fn = middleware.post_process
+                if inspect.iscoroutinefunction(fn):
+                    rendered = await fn(request, response, rendered)
+                else:
+                    rendered = await asyncio.to_thread(fn, request, response, rendered)
+            except UnusedMiddleware:
+                to_remove.append(middleware)
+        for m in to_remove:
+            try:
+                self.middleware.remove(m)
+            except ValueError:
+                pass
+        return rendered
