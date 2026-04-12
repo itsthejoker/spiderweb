@@ -1,14 +1,13 @@
 """Extra coverage tests for spiderweb/main.py uncovered branches."""
-import os
+
 import sys
 import types
-from io import BytesIO
 from wsgiref.util import setup_testing_defaults
 
 import pytest
 
 from spiderweb import SpiderwebRouter
-from spiderweb.exceptions import ConfigError, ServerError
+from spiderweb.exceptions import ServerError
 from spiderweb.middleware.base import SpiderwebMiddleware
 from spiderweb.response import HttpResponse, TemplateResponse
 from spiderweb.tests.helpers import setup
@@ -194,7 +193,7 @@ def test_check_valid_host_no_host_header():
     # Remove the HTTP_HOST header that setup_testing_defaults would add
     environ.pop("HTTP_HOST", None)
 
-    result = app(environ, start_response)
+    app(environ, start_response)
     assert start_response.status.startswith("403")
 
 
@@ -212,7 +211,7 @@ def test_check_valid_host_rejected_host():
         return HttpResponse("ok")  # pragma: no cover
 
     environ["HTTP_HOST"] = "evil.example.com"
-    result = app(environ, start_response)
+    app(environ, start_response)
     assert start_response.status.startswith("403")
 
 
@@ -313,7 +312,7 @@ def test_prepare_and_fire_response_exception_returns_500():
         def index(request):
             return HttpResponse("ok")
 
-        result = app(environ, start_response)
+        app(environ, start_response)
         assert start_response.status.startswith("500")
     finally:
         sys.modules.pop(mod_name, None)

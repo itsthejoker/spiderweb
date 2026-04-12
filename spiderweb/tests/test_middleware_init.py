@@ -1,4 +1,5 @@
 """Tests for the async middleware pipeline in spiderweb/middleware/__init__.py."""
+
 import sys
 import types
 

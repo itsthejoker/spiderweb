@@ -1,4 +1,5 @@
 """Extra ASGI coverage tests targeting uncovered branches in asgi.py."""
+
 import sys
 import types
 
@@ -6,9 +7,9 @@ import httpx
 import pytest
 
 from spiderweb.asgi import build_environ_from_asgi
-from spiderweb.exceptions import NotFound, ServerError
+from spiderweb.exceptions import ServerError
 from spiderweb.middleware.base import SpiderwebMiddleware
-from spiderweb.response import HttpResponse, JsonResponse, TemplateResponse
+from spiderweb.response import HttpResponse, TemplateResponse
 from spiderweb.tests.helpers import setup
 
 
@@ -166,7 +167,9 @@ async def test_asgi_template_response():
 
     @app.route("/tmpl")
     def tmpl_view(request):
-        return TemplateResponse(request, template_string="hello {{ name }}", context={"name": "world"})
+        return TemplateResponse(
+            request, template_string="hello {{ name }}", context={"name": "world"}
+        )
 
     async with _client(app.asgi_app) as client:
         resp = await client.get("/tmpl")

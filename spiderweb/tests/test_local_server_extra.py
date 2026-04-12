@@ -1,4 +1,5 @@
 """Extra coverage tests for spiderweb/local_server.py."""
+
 import sys
 import threading
 import time
@@ -135,6 +136,7 @@ def test_start_asgi_non_blocking_returns_thread():
         async def serve(self):
             # Simulate work then exit
             import asyncio
+
             await asyncio.sleep(0.01)
 
     class _FakeUvicorn:

@@ -1,4 +1,5 @@
 """Small targeted tests filling remaining coverage gaps across several modules."""
+
 from io import BytesIO
 
 import httpx
@@ -92,9 +93,9 @@ def test_csrf_session_key_mismatch(monkeypatch):
 
     # Build a token for a different session_key than what the request will have
     wrong_session_key = "wrong_session_key_12345"
-    token = app.encrypt(
-        f"2099-01-01T00:00:00::{wrong_session_key}"
-    ).decode(app.DEFAULT_ENCODING)
+    token = app.encrypt(f"2099-01-01T00:00:00::{wrong_session_key}").decode(
+        app.DEFAULT_ENCODING
+    )
 
     mw = CSRFMiddleware(server=app)
 
@@ -122,6 +123,7 @@ def test_request_json_method():
     def json_view(request):
         captured["data"] = request.json()
         from spiderweb.response import HttpResponse
+
         return HttpResponse("ok")
 
     environ = {}
@@ -134,6 +136,7 @@ def test_request_json_method():
     environ["PATH_INFO"] = "/json-in"
 
     from spiderweb.tests.helpers import StartResponse
+
     sr = StartResponse()
     app(environ, sr)
 

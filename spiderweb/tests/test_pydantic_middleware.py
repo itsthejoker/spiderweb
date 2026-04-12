@@ -3,20 +3,19 @@
 Requires pydantic to be installed (spiderweb-framework[pydantic]).
 Skip the whole module gracefully when pydantic is absent.
 """
+
 import sys
-import types
 from io import BytesIO
 from urllib.parse import urlencode
 from wsgiref.util import setup_testing_defaults
 
 import pytest
 
-pydantic = pytest.importorskip("pydantic", reason="pydantic not installed")
-
-from spiderweb import SpiderwebRouter
 from spiderweb.middleware.pydantic import RequestModel
 from spiderweb.response import HttpResponse
 from spiderweb.tests.helpers import setup
+
+pydantic = pytest.importorskip("pydantic", reason="pydantic not installed")
 
 
 # ---------------------------------------------------------------------------
@@ -76,9 +75,7 @@ def test_pydantic_valid_post_sets_validated_data():
     """Valid POST data is parsed into validated_data on the request."""
     captured = {}
 
-    app, _, _ = setup(
-        middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"]
-    )
+    app, _, _ = setup(middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"])
 
     @app.route("/submit", allowed_methods=["POST"])
     def submit(request: _CommentForm):
@@ -98,9 +95,7 @@ def test_pydantic_missing_field_returns_400():
     """POST data missing a required field returns a 400 JSON error."""
     import json
 
-    app, _, _ = setup(
-        middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"]
-    )
+    app, _, _ = setup(middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"])
 
     @app.route("/submit", allowed_methods=["POST"])
     def submit(request: _CommentForm):
@@ -118,9 +113,7 @@ def test_pydantic_missing_field_returns_400():
 
 def test_pydantic_get_request_skipped():
     """GET requests are not validated — handler is called directly."""
-    app, _, _ = setup(
-        middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"]
-    )
+    app, _, _ = setup(middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"])
 
     @app.route("/page")
     def page(request: _CommentForm):
@@ -135,9 +128,7 @@ def test_pydantic_get_request_skipped():
 
 def test_pydantic_unannotated_handler_skipped():
     """A handler without a RequestModel type hint is not validated."""
-    app, _, _ = setup(
-        middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"]
-    )
+    app, _, _ = setup(middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"])
 
     @app.route("/plain", allowed_methods=["POST"])
     def plain(request):
@@ -189,9 +180,7 @@ def test_pydantic_multiple_errors_reported():
         second: str
         third: str
 
-    app, _, _ = setup(
-        middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"]
-    )
+    app, _, _ = setup(middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"])
 
     @app.route("/multi", allowed_methods=["POST"])
     def multi(request: _MultiForm):

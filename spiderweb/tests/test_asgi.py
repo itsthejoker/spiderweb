@@ -116,10 +116,12 @@ async def test_asgi_middleware_sync_and_async():
     mod.AsyncMiddleware = AsyncMiddleware
     sys.modules[mod_name] = mod
     try:
-        app, _, _ = setup(middleware=[
-            f"{mod_name}.SyncMiddleware",
-            f"{mod_name}.AsyncMiddleware",
-        ])
+        app, _, _ = setup(
+            middleware=[
+                f"{mod_name}.SyncMiddleware",
+                f"{mod_name}.AsyncMiddleware",
+            ]
+        )
 
         @app.route("/mw-test")
         def view(request):
