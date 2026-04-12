@@ -1,8 +1,10 @@
 # asgi
 
+> New in 2.3.0!
+
 Spiderweb supports both WSGI and ASGI from the same `SpiderwebRouter` instance. Your existing WSGI app continues to work exactly as before; ASGI is strictly opt-in.
 
-## installation
+## Installation
 
 ASGI mode requires `uvicorn`, which is available as an optional extra:
 
@@ -28,7 +30,7 @@ pipenv install "spiderweb-framework[asgi]"
 
 <!-- tabs:end -->
 
-## the dev server
+## The Dev Server
 
 The simplest way to run your app in ASGI mode during development is `app.start_asgi()`. It behaves just like `app.start()`, but runs through uvicorn instead of `wsgiref`.
 
@@ -49,7 +51,7 @@ if __name__ == "__main__":
 > [!WARNING]
 > The dev server is just that: for development. Do not use for production.
 
-## production deployment
+## Production Deployment
 
 For production, pass `app.asgi_app` to any ASGI-compatible server. The `asgi_app` property returns the same `ASGIHandler` instance every time, so it's safe to pass once and reuse.
 
@@ -63,7 +65,7 @@ Or with Hypercorn:
 hypercorn myapp:app.asgi_app
 ```
 
-## async views
+## Async Views
 
 Views can be defined as `async def` and they will be awaited natively in ASGI mode. Sync views continue to work too — they're dispatched via `asyncio.to_thread` so they don't block the event loop.
 
@@ -79,7 +81,7 @@ async def async_view(request):
 
 Both of the above work under both WSGI and ASGI. There's no need to pick one or the other.
 
-## lifespan callbacks
+## Lifespan Callbacks
 
 You can register startup and shutdown callbacks when creating the router. These are called by the ASGI server during the lifespan protocol — startup before the first request, shutdown after the last.
 
@@ -98,7 +100,7 @@ app = SpiderwebRouter(
 
 Both sync and async callbacks are supported. They're no-ops when running under WSGI.
 
-## async middleware
+## Async Middleware
 
 Middleware can define `async def` versions of `process_request`, `process_response`, and `post_process`. Spiderweb detects them and awaits them in ASGI mode. Sync middleware works in both modes via `asyncio.to_thread`.
 
@@ -125,7 +127,7 @@ class TimingMiddleware(SpiderwebMiddleware):
 
 > See [writing your own middleware](middleware/custom_middleware.md) for the full middleware API.
 
-## request body size limit
+## Request Body Size Limit
 
 By default, Spiderweb rejects request bodies larger than **10 MB** with a `413` response. You can raise or remove the limit when creating the router:
 
@@ -146,7 +148,7 @@ app = SpiderwebRouter(
 > [!WARNING]
 > Disabling the size limit means a single request can exhaust your server's memory. Only do this if you have another mechanism (e.g. a reverse proxy) enforcing a limit upstream.
 
-## wsgi and asgi side by side
+## WSGI and ASGI Side by Side
 
 You can use both protocols at the same time from the same `SpiderwebRouter` instance. The WSGI `__call__` is untouched; `asgi_app` is a separate entry point.
 
@@ -160,7 +162,7 @@ wsgi_app = app
 asgi_app = app.asgi_app
 ```
 
-## configuration reference
+## Configuration Reference
 
 These `SpiderwebRouter` parameters are specific to ASGI support:
 
