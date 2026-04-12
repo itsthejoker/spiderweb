@@ -46,17 +46,17 @@ def build_environ_from_asgi(scope: dict, body: bytes) -> dict:
 
 
 class ASGIHandler:
-    def __init__(self, router):
+    def __init__(self, router) -> None:
         self._router = router
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope, receive, send) -> None:
         if scope["type"] == "lifespan":
             await self._handle_lifespan(scope, receive, send)
         elif scope["type"] == "http":
             await self._handle_http(scope, receive, send)
         # websocket: not yet handled
 
-    async def _handle_lifespan(self, scope, receive, send):
+    async def _handle_lifespan(self, scope, receive, send) -> None:
         while True:
             message = await receive()
             if message["type"] == "lifespan.startup":
@@ -82,7 +82,7 @@ class ASGIHandler:
                     await send({"type": "lifespan.shutdown.failed", "message": str(e)})
                 return
 
-    async def _handle_http(self, scope, receive, send):
+    async def _handle_http(self, scope, receive, send) -> None:
         router = self._router
         max_body = getattr(
             router, "max_request_body_size", 10 * 1024 * 1024
@@ -184,7 +184,7 @@ class ASGIHandler:
         # 7. Send ASGI response
         await self._send_response(send, request, resp)
 
-    async def _send_response(self, send, request, resp: HttpResponse):
+    async def _send_response(self, send, request, resp: HttpResponse) -> None:
         router = self._router
         try:
             rendered = resp.render()
@@ -243,7 +243,7 @@ class ASGIHandler:
             {"type": "http.response.body", "body": body_bytes, "more_body": False}
         )
 
-    async def _send_error(self, send, request, e: SpiderwebNetworkException):
+    async def _send_error(self, send, request, e: SpiderwebNetworkException) -> None:
         body = f"Something went wrong.\n\nCode: {e.code}\n\nMsg: {e.msg}\n\nDesc: {e.desc}".encode(
             DEFAULT_ENCODING
         )
