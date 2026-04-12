@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import inspect
 import logging
@@ -92,7 +93,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         session_cookie_path: str = "/",
         on_startup: list[Callable] = None,
         on_shutdown: list[Callable] = None,
-        max_request_body_size: int | None = 10 * 1024 * 1024,  # 10 MB; None disables the limit
+        max_request_body_size: int | None = 10
+        * 1024
+        * 1024,  # 10 MB; None disables the limit
         log: Logger = None,
         **kwargs,
     ):
@@ -248,6 +251,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
     @functools.cached_property
     def asgi_app(self):
         from spiderweb.asgi import ASGIHandler
+
         return ASGIHandler(self)
 
     def fire_response(self, start_response, request: Request, resp: HttpResponse):
@@ -392,6 +396,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                         start_response, request, abort_view
                     )
                 resp = handler(request, **additional_args)
+                if inspect.iscoroutine(resp):
+                    resp = self._run_coroutine(resp)
                 if resp is None:
                     raise NoResponseError(f"View {handler} returned None.")
                 # run the response through the middleware and send it
