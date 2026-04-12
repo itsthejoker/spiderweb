@@ -84,18 +84,32 @@ class ASGIHandler:
 
     async def _handle_http(self, scope, receive, send):
         router = self._router
-        max_body = getattr(router, "max_request_body_size", 10 * 1024 * 1024)  # default 10 MB
+        max_body = getattr(
+            router, "max_request_body_size", 10 * 1024 * 1024
+        )  # default 10 MB
         # 1. Buffer request body (enforcing size limit to prevent memory exhaustion)
         body = b""
         while True:
             msg = await receive()
             body += msg.get("body", b"")
             if max_body is not None and len(body) > max_body:
-                await send({"type": "http.response.start", "status": 413,
-                            "headers": [(b"content-type", b"text/plain; charset=utf-8"),
-                                        (b"connection", b"close")]})
-                await send({"type": "http.response.body",
-                            "body": b"Request body too large", "more_body": False})
+                await send(
+                    {
+                        "type": "http.response.start",
+                        "status": 413,
+                        "headers": [
+                            (b"content-type", b"text/plain; charset=utf-8"),
+                            (b"connection", b"close"),
+                        ],
+                    }
+                )
+                await send(
+                    {
+                        "type": "http.response.body",
+                        "body": b"Request body too large",
+                        "more_body": False,
+                    }
+                )
                 return
             if not msg.get("more_body", False):
                 break
@@ -141,10 +155,20 @@ class ASGIHandler:
         if resp is None:
             # The ASGI server requires http.response.start before the connection
             # closes. Send a 500 first, then log and return — do NOT raise here.
-            await send({"type": "http.response.start", "status": 500,
-                        "headers": [(b"content-type", b"text/plain; charset=utf-8")]})
-            await send({"type": "http.response.body",
-                        "body": b"View returned None", "more_body": False})
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 500,
+                    "headers": [(b"content-type", b"text/plain; charset=utf-8")],
+                }
+            )
+            await send(
+                {
+                    "type": "http.response.body",
+                    "body": b"View returned None",
+                    "more_body": False,
+                }
+            )
             router.log.error(f"NoResponseError: view {handler!r} returned None")
             return
 
@@ -164,13 +188,25 @@ class ASGIHandler:
         router = self._router
         try:
             rendered = resp.render()
-            rendered = await router.post_process_middleware_async(request, resp, rendered)
+            rendered = await router.post_process_middleware_async(
+                request, resp, rendered
+            )
         except Exception:
             router.log.error(traceback.format_exc())
-            await send({"type": "http.response.start", "status": 500,
-                        "headers": [(b"content-type", b"text/plain; charset=utf-8")]})
-            await send({"type": "http.response.body", "body": b"Internal Server Error",
-                        "more_body": False})
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 500,
+                    "headers": [(b"content-type", b"text/plain; charset=utf-8")],
+                }
+            )
+            await send(
+                {
+                    "type": "http.response.body",
+                    "body": b"Internal Server Error",
+                    "more_body": False,
+                }
+            )
             return
 
         if isinstance(rendered, str):
@@ -188,17 +224,35 @@ class ASGIHandler:
         normalised = {k.replace("_", "-"): v for k, v in resp.headers.items()}
         cookies = normalised.pop("set-cookie", [])
         varies = normalised.pop("vary", [])
-        raw_headers = [(k.encode("latin1"), str(v).encode("latin1")) for k, v in normalised.items()]
+        raw_headers = [
+            (k.encode("latin1"), str(v).encode("latin1")) for k, v in normalised.items()
+        ]
         for c in cookies:
             raw_headers.append((b"set-cookie", str(c).encode("latin1")))
         for v in varies:
             raw_headers.append((b"vary", str(v).encode("latin1")))
 
-        await send({"type": "http.response.start", "status": resp.status_code, "headers": raw_headers})
-        await send({"type": "http.response.body", "body": body_bytes, "more_body": False})
+        await send(
+            {
+                "type": "http.response.start",
+                "status": resp.status_code,
+                "headers": raw_headers,
+            }
+        )
+        await send(
+            {"type": "http.response.body", "body": body_bytes, "more_body": False}
+        )
 
     async def _send_error(self, send, request, e: SpiderwebNetworkException):
-        body = f"Something went wrong.\n\nCode: {e.code}\n\nMsg: {e.msg}\n\nDesc: {e.desc}".encode(DEFAULT_ENCODING)
+        body = f"Something went wrong.\n\nCode: {e.code}\n\nMsg: {e.msg}\n\nDesc: {e.desc}".encode(
+            DEFAULT_ENCODING
+        )
         status = getattr(e, "code", 500) or 500
-        await send({"type": "http.response.start", "status": status, "headers": [(b"content-type", b"text/plain; charset=utf-8")]})
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status,
+                "headers": [(b"content-type", b"text/plain; charset=utf-8")],
+            }
+        )
         await send({"type": "http.response.body", "body": body, "more_body": False})
