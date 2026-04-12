@@ -1,3 +1,5 @@
+import asyncio
+import functools
 import inspect
 import logging
 import pathlib
@@ -89,6 +91,11 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         session_cookie_http_only: bool = True,
         session_cookie_same_site: Literal["strict", "lax", "none"] = "lax",
         session_cookie_path: str = "/",
+        on_startup: list[Callable] = None,
+        on_shutdown: list[Callable] = None,
+        max_request_body_size: int | None = 10
+        * 1024
+        * 1024,  # 10 MB; None disables the limit
         log: Logger = None,
         **kwargs,
     ):
@@ -142,6 +149,10 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.session_cookie_http_only = session_cookie_http_only
         self.session_cookie_same_site = session_cookie_same_site
         self.session_cookie_path = session_cookie_path
+
+        self.on_startup = on_startup or []
+        self.on_shutdown = on_shutdown or []
+        self.max_request_body_size = max_request_body_size
 
         self.DEFAULT_ENCODING = DEFAULT_ENCODING
         self.DEFAULT_ALLOWED_METHODS = DEFAULT_ALLOWED_METHODS
@@ -236,6 +247,12 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         # finally, run the startup checks to verify everything is correct and happy.
         self.log.info("Run startup checks...")
         self.run_middleware_checks()
+
+    @functools.cached_property
+    def asgi_app(self):
+        from spiderweb.asgi import ASGIHandler
+
+        return ASGIHandler(self)
 
     def fire_response(self, start_response, request: Request, resp: HttpResponse):
         try:
@@ -365,12 +382,11 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             allowed_methods = DEFAULT_ALLOWED_METHODS
         request.handler = handler
 
-        if request.method not in allowed_methods:
-            # replace the potentially valid handler with the error route
-            handler = self.get_error_route(405)
-
         if not self.check_valid_host(request):
             handler = self.get_error_route(403)
+        elif request.method not in allowed_methods:
+            # replace the potentially valid handler with the error route
+            handler = self.get_error_route(405)
 
         try:
             if handler:
@@ -380,6 +396,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                         start_response, request, abort_view
                     )
                 resp = handler(request, **additional_args)
+                if inspect.iscoroutine(resp):
+                    resp = self._run_coroutine(resp)
                 if resp is None:
                     raise NoResponseError(f"View {handler} returned None.")
                 # run the response through the middleware and send it

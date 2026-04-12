@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from spiderweb.decorators import csrf_exempt
+# from spiderweb.decorators import csrf_exempt
 # from spiderweb.example_validator import CommentForm
 from spiderweb.main import SpiderwebRouter
 from spiderweb.exceptions import ServerError
