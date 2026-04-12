@@ -1,9 +1,6 @@
 """
 Async example server for Spiderweb.
 
-Demonstrates ASGI mode with a mix of async and sync route handlers,
-async middleware, lifecycle hooks, and all standard response types.
-
 Run with uvicorn directly:
     uvicorn example_async:app.asgi_app --reload
 
@@ -33,6 +30,7 @@ from spiderweb.response import (
 # Lifecycle hooks
 # ---------------------------------------------------------------------------
 
+
 async def on_startup():
     # Async startup hook — good place to open DB connections, warm caches, etc.
     print("[startup] async example server is ready")
@@ -53,6 +51,7 @@ app = SpiderwebRouter(
         "spiderweb.middleware.cors.CorsMiddleware",
         "spiderweb.middleware.sessions.SessionMiddleware",
         "spiderweb.middleware.csrf.CSRFMiddleware",
+        "example_middleware.TestMiddleware",
         # Async-native middleware
         "example_async_middleware.AsyncTimingMiddleware",
         "example_async_middleware.AsyncRequestIdMiddleware",
@@ -78,6 +77,7 @@ app = SpiderwebRouter(
 # Sync handlers — work in both WSGI and ASGI, run in thread pool under ASGI
 # ---------------------------------------------------------------------------
 
+
 @app.route("/")
 def index(request):
     return TemplateResponse(request, "test.html", context={"value": "ASYNC EXAMPLE"})
@@ -94,7 +94,7 @@ def cookies(request):
     resp = HttpResponse(body="COOKIES! NOM NOM NOM")
     resp.set_cookie(name="nom", value="everyonelovescookies")
     resp.set_cookie(
-        name="nom_timed",
+        name="nomtimed",
         value="expires-soon",
         expires=datetime.utcnow() + timedelta(seconds=30),
         max_age=30,
@@ -125,6 +125,7 @@ def error(request):
 # Async handlers — native coroutines, no thread-pool overhead under ASGI
 # ---------------------------------------------------------------------------
 
+
 @app.route("/async/hello")
 async def async_hello(request):
     """Simple async handler."""
@@ -136,11 +137,13 @@ async def async_json(request):
     """Async handler returning JSON."""
     # Simulate a short async I/O operation (e.g., a cache lookup)
     await asyncio.sleep(0)
-    return JsonResponse(data={
-        "handler": "async",
-        "timestamp": datetime.utcnow().isoformat(),
-        "path": request.path,
-    })
+    return JsonResponse(
+        data={
+            "handler": "async",
+            "timestamp": datetime.utcnow().isoformat(),
+            "path": request.path,
+        }
+    )
 
 
 @app.route("/async/echo", allowed_methods=["POST"])
@@ -155,11 +158,13 @@ async def async_echo(request):
     except Exception:
         payload = {"raw": request.content}
 
-    return JsonResponse(data={
-        "method": request.method,
-        "received": payload,
-        "content_type": request.META.get("CONTENT_TYPE", ""),
-    })
+    return JsonResponse(
+        data={
+            "method": request.method,
+            "received": payload,
+            "content_type": request.META.get("CONTENT_TYPE", ""),
+        }
+    )
 
 
 @app.route("/async/session")
@@ -185,7 +190,9 @@ async def async_delay(request, ms):
     """
     ms = min(ms, 5000)  # cap at 5 s for safety
     await asyncio.sleep(ms / 1000)
-    return JsonResponse(data={"slept_ms": ms, "timestamp": datetime.utcnow().isoformat()})
+    return JsonResponse(
+        data={"slept_ms": ms, "timestamp": datetime.utcnow().isoformat()}
+    )
 
 
 @app.route("/async/params/<int:id>/<str:name>")
@@ -214,15 +221,21 @@ async def async_file_upload(request):
         content = file.read()
         filepath = file.save()
         try:
-            return JsonResponse(data={
-                "filename": file.filename,
-                "size_bytes": len(content),
-                "preview": content.decode("utf-8")[:200],
-                "saved_to": str(filepath),
-            })
+            return JsonResponse(
+                data={
+                    "filename": file.filename,
+                    "size_bytes": len(content),
+                    "preview": content.decode("utf-8")[:200],
+                    "saved_to": str(filepath),
+                }
+            )
         except UnicodeDecodeError:
             return JsonResponse(
-                data={"filename": file.filename, "size_bytes": len(content), "saved_to": str(filepath)},
+                data={
+                    "filename": file.filename,
+                    "size_bytes": len(content),
+                    "saved_to": str(filepath),
+                },
                 status_code=201,
             )
     return TemplateResponse(request, "file_upload.html")
@@ -231,6 +244,7 @@ async def async_file_upload(request):
 # ---------------------------------------------------------------------------
 # Custom error handlers
 # ---------------------------------------------------------------------------
+
 
 @app.error(404)
 def http404(request) -> HttpResponse:

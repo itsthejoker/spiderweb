@@ -82,6 +82,8 @@ class LocalServerMixin:
         else:
             # Run the server in a background thread and return immediately
             # (mirrors the threading behaviour of start(blocking=False))
-            t = threading.Thread(target=asyncio.run, args=(server.serve(),), daemon=True)
+            t = threading.Thread(
+                target=asyncio.run, args=(server.serve(),), daemon=True
+            )
             t.start()
             return t
