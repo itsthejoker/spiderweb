@@ -869,6 +869,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "multipart" },
     { name = "sqlalchemy" },
+    { name = "uvicorn" },
 ]
 
 [package.optional-dependencies]
@@ -901,6 +902,7 @@ requires-dist = [
     { name = "multipart", specifier = ">=1.3.0" },
     { name = "pydantic", marker = "extra == 'pydantic'", specifier = ">=2.8.2,<3" },
     { name = "sqlalchemy", specifier = ">=2.0.44" },
+    { name = "uvicorn", specifier = ">=0.44.0" },
     { name = "uvicorn", marker = "extra == 'asgi'", specifier = ">=0.30.0" },
 ]
 provides-extras = ["pydantic", "asgi"]
