@@ -24,7 +24,7 @@ spiderweb --app myapp:app serve
 
 **2. The `SPIDERWEB_APP` environment variable**
 
-Set it once in your shell and never think about it again:
+This is helpful for CI pipelines of for folks who like to have everything set in the shell.
 
 ```shell
 export SPIDERWEB_APP=myapp:app
@@ -83,7 +83,7 @@ Override the bind address or port without touching your source code:
 spiderweb serve --addr 0.0.0.0 --port 9000
 ```
 
-If your project always runs in ASGI mode, set `asgi = true` in `[tool.spiderweb]` and you'll never need to type `--asgi` again:
+If your project always runs in ASGI mode, set `asgi = true` in `[tool.spiderweb]`:
 
 ```toml
 [tool.spiderweb]
@@ -91,7 +91,7 @@ app = "myapp:app"
 asgi = true
 ```
 
-You can still override it on the command line in either direction — `--asgi` forces ASGI, `--no-asgi` forces WSGI regardless of what `pyproject.toml` says.
+You can still override it on the command line in either direction — `--asgi` forces ASGI, `--wsgi` forces WSGI regardless of what `pyproject.toml` says.
 
 > [!WARNING]
 > The dev server is just that: for development. Do not use for production.
@@ -221,13 +221,13 @@ You can register as many custom commands as you like. Pick meaningful names; the
 | `--app MODULE:ATTR` | The app to use, in `module:attribute` form. Overrides `SPIDERWEB_APP` and `pyproject.toml`. |
 | `SPIDERWEB_APP` | Environment variable. Overrides `pyproject.toml`, overridden by `--app`. |
 | `[tool.spiderweb] app` | `pyproject.toml` key. Lowest priority; used when neither of the above is set. |
-| `[tool.spiderweb] asgi` | `pyproject.toml` boolean. When `true`, `serve` defaults to ASGI mode. Overridden by `--asgi` / `--no-asgi`. |
+| `[tool.spiderweb] asgi` | `pyproject.toml` boolean. When `true`, `serve` defaults to ASGI mode. Overridden by `--asgi` / `--wsgi`. |
 
 ### `serve` options
 
 | Flag | Description |
 |---|---|
 | `--asgi` | Start in ASGI mode via uvicorn instead of WSGI. |
-| `--no-asgi` | Force WSGI mode even when `asgi = true` is set in `pyproject.toml`. |
+| `--wsgi` | Force WSGI mode even when `asgi = true` is set in `pyproject.toml`. |
 | `--addr ADDR` | Bind address. Overrides the value stored in the app. |
 | `--port PORT` | Port number. Overrides the value stored in the app. |

@@ -14,6 +14,7 @@ The ``--app`` value is resolved in this order (first match wins):
 
        [tool.spiderweb]
        app = "myapp:app"
+       asgi = true   # makes `serve` default to ASGI mode
 
 Built-in commands
 -----------------
@@ -21,7 +22,8 @@ Built-in commands
     Print the spiderweb-framework version and exit.  Does not need ``--app``.
 
 ``serve``
-    Start the development server (WSGI by default; ``--asgi`` for ASGI mode).
+    Start the development server (WSGI by default; ``--asgi`` for ASGI mode,
+    ``--wsgi`` to force WSGI when ``asgi=true`` is set in pyproject.toml).
     Optional ``--addr`` and ``--port`` override the values stored in the app.
 
 ``shell``
@@ -66,11 +68,12 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 
-def _find_pyproject_app() -> str | None:
-    """Return the ``[tool.spiderweb] app`` value from the nearest pyproject.toml.
+def _read_pyproject_config() -> dict:
+    """Return the ``[tool.spiderweb]`` section from the nearest ``pyproject.toml``.
 
     Walks up from the current working directory until the filesystem root is
-    reached.  Returns ``None`` if no file is found or the key is absent.
+    reached.  Returns an empty dict if no file is found, the section is absent,
+    or the file cannot be parsed.
     """
     directory = pathlib.Path.cwd()
     while True:
@@ -79,14 +82,18 @@ def _find_pyproject_app() -> str | None:
             try:
                 with candidate.open("rb") as fh:
                     data = tomllib.load(fh)
-                return data.get("tool", {}).get("spiderweb", {}).get("app")
+                return data.get("tool", {}).get("spiderweb", {})
             except Exception:
-                return None
+                return {}
         parent = directory.parent
         if parent == directory:
-            # Reached the filesystem root without finding anything.
-            return None
+            return {}
         directory = parent
+
+
+def _find_pyproject_app() -> str | None:
+    """Return the ``[tool.spiderweb] app`` value from the nearest pyproject.toml."""
+    return _read_pyproject_config().get("app")
 
 
 # ---------------------------------------------------------------------------
@@ -262,13 +269,22 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _build_serve_parser() -> argparse.ArgumentParser:
+def _build_serve_parser(asgi_default: bool = False) -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="spiderweb serve", add_help=False)
-    p.add_argument(
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument(
         "--asgi",
+        dest="asgi",
         action="store_true",
-        help="Use ASGI mode via uvicorn (default: WSGI)",
+        help="Use ASGI mode via uvicorn.",
     )
+    mode.add_argument(
+        "--wsgi",
+        dest="asgi",
+        action="store_false",
+        help="Force WSGI mode even when asgi=true is set in pyproject.toml.",
+    )
+    p.set_defaults(asgi=asgi_default)
     p.add_argument(
         "--addr",
         metavar="ADDR",
@@ -289,13 +305,16 @@ def _build_serve_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None):
+    # Read pyproject.toml once so both --app and serve's asgi_default can use it.
+    pyproject = _read_pyproject_config()
+
     # Stage 1: extract --app and the bare command name; leave the rest for the
     # command-specific parser so that e.g. ``serve --asgi`` works without
     # argparse rejecting ``--asgi`` at the top level.
     pre = argparse.ArgumentParser(add_help=False)
     pre.add_argument(
         "--app",
-        default=os.environ.get("SPIDERWEB_APP") or _find_pyproject_app(),
+        default=os.environ.get("SPIDERWEB_APP") or pyproject.get("app"),
     )
     pre.add_argument("command", nargs="?")
     pre_args, remaining = pre.parse_known_args(argv)
@@ -323,7 +342,8 @@ def main(argv=None):
 
     # Built-in commands (parse their own flags from *remaining*)
     if command == "serve":
-        serve_args, extra = _build_serve_parser().parse_known_args(remaining)
+        asgi_default = bool(pyproject.get("asgi", False))
+        serve_args, extra = _build_serve_parser(asgi_default).parse_known_args(remaining)
         _cmd_serve(app, serve_args, extra)
         return
 

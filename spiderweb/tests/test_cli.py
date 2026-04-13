@@ -391,8 +391,8 @@ class TestServeAsgiFromPyproject:
         args, _ = _build_serve_parser(asgi_default=True).parse_known_args([])
         assert args.asgi is True
 
-    def test_no_asgi_flag_overrides_pyproject_true(self):
-        args, _ = _build_serve_parser(asgi_default=True).parse_known_args(["--no-asgi"])
+    def test_wsgi_flag_overrides_pyproject_true(self):
+        args, _ = _build_serve_parser(asgi_default=True).parse_known_args(["--wsgi"])
         assert args.asgi is False
 
     def test_asgi_flag_explicit_still_works(self):
@@ -415,8 +415,8 @@ class TestServeAsgiFromPyproject:
         main(["serve"])
         assert started_asgi == [True]
 
-    def test_no_asgi_flag_overrides_pyproject_in_main(self, tmp_path, monkeypatch):
-        """--no-asgi on the CLI overrides asgi=true in pyproject.toml."""
+    def test_wsgi_flag_overrides_pyproject_in_main(self, tmp_path, monkeypatch):
+        """--wsgi on the CLI overrides asgi=true in pyproject.toml."""
         app = _make_app()
         (tmp_path / "pyproject.toml").write_text(
             '[tool.spiderweb]\napp = "fake:app"\nasgi = true\n'
@@ -428,7 +428,7 @@ class TestServeAsgiFromPyproject:
         started_wsgi = []
         monkeypatch.setattr(app, "start", lambda blocking=True: started_wsgi.append(True))
 
-        main(["serve", "--no-asgi"])
+        main(["serve", "--wsgi"])
         assert started_wsgi == [True]
 
 
@@ -442,8 +442,8 @@ class TestParser:
         args, _ = _build_serve_parser().parse_known_args(["--asgi"])
         assert args.asgi is True
 
-    def test_serve_no_asgi_flag(self):
-        args, _ = _build_serve_parser(asgi_default=True).parse_known_args(["--no-asgi"])
+    def test_serve_wsgi_flag(self):
+        args, _ = _build_serve_parser(asgi_default=True).parse_known_args(["--wsgi"])
         assert args.asgi is False
 
     def test_serve_addr_and_port(self):
