@@ -11,7 +11,7 @@ except Exception:  # pragma: no cover - executed only when pydantic isn't instal
 
     class BaseModel:  # minimal stub to allow module import without pydantic
         @classmethod
-        def parse_obj(cls, *args, **kwargs):  # noqa: D401 - simple shim
+        def model_validate(cls, *args, **kwargs):  # noqa: D401 - simple shim
             raise RuntimeError(
                 "Pydantic is not installed. Install with 'pip install"
                 " spiderweb-framework[pydantic]' or 'pip install pydantic'"
@@ -65,7 +65,7 @@ class PydanticMiddleware(SpiderwebMiddleware):
         request_arg_name = inspect.getfullargspec(request.handler).args[0]
         if types.get(request_arg_name) in RequestModel.__subclasses__():
             try:
-                data = types[request_arg_name].parse_obj(request.POST)
+                data = types[request_arg_name].model_validate(request.POST)
                 request.validated_data = data
             except ValidationError as e:
                 return self.on_error(request, e)
