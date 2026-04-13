@@ -860,10 +860,11 @@ wheels = [
 
 [[package]]
 name = "spiderweb-framework"
-version = "2.3.0"
+version = "2.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "advanced-alchemy" },
+    { name = "alembic" },
     { name = "cryptography" },
     { name = "email-validator" },
     { name = "jinja2" },
@@ -896,6 +897,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "advanced-alchemy", specifier = ">=1.6.3,<2.0.0" },
+    { name = "alembic", specifier = ">=1.17.0" },
     { name = "cryptography", specifier = ">=46.0.2" },
     { name = "email-validator", specifier = ">=2.3.0" },
     { name = "jinja2", specifier = ">=3.1.6" },

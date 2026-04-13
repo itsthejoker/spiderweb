@@ -197,3 +197,141 @@ print(path)  # -> "/example/3?name=james"
 ```
 
 The arguments you pass in must match what the path expects, or you'll get a `SpiderwebException`. If there's no route with that name, you'll get a `ReverseNotFound` exception instead.
+
+## Route Groups
+
+> New in 2.4.0!
+
+As your application grows, keeping all of its routes in one file becomes unwieldy. Route groups let you define a set of related routes together — with a shared URL prefix — and then mount them onto your app in one shot.
+
+```python
+from spiderweb import SpiderwebRouter, RouteGroup
+from spiderweb.response import HttpResponse, JsonResponse
+
+api = RouteGroup(prefix="/api")
+
+@api.route("/users")
+def list_users(request):
+    return JsonResponse({"users": []})
+
+@api.route("/users/<int:id>")
+def get_user(request, id):
+    return JsonResponse({"id": id})
+
+app = SpiderwebRouter()
+app.include_routegroup(api)
+
+if __name__ == "__main__":
+    app.start()
+```
+
+The two routes above are registered as `/api/users` and `/api/users/<int:id>`. Everything else works exactly as it would if you had written `@app.route("/api/users")` yourself — URL parameter conversion, `allowed_methods`, all of it.
+
+You can also use `add_route()` on a group directly, without the decorator:
+
+```python
+api = RouteGroup(prefix="/api")
+api.add_route("/status", status_view, allowed_methods=["GET"], name="status")
+```
+
+### Namespaces
+
+If you give a route group a `namespace`, route names inside it are automatically prefixed with `"namespace:"`. This keeps reverse lookups unambiguous when two groups have routes with the same local name.
+
+```python
+v1 = RouteGroup(prefix="/v1", namespace="v1")
+v2 = RouteGroup(prefix="/v2", namespace="v2")
+
+@v1.route("/ping", name="ping")
+def ping_v1(request):
+    return HttpResponse("v1")
+
+@v2.route("/ping", name="ping")
+def ping_v2(request):
+    return HttpResponse("v2")
+
+app = SpiderwebRouter()
+app.include_routegroup(v1)
+app.include_routegroup(v2)
+
+app.reverse("v1:ping")  # -> "/v1/ping"
+app.reverse("v2:ping")  # -> "/v2/ping"
+```
+
+Without a namespace, route names pass through unchanged, so existing apps that don't need namespacing work exactly as before.
+
+> [!TIP]
+> You can include as many route groups as you like on the same app. Groups don't know about each other, so two groups that share the same prefix are fine as long as their individual paths don't clash.
+
+## Custom Path-Parameter Converters
+
+> New in 2.4.0!
+
+The built-in converters (`str`, `int`, `float`, `path`) cover the common cases, but sometimes you need a custom pattern — a UUID, a slug, a date string, and so on. You can teach Spiderweb new converters with `register_converter()`.
+
+A converter is any class with two things:
+
+- a `regex` class attribute — the pattern that must match the URL segment
+- a `to_python()` method — converts the matched string to whatever Python type you want
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+
+class SlugConverter:
+    regex = r"[-a-z0-9_]+"
+    name = "slug"
+
+    def to_python(self, value):
+        return str(value)
+
+app = SpiderwebRouter()
+app.register_converter(SlugConverter)
+
+@app.route("/posts/<slug:post_slug>")
+def get_post(request, post_slug):
+    return HttpResponse(f"post: {post_slug}")
+```
+
+The `name` attribute controls what you write in the route path — `<slug:...>` in this case. If you leave `name` off the class, Spiderweb derives it automatically by lower-casing the class name and stripping a trailing `"converter"` (so `SlugConverter` becomes `"slug"` either way).
+
+### A more complete example
+
+Here's a UUID converter that hands you a proper `uuid.UUID` object in your view:
+
+```python
+import uuid
+
+class UUIDConverter:
+    regex = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    name = "uuid"
+
+    def to_python(self, value):
+        return uuid.UUID(value)
+
+app.register_converter(UUIDConverter)
+
+@app.route("/records/<uuid:record_id>")
+def get_record(request, record_id):
+    # record_id is a uuid.UUID instance here
+    return HttpResponse(str(record_id))
+```
+
+Custom converters work inside route groups too — just register them on the app before calling `include_routegroup()`:
+
+```python
+app.register_converter(SlugConverter)
+
+blog = RouteGroup(prefix="/blog", namespace="blog")
+
+@blog.route("/<slug:post_slug>", name="post")
+def blog_post(request, post_slug):
+    return HttpResponse(post_slug)
+
+app.include_routegroup(blog)
+
+app.reverse("blog:post", {"post_slug": "hello-world"})  # -> "/blog/hello-world"
+```
+
+> [!NOTE]
+> Custom converters don't replace the built-ins. You can mix `<int:id>` and `<uuid:uid>` in the same app without any conflict.

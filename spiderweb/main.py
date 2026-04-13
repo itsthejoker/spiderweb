@@ -100,6 +100,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         **kwargs,
     ):
         self._routes = {}
+        self._converters = {}
         self.routes = routes
         self._error_routes = {}
         self.error_routes = error_routes
@@ -157,6 +158,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         self.DEFAULT_ENCODING = DEFAULT_ENCODING
         self.DEFAULT_ALLOWED_METHODS = DEFAULT_ALLOWED_METHODS
         self.log: logging.Logger = log if log else console_logger
+        self._management_commands: dict[str, Callable] = {}
 
         # for using .start() and .stop()
         self._thread: Optional[Thread] = None
@@ -318,6 +320,32 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
     def get_db_session(self):
         """Return a new SQLAlchemy session bound to the application's engine."""
         return self.db_session_factory()
+
+    def command(self, name: str) -> Callable:
+        """Register a custom management command callable for the CLI.
+
+        The decorated function receives ``(app, args, extra)`` where *app* is
+        this ``SpiderwebRouter`` instance, *args* is the parsed
+        ``argparse.Namespace``, and *extra* is a list of any unrecognised
+        command-line arguments.
+
+        Usage::
+
+            @app.command("seed")
+            def seed_db(app, args, extra):
+                with app.get_db_session() as session:
+                    ...
+
+        Then run it with::
+
+            spiderweb --app mymodule:app seed
+        """
+
+        def decorator(fn: Callable) -> Callable:
+            self._management_commands[name] = fn
+            return fn
+
+        return decorator
 
     def send_error_response(
         self, start_response, request: Request, e: SpiderwebNetworkException

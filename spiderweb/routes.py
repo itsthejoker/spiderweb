@@ -14,12 +14,21 @@ from spiderweb.exceptions import (
 from spiderweb.response import RedirectResponse
 
 
-def convert_match_to_dict(match: dict):
-    """Convert a match object to a dict with the proper converted types for each match."""
-    return {
-        k.split("__")[0]: globals()[k.split("__")[1]]().to_python(v)
-        for k, v in match.items()
-    }
+def convert_match_to_dict(match: dict, extra_converters: dict = None):
+    """Convert a match object to a dict with the proper converted types for each match.
+
+    extra_converters maps converter class names to converter classes and is used
+    for any custom converters registered via register_converter().
+    """
+    result = {}
+    for k, v in match.items():
+        param_name, converter_name = k.split("__")
+        if extra_converters and converter_name in extra_converters:
+            cls = extra_converters[converter_name]
+        else:
+            cls = globals()[converter_name]
+        result[param_name] = cls().to_python(v)
+    return result
 
 
 class DummyRedirectRoute:
@@ -36,6 +45,7 @@ class RoutesMixin:
     # ones that start with underscores are the compiled versions, non-underscores
     # are the user-supplied versions
     _routes: dict
+    _converters: dict  # name -> converter class (custom converters)
     routes: Sequence[tuple[str, Callable] | tuple[str, Callable, dict]]
     _error_routes: dict
     error_routes: dict[int, Callable]
@@ -67,11 +77,14 @@ class RoutesMixin:
         return outer
 
     def get_route(self, path) -> tuple[Callable, dict[str, Any], list[str]]:
+        # Build a by-class-name lookup for any registered custom converters so
+        # convert_match_to_dict can find them without touching globals().
+        custom_by_class = {cls.__name__: cls for cls in self._converters.values()}
         for option in self._routes.keys():
             if match_data := option.match(path):
                 return (
                     self._routes[option]["func"],
-                    convert_match_to_dict(match_data.groupdict()),
+                    convert_match_to_dict(match_data.groupdict(), custom_by_class),
                     self._routes[option]["allowed_methods"],
                 )
         raise NotFound()
@@ -112,15 +125,60 @@ class RoutesMixin:
                         f" Please fix '{name}'."
                     )
                 if ":" in name:
-                    converter, name = name.split(":")
-                    try:
-                        converter = globals()[converter.title() + "Converter"]
-                    except KeyError:
-                        raise ParseError(f"Unknown converter {converter}")
+                    converter_name, name = name.split(":")
+                    # Check custom converters first, then fall back to built-ins.
+                    if converter_name in self._converters:
+                        converter_cls = self._converters[converter_name]
+                    else:
+                        try:
+                            converter_cls = globals()[
+                                converter_name.title() + "Converter"
+                            ]
+                        except KeyError:
+                            raise ParseError(f"Unknown converter {converter_name}")
                 else:
-                    converter = StrConverter  # noqa: F405
-                parts[i] = rf"(?P<{name}__{str(converter.__name__)}>{converter.regex})"
+                    converter_cls = StrConverter  # noqa: F405
+                parts[i] = (
+                    rf"(?P<{name}__{converter_cls.__name__}>{converter_cls.regex})"
+                )
         return re.compile(rf"^{'/'.join(parts)}$")
+
+    def register_converter(self, cls) -> None:
+        """Register a custom path-parameter converter class.
+
+        The converter must have a ``regex`` class attribute (the pattern to
+        match) and a ``to_python(value)`` method.  Its ``name`` attribute (or,
+        falling back to the class name lowercased with "converter" stripped) is
+        what you use in route paths::
+
+            class SlugConverter:
+                regex = r"[-a-z0-9_]+"
+                name = "slug"
+
+                def to_python(self, value):
+                    return str(value)
+
+            app.register_converter(SlugConverter)
+
+            @app.route("/posts/<slug:post_slug>")
+            def get_post(request, post_slug): ...
+        """
+        name = getattr(cls, "name", cls.__name__.lower().replace("converter", ""))
+        self._converters[name] = cls
+
+    def include_routegroup(self, routegroup) -> None:
+        """Include all routes from a RouteGroup into this router.
+
+        Route paths are prefixed with ``routegroup.prefix``.  If the group
+        has a ``namespace``, route names become ``"namespace:name"``.
+        """
+        for path, func, allowed_methods, name in routegroup._pending_routes:
+            full_path = routegroup.prefix + path
+            if name is not None and routegroup.namespace:
+                full_name = f"{routegroup.namespace}:{name}"
+            else:
+                full_name = name
+            self.add_route(full_path, func, allowed_methods, full_name)
 
     def add_route(
         self,
