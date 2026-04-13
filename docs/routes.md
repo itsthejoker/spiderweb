@@ -116,7 +116,7 @@ In this case, a valid URL might be `/example/3/james`, and both sections will be
 
 The `path` option is special; this is used when you want to capture everything after the slash. For example:
 
-> New in 1.2.0!
+[!badge New in 1.2.0!]
 
 ```python
 @app.route("/example/<path:rest>")
@@ -165,7 +165,7 @@ As with the `routes` argument, as many routes as you'd like can be registered he
 
 ## Finding Routes Again
 
-> New in 1.1.0!
+[!badge New in 1.1.0!]
 
 If you need to find the path that's associated with a route (for example, for a RedirectResponse), you can use the `app.reverse()` function to find it. This function takes the name of the view and returns the path that it's associated with. For example:
 
@@ -200,7 +200,7 @@ The arguments you pass in must match what the path expects, or you'll get a `Spi
 
 ## Route Groups
 
-> New in 2.4.0!
+[!badge New in 2.4.0!]
 
 As your application grows, keeping all of its routes in one file becomes unwieldy. Route groups let you define a set of related routes together — with a shared URL prefix — and then mount them onto your app in one shot.
 
@@ -265,7 +265,7 @@ Without a namespace, route names pass through unchanged, so existing apps that d
 
 ## Custom Path-Parameter Converters
 
-> New in 2.4.0!
+[!badge New in 2.4.0!]
 
 The built-in converters (`str`, `int`, `float`, `path`) cover the common cases, but sometimes you need a custom pattern — a UUID, a slug, a date string, and so on. You can teach Spiderweb new converters with `register_converter()`.
 

@@ -57,7 +57,7 @@ This is a helper function that is available for you to override; it's not often 
 
 ## post_process(self, request: Request, response: HttpResponse, rendered_response: str) -> str | bytes:
 
-> New in 1.3.0!
+[!badge New in 1.3.0!]
 
 After `process_request` and `process_response` run, the response is rendered out into the raw text that is going to be sent to the client. Right before that happens, `post_process` is called on each middleware in the same order as `process_response` (so the closer something is to the beginning of the middleware list, the more important it is).
 

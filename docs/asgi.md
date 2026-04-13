@@ -1,6 +1,6 @@
 # asgi
 
-> New in 2.3.0!
+[!badge New in 2.3.0!]
 
 Spiderweb supports both WSGI and ASGI from the same `SpiderwebRouter` instance. Your existing WSGI app continues to work exactly as before; ASGI is strictly opt-in.
 
