@@ -1,6 +1,6 @@
 # gzip compression middleware
 
-> New in 1.4.0!
+[!badge New in 1.4.0!]
 
 ```python
 from spiderweb import SpiderwebRouter

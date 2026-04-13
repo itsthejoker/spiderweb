@@ -1,6 +1,6 @@
 # management
 
-> New in 2.4.0!
+[!badge New in 2.4.0!]
 
 Spiderweb ships with a built-in management CLI — a single command you can use to start the dev server, explore your routes, open an interactive shell, and run startup checks. If you've ever used Django's `manage.py`, this will feel familiar.
 

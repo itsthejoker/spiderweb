@@ -1,0 +1,19 @@
+input: docs/
+output: .retype
+
+url: https://itsthejoker.github.io/spiderweb # Use your website address here
+
+start:
+  # Uncomment the next line to try Retype Pro features
+   pro: true
+
+branding:
+  title: Spiderweb
+  label: &1475849893 Docs
+
+links:
+- text: Docs
+  link: /docs
+
+footer:
+  copyright: "Made with :burrito: and love. MIT license."

@@ -1,6 +1,6 @@
 # handling file uploads
 
-> New in 2.2.0!
+[!badge New in 2.2.0!]
 
 Spiderweb supports handling file uploads via standard HTML forms that use multipart/form-data. Uploaded files are parsed into Request.FILES as a MultiDict of MediaFile objects, which provide convenient helpers like filename, content_type, size, read(), seek(), and save().
 
