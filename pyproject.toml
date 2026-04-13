@@ -1,6 +1,6 @@
 [project]
 name = "spiderweb-framework"
-version = "2.3.0"
+version = "2.4.0"
 description = "A small web framework, just big enough for a spider."
 authors = [{name="Joe Kaufeld", email="opensource@joekaufeld.com"}]
 readme = "README.md"
@@ -29,6 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "advanced-alchemy>=1.6.3,<2.0.0",
+    "alembic>=1.17.0",
     "cryptography>=46.0.2",
     "email-validator>=2.3.0",
     "jinja2>=3.1.6",
@@ -101,3 +102,6 @@ exclude_also = [
 ]
 
 ignore_errors = true
+
+[tool.spiderweb]
+app = "example:app"
