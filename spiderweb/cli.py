@@ -506,14 +506,14 @@ def _build_parser() -> argparse.ArgumentParser:
         epilog=(
             "Set SPIDERWEB_APP in your environment to avoid passing --app every time.\n"
             "\nExamples:\n"
-            "  spiderweb version\n"
-            "  spiderweb --app myapp:app serve\n"
-            "  spiderweb --app myapp:app serve --asgi --port 9000\n"
-            "  spiderweb --app myapp:app shell\n"
-            "  spiderweb --app myapp:app routes\n"
-            "  spiderweb --app myapp:app check\n"
-            "  spiderweb --app myapp:app makemigrations -m 'add users table'\n"
-            "  spiderweb --app myapp:app migrate\n"
+            "  web version\n"
+            "  web --app myapp:app serve\n"
+            "  web --app myapp:app serve --asgi --port 9000\n"
+            "  web --app myapp:app shell\n"
+            "  web --app myapp:app routes\n"
+            "  web --app myapp:app check\n"
+            "  web --app myapp:app makemigrations -m 'add users table'\n"
+            "  web --app myapp:app migrate\n"
         ),
     )
     parser.add_argument(
@@ -601,8 +601,9 @@ def main(argv=None):
 
     if not pre_args.app:
         print(
-            "error: --app is required (or set SPIDERWEB_APP). "
-            "Example: spiderweb --app mymodule:app serve",
+            ("error: need to know server entry point. Set in pyproject.toml"
+             " with:\n\n[tool.spiderweb]\napp = \"myapp:app\"\n\nOr use --app"
+             " or set SPIDERWEB_APP environment variable."),
             file=sys.stderr,
         )
         sys.exit(1)
