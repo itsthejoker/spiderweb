@@ -19,7 +19,7 @@ All commands (except `version`) need to know which `SpiderwebRouter` instance to
 Pass the app location directly on the command line as `module:attribute`:
 
 ```shell
-spiderweb --app myapp:app serve
+web --app myapp:app serve
 ```
 
 **2. The `SPIDERWEB_APP` environment variable**
