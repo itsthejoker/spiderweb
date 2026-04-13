@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="turbo-root" content="/spiderweb">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829423174607">
+
+    <!-- See retype.com -->
+    <meta name="generator" content="Retype 4.5.3">
+
+    <!-- Primary Meta Tags -->
+    <title>writing your own middleware</title>
+    <meta name="title" content="writing your own middleware">
+    <meta name="description" content="Sometimes you want to run the same code on every request or every response (or both!). Lots of processing happens in the middleware layer, and if you want to write your own, all you have to do is write a quick class and put it in a place that Spiderweb can find it.">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://itsthejoker.github.io/spiderweb/middleware/custom_middleware/">
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="https://itsthejoker.github.io/spiderweb/sitemap.xml">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://itsthejoker.github.io/spiderweb/middleware/custom_middleware/">
+    <meta property="og:title" content="writing your own middleware">
+    <meta property="og:description" content="Sometimes you want to run the same code on every request or every response (or both!). Lots of processing happens in the middleware layer, and if you want to write your own, all you have to do is write a quick class and put it in a place that Spiderweb can find it.">
+    <meta property="og:site_name" content="Spiderweb">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://itsthejoker.github.io/spiderweb/middleware/custom_middleware/">
+    <meta name="twitter:title" content="writing your own middleware">
+    <meta name="twitter:description" content="Sometimes you want to run the same code on every request or every response (or both!). Lots of processing happens in the middleware layer, and if you want to write your own, all you have to do is write a quick class and put it in a place that Spiderweb can find it.">
+
+    <!-- Alternate Markdown -->
+    <link rel="alternate" type="text/markdown" href="https://itsthejoker.github.io/spiderweb/middleware/custom_middleware.md">
+
+    <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
+
+    <link href="../../resources/css/retype.css?v=4.5.3.829423174607" rel="stylesheet">
+
+    <script data-cfasync="false" src="../../resources/js/config.js?v=4.5.3.829423174607" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../../resources/js/retype.js?v=4.5.3" data-turbo-eval="false" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../../resources/js/lunr.js?v=4.5.3.829423174607" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../../resources/js/prism.js?v=4.5.3.829423174607" defer></script>
+</head>
+<body>
+    <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
+    <div class="absolute bottom-0 left-0" style="top: 5rem; right: 50%"></div>
+
+    <header id="retype-header" class="sticky top-0 z-30 flex w-full h-16 bg-header-bg border-b border-header-border md:h-20">
+        <div class="container relative flex items-center justify-between pr-6 grow md:justify-start">
+            <!-- Mobile menu button skeleton -->
+            <button v-cloak class="skeleton retype-mobile-menu-button flex items-center justify-center shrink-0 overflow-hidden dark:text-white focus:outline-hidden rounded-full w-10 h-10 ml-3.5 md:hidden"><svg xmlns="http://www.w3.org/2000/svg" class="mb-px shrink-0" width="24" height="24" viewBox="0 0 24 24" role="presentation" style="margin-bottom: 0px;"><g fill="currentColor"><path d="M2 4h20v2H2zM2 11h20v2H2zM2 18h20v2H2z"></path></g></svg></button>
+            <div v-cloak id="retype-sidebar-left-toggle-button"></div>
+    
+            <!-- Logo -->
+            <div class="flex items-center justify-between h-full py-2 md:w-75">
+                <div class="flex items-center px-2 md:px-6">
+                    <a id="retype-branding-logo" href="https://itsthejoker.github.io/spiderweb/" class="flex items-center leading-snug text-2xl">
+                        <span class="dark:text-white font-bold line-clamp-1 md:line-clamp-2">Spiderweb</span>
+                    </a><span id="retype-branding-label" class="inline-flex mt-1 px-2 py-1 ml-4 text-xs font-medium leading-none items-center rounded-md bg-branding-label-bg text-branding-label-text ring-1 ring-branding-label-border ring-inset md:inline-block">Docs</span>
+                </div>
+    
+                <span class="hidden h-8 border-r md:inline-block border-base-border"></span>
+            </div>
+    
+            <div class="flex justify-between md:grow">
+                <!-- Top Nav -->
+                <nav id="retype-header-nav" class="hidden md:flex">
+                    <ul class="flex flex-col mb-4 md:pl-16 md:mb-0 md:flex-row md:items-center">
+                        <li class="mr-6">
+                            <a class="py-2 md:mb-0 inline-flex items-center text-sm whitespace-nowrap transition-colors duration-200 ease-linear md:text-header-text font-header-text hover:text-header-text-hover" href="/docs">Docs</a>
+                        </li>
+    
+                    </ul>
+                </nav>
+    
+                <div v-cloak class="flex justify-end grow">
+                    <div id="retype-mobile-search-button"></div>
+                    <doc-search-desktop></doc-search-desktop>
+    
+                    <doc-theme-switch class="lg:ml-2"></doc-theme-switch>
+                    <doc-history></doc-history>
+                </div>
+            </div>
+        </div>
+    </header>
+
+
+    <div id="retype-container" class="container relative flex bg-white">
+        <!-- Sidebar Skeleton -->
+        <div v-cloak class="fixed flex flex-col shrink-0 duration-300 ease-in-out bg-sidebar-left-bg border-sidebar-left-border sidebar top-20 w-75 border-r h-screen md:sticky transition-transform skeleton">
+        
+            <div class="flex items-center h-16 px-6">
+                <input id="retype-filter-input-mock" class="w-full h-10 pl-8 px-3 py-2 transition-colors duration-200 ease-linear bg-filter-bg border border-filter-border rounded-lg shadow-none md:text-sm hover:border-filter-border-hover focus:outline-hidden focus:border-filter-border-focus placeholder-filter-placeholder" type="text">
+            </div>
+        
+            <div class="pl-6 mt-1 mb-4">
+                <div class="w-32 h-3 mb-4 bg-skeleton-bg rounded-full loading"></div>
+                <div class="w-48 h-3 mb-4 bg-skeleton-bg rounded-full loading"></div>
+                <div class="w-40 h-3 mb-4 bg-skeleton-bg rounded-full loading"></div>
+                <div class="w-32 h-3 mb-4 bg-skeleton-bg rounded-full loading"></div>
+                <div class="w-48 h-3 mb-4 bg-skeleton-bg rounded-full loading"></div>
+                <div class="w-40 h-3 mb-4 bg-skeleton-bg rounded-full loading"></div>
+            </div>
+        
+            <div class="shrink-0 mt-auto bg-transparent dark:border-base-border">
+                <a class="flex items-center justify-center flex-nowrap h-16 text-gray-350 dark:text-dark-400 hover:text-gray-600 dark:hover:text-dark-300 transition-colors duration-150 ease-in docs-powered-by" target="_blank" href="https://retype.com/" rel="noopener">
+                    <span class="text-xs whitespace-nowrap">Powered by</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="ml-2" fill="currentColor" width="96" height="20" overflow="visible"><path d="M0 0v20h13.59V0H0zm11.15 17.54H2.44V2.46h8.71v15.08zM15.8 20h2.44V4.67L15.8 2.22zM20.45 6.89V20h2.44V9.34z"/><g><path d="M40.16 8.44c0 1.49-.59 2.45-1.75 2.88l2.34 3.32h-2.53l-2.04-2.96h-1.43v2.96h-2.06V5.36h3.5c1.43 0 2.46.24 3.07.73s.9 1.27.9 2.35zm-2.48 1.1c.26-.23.38-.59.38-1.09 0-.5-.13-.84-.4-1.03s-.73-.28-1.39-.28h-1.54v2.75h1.5c.72 0 1.2-.12 1.45-.35zM51.56 5.36V7.2h-4.59v1.91h4.13v1.76h-4.13v1.92h4.74v1.83h-6.79V5.36h6.64zM60.09 7.15v7.48h-2.06V7.15h-2.61V5.36h7.28v1.79h-2.61zM70.81 14.64h-2.06v-3.66l-3.19-5.61h2.23l1.99 3.45 1.99-3.45H74l-3.19 5.61v3.66zM83.99 6.19c.65.55.97 1.4.97 2.55s-.33 1.98-1 2.51-1.68.8-3.04.8h-1.23v2.59h-2.06V5.36h3.26c1.42 0 2.45.28 3.1.83zm-1.51 3.65c.25-.28.37-.69.37-1.22s-.16-.92-.48-1.14c-.32-.23-.82-.34-1.5-.34H79.7v3.12h1.38c.68 0 1.15-.14 1.4-.42zM95.85 5.36V7.2h-4.59v1.91h4.13v1.76h-4.13v1.92H96v1.83h-6.79V5.36h6.64z"/></g></svg>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Sidebar component -->
+        <doc-sidebar v-cloak>
+            <template #sidebar-footer>
+                <div class="shrink-0 mt-auto border-t md:bg-transparent md:border-none dark:border-base-border">
+        
+                    <div class="py-3 px-6 md:hidden border-b dark:border-base-border">
+                        <nav>
+                            <ul class="flex flex-wrap justify-center items-center">
+                                <li class="mr-6">
+                                    <a class="block py-1 inline-flex items-center text-sm whitespace-nowrap transition-colors duration-200 ease-linear md:text-header-text font-header-text hover:text-header-text-hover" href="/docs">Docs</a>
+                                </li>
+        
+                            </ul>
+                        </nav>
+                    </div>
+        
+                    <a class="flex items-center justify-center flex-nowrap h-16 text-gray-350 dark:text-dark-400 hover:text-gray-600 dark:hover:text-dark-300 transition-colors duration-150 ease-in docs-powered-by" target="_blank" href="https://retype.com/" rel="noopener">
+                        <span class="text-xs whitespace-nowrap">Powered by</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="ml-2" fill="currentColor" width="96" height="20" overflow="visible"><path d="M0 0v20h13.59V0H0zm11.15 17.54H2.44V2.46h8.71v15.08zM15.8 20h2.44V4.67L15.8 2.22zM20.45 6.89V20h2.44V9.34z"/><g><path d="M40.16 8.44c0 1.49-.59 2.45-1.75 2.88l2.34 3.32h-2.53l-2.04-2.96h-1.43v2.96h-2.06V5.36h3.5c1.43 0 2.46.24 3.07.73s.9 1.27.9 2.35zm-2.48 1.1c.26-.23.38-.59.38-1.09 0-.5-.13-.84-.4-1.03s-.73-.28-1.39-.28h-1.54v2.75h1.5c.72 0 1.2-.12 1.45-.35zM51.56 5.36V7.2h-4.59v1.91h4.13v1.76h-4.13v1.92h4.74v1.83h-6.79V5.36h6.64zM60.09 7.15v7.48h-2.06V7.15h-2.61V5.36h7.28v1.79h-2.61zM70.81 14.64h-2.06v-3.66l-3.19-5.61h2.23l1.99 3.45 1.99-3.45H74l-3.19 5.61v3.66zM83.99 6.19c.65.55.97 1.4.97 2.55s-.33 1.98-1 2.51-1.68.8-3.04.8h-1.23v2.59h-2.06V5.36h3.26c1.42 0 2.45.28 3.1.83zm-1.51 3.65c.25-.28.37-.69.37-1.22s-.16-.92-.48-1.14c-.32-.23-.82-.34-1.5-.34H79.7v3.12h1.38c.68 0 1.15-.14 1.4-.42zM95.85 5.36V7.2h-4.59v1.91h4.13v1.76h-4.13v1.92H96v1.83h-6.79V5.36h6.64z"/></g></svg>
+                    </a>
+                </div>
+            </template>
+        </doc-sidebar>
+
+        <div class="grow min-w-0 bg-body-bg">
+            <!-- Render "toolbar" template here on api pages --><!-- Render page content -->
+<div class="flex">
+    <div id="retype-main" class="min-w-0 p-4 grow md:px-16">
+        <main class="relative pb-12 lg:pt-2">
+            <div class="relative retype-markdown" id="retype-content">
+                <!-- Rendered if sidebar right is enabled -->
+                <div id="retype-sidebar-right-toggle"></div>
+                <nav id="retype-breadcrumb" class="breadcrumb" aria-label="Breadcrumb">
+                    <ol role="list">
+                        <li class="pr-4">
+                            <a href="../../" class="pr-4">
+                                spiderweb
+                            </a>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/>
+                            </svg>
+                        </li>
+                        <li class="pr-4">
+                            <span class="pr-4">
+                                Middleware
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/>
+                            </svg>
+                        </li>
+                        <li class="pr-4">
+                            <a href="../../middleware/custom_middleware/" class="pr-4">
+                                writing your own middleware
+                            </a>
+                        </li>
+                    </ol>
+                </nav>
+
+                <doc-page-actions></doc-page-actions>
+
+                <!-- Page content  -->
+<h1 id="writing-your-own-middleware">writing your own middleware</h1>
+<p>Sometimes you want to run the same code on every request or every response (or both!). Lots of processing happens in the middleware layer, and if you want to write your own, all you have to do is write a quick class and put it in a place that Spiderweb can find it. A piece of middleware only needs two things to be successful:</p>
+<ul>
+<li>it must be a class that inherits from SpiderwebMiddleware</li>
+<li>it must handle either requests, responses, or both!</li>
+</ul>
+<p>That&#x27;s really all there is to it. Here&#x27;s a template you can copy:</p>
+<div id="writing-your-own-middleware-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-python"><code v-pre class="language-python">from spiderweb.middleware import SpiderwebMiddleware
+from spiderweb.request import Request
+from spiderweb.response import HttpResponse
+
+
+class TestMiddleware(SpiderwebMiddleware):
+    def process_request(self, request: Request) -&gt; None:
+        # example of a middleware that sets a flag on the request
+        request.spiderweb = True
+
+    def process_response(self, request: Request, response: HttpResponse) -&gt; None:
+        # example of a middleware that sets a header on the resp
+        if hasattr(request, &quot;spiderweb&quot;):
+            response.headers[&quot;X-Spiderweb&quot;] = &quot;true&quot;</code></pre>
+</doc-codeblock></div>
+<p>Middleware is run twice: once for the incoming request and once for the outgoing response. You only need to include whichever function is required for the functionality you need.</p>
+<h2 id="process_requestself-request-request---optionalhttpresponse">process_request(self, request: Request) -&gt; Optional[HttpResponse]:</h2>
+<p><code translate="no" v-pre>process_request</code> is called before the view is reached in the execution order. You will receive the assembled Request object, and any middleware declared above this one will have already run. Because the request is the single instantiation of a class, you can modify it in-place without returning anything and your changes will stick.</p>
+<p>This function also has a special ability; it can stop execution before the view is called by returning a response. If a response is returned, Spiderweb will immediately skip to applying the response middleware and sending the response back to the client. Here&#x27;s an example of what that might look like:</p>
+<div id="process_requestself-request-request---optionalhttpresponse-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-python"><code v-pre class="language-python">class JohnMiddleware(SpiderwebMiddleware):
+    def process_request(self, request: Request) -&gt; Optional[HttpResponse]:
+        if (
+            hasattr(request, &quot;user&quot;)
+            and user.name == &quot;John&quot;
+            and request.path.startswith(&quot;/admin&quot;)
+        ):
+            return HttpResponse(&quot;Go away, John!&quot;, status_code=403)</code></pre>
+</doc-codeblock></div>
+<p>In this case, if the user John tries to access any route that starts with &quot;/admin&quot;, he&#x27;ll immediately get denied and the view will never be called. If the request does not have a user attached to it (or the user is not John), then the middleware will return None and Spiderweb will continue processing.</p>
+<h2 id="process_responseself-request-request-response-httpresponse---none">process_response(self, request: Request, response: HttpResponse) -&gt; None:</h2>
+<p>This function is called after the view has run and returned a response. You will receive the request object and the response object; like with the request object, the response is also a single instantiation of a class, so any changes you make will stick automatically.</p>
+<p>Unlike <code translate="no" v-pre>process_request</code>, returning a value here doesn&#x27;t change anything. We&#x27;re already processing a request, and there are opportunities to turn away requests / change the response at both the <code translate="no" v-pre>process_request</code> layer and the view layer, so Spiderweb assumes that whatever it is working on here is what you mean to return to the user. The response object that you receive in the middleware is still prerendered, so any changes you make to it will take effect after it finishes the middleware and renders the response.</p>
+<h2 id="on_errorself-request-request-triggered_exception-exception---optionalhttpresponse">on_error(self, request: Request, triggered_exception: Exception) -&gt; Optional[HttpResponse]:</h2>
+<p>This is a helper function that is available for you to override; it&#x27;s not often used by middleware, but there are some (<a href="middleware/pydantic.md">like the pydantic middleware</a>) that call <code translate="no" v-pre>on_error</code> when there is a validation failure.</p>
+<h2 id="post_processself-request-request-response-httpresponse-rendered_response-str---str--bytes">post_process(self, request: Request, response: HttpResponse, rendered_response: str) -&gt; str | bytes:</h2>
+<p><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border h-6 px-2 text-xs rounded-md">
+    <span>New in 1.3.0!</span>
+</span></p>
+<p>After <code translate="no" v-pre>process_request</code> and <code translate="no" v-pre>process_response</code> run, the response is rendered out into the raw text that is going to be sent to the client. Right before that happens, <code translate="no" v-pre>post_process</code> is called on each middleware in the same order as <code translate="no" v-pre>process_response</code> (so the closer something is to the beginning of the middleware list, the more important it is).</p>
+<p>There are three things passed to <code translate="no" v-pre>post_process</code>:</p>
+<ul>
+<li><code translate="no" v-pre>request</code>: the request object. It&#x27;s provided here purely for reference purposes; while you can technically change it here, it won&#x27;t have any effect on the response.</li>
+<li><code translate="no" v-pre>response</code>: the response object. The full HTML of the response has already been rendered, but the headers can still be modified here. This object can be modified in place, like in <code translate="no" v-pre>process_response</code>.</li>
+<li><code translate="no" v-pre>rendered_response</code>: the full HTML of the response as a string or bytes. This is the final output that will be sent to the client. Every instance of <code translate="no" v-pre>post_process</code> must return the full HTML of the response, so if you want to make changes, you&#x27;ll need to return the modified string. A string is <em>strongly</em> preferred, but bytes are also acceptable; keep in mind that you&#x27;ll be making things harder for any <code translate="no" v-pre>post_process</code> middleware that comes after you.</li>
+</ul>
+<p>Note that this function <em>must</em> return the full HTML of the response (provided at the start as <code translate="no" v-pre>rendered_response</code>. Each invocation of <code translate="no" v-pre>post_process</code> overwrites the entire output of the response, so make sure to return everything that you want to send. For example, here&#x27;s a middleware that <del>breaks</del> adjusts the capitalization of the response and also demonstrates passing variables into the middleware and modifies the headers with the type of transformation:</p>
+<div id="post_processself-request-request-response-httpresponse-rendered_response-str---str--bytes-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-python"><code v-pre class="language-python">import random
+
+from spiderweb.request import Request
+from spiderweb.response import HttpResponse
+from spiderweb.middleware import SpiderwebMiddleware
+from spiderweb.exceptions import ConfigError
+
+
+class CaseTransformMiddleware(SpiderwebMiddleware):
+    # this breaks everything, but it's hilarious so it's worth it. Blame Sam.
+    def post_process(self, request: Request, response: HttpResponse, rendered_response: str) -&gt; str:
+        valid_options = [&quot;spongebob&quot;, &quot;random&quot;]
+        # grab the value from the extra data passed into the server object
+        # during instantiation
+        method = self.server.extra_data.get(&quot;case_transform_middleware_type&quot;, &quot;spongebob&quot;)
+        if method not in valid_options:
+            raise ConfigError(
+                f&quot;Invalid method '{method}' for CaseTransformMiddleware.&quot;
+                f&quot; Valid options are {', '.join(valid_options)}&quot;
+            )
+
+        if method == &quot;spongebob&quot;:
+            response.headers[&quot;X-Case-Transform&quot;] = &quot;spongebob&quot;
+            return &quot;&quot;.join(
+                char.upper() 
+                if i % 2 == 0 
+                else char.lower() for i, char in enumerate(rendered_response)
+            )
+        else:
+            response.headers[&quot;X-Case-Transform&quot;] = &quot;random&quot;
+            return &quot;&quot;.join(
+                char.upper() 
+                if random.random() &gt; 0.5 
+                else char for char in rendered_response
+            )
+
+# usage:
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    middleware=[&quot;CaseTransformMiddleware&quot;],
+    case_transform_middleware_type=&quot;random&quot;,
+)</code></pre>
+</doc-codeblock></div>
+<h2 id="checks">checks</h2>
+<p>If you want to have runtime verifications that ensure that everything is running smoothly, you can take advantage of Spiderweb&#x27;s <code translate="no" v-pre>checks</code> feature.</p>
+<div class="flex mb-6">
+    <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-tip"></div>
+    <div class="flex w-full py-4 border border-l-0 rounded-tr-lg rounded-br-lg doc-callout bg-callout-base-bg border-callout-base-border" role="alert">
+        <div class="flex items-center ml-4 h-7">
+            <svg xmlns="http://www.w3.org/2000/svg" class="block text-callout-tip" width="22" height="22" viewBox="0 0 24 24" role="presentation">
+                <g fill="currentColor"><g>
+                    <path d="M7.90625 2.15625C4.50944 2.15625 2.15625 4.58563 2.15625 7.54688C2.15625 8.96138 2.76575 9.88281 3.57075 10.8589L3.87837 11.2226C4.19894 11.6021 4.554 12.0218 4.84581 12.4416C5.25406 13.0324 5.61775 13.7296 5.7385 14.5834C5.76728 14.8608 5.68746 15.1386 5.51579 15.3583C5.34413 15.5781 5.09399 15.7228 4.8179 15.7621C4.5418 15.8013 4.26124 15.7321 4.03512 15.5689C3.809 15.4056 3.65493 15.1612 3.60525 14.8867C3.54775 14.4814 3.37094 14.1004 3.07338 13.6692C2.8306 13.3302 2.57055 13.0039 2.29425 12.6917C2.1735 12.5479 2.04556 12.397 1.909 12.2317C1.00769 11.1406 0 9.72613 0 7.54688C0 3.32062 3.39681 0 7.90625 0C12.4157 0 15.8125 3.32062 15.8125 7.54688C15.8125 9.72613 14.8048 11.1406 13.9035 12.2317C13.7669 12.397 13.639 12.5479 13.5183 12.6903C13.2207 13.0424 12.9677 13.3414 12.7406 13.6692C12.4416 14.1004 12.2662 14.4814 12.2087 14.8867C12.1557 15.1584 12.0003 15.3994 11.7747 15.5598C11.5492 15.7202 11.2706 15.7879 10.9965 15.7488C10.7225 15.7096 10.474 15.5667 10.3023 15.3496C10.1306 15.1325 10.0489 14.8577 10.074 14.582C10.1948 13.7296 10.5584 13.0324 10.9667 12.4416C11.2585 12.0218 11.6136 11.6021 11.9341 11.2226C12.0419 11.0961 12.1454 10.9739 12.2403 10.8589C13.0468 9.88281 13.6562 8.96138 13.6562 7.54688C13.6562 4.58563 11.3031 2.15625 7.90625 2.15625ZM4.67188 17.25H11.1406C11.4266 17.25 11.7008 17.3636 11.903 17.5658C12.1052 17.768 12.2188 18.0422 12.2188 18.3281C12.2188 18.6141 12.1052 18.8883 11.903 19.0905C11.7008 19.2927 11.4266 19.4062 11.1406 19.4062H4.67188C4.38594 19.4062 4.11171 19.2927 3.90953 19.0905C3.70734 18.8883 3.59375 18.6141 3.59375 18.3281C3.59375 18.0422 3.70734 17.768 3.90953 17.5658C4.11171 17.3636 4.38594 17.25 4.67188 17.25ZM5.03125 21.9219C5.03125 21.6359 5.14484 21.3617 5.34703 21.1595C5.54921 20.9573 5.82344 20.8438 6.10938 20.8438H9.70312C9.98906 20.8438 10.2633 20.9573 10.4655 21.1595C10.6677 21.3617 10.7812 21.6359 10.7812 21.9219C10.7812 22.2078 10.6677 22.482 10.4655 22.6842C10.2633 22.8864 9.98906 23 9.70312 23H6.10938C5.82344 23 5.54921 22.8864 5.34703 22.6842C5.14484 22.482 5.03125 22.2078 5.03125 21.9219Z" />
+                </g></g>
+            </svg>
+        </div>
+        <div class="pr-5 ml-3 w-full">
+            <h5>Tip</h5>
+<p>If you just want to run startup checks, you can also tie this in with the <code translate="no" v-pre>UnusedMiddleware</code> exception, as it&#x27;ll trigger after the checks run.</p>
+        </div>
+    </div>
+</div>
+<p>A startup check looks like this:</p>
+<div id="checks-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-python"><code v-pre class="language-python">from spiderweb.exceptions import ConfigError
+from spiderweb.server_checks import ServerCheck
+
+
+class MyCheck(ServerCheck):
+    # You don't have to extract the message out into a top-level
+    # variable, but it does make testing your middleware easier.
+    MYMESSAGE = &quot;Something has gone wrong!&quot;
+
+    # The function must be called `check` and it takes no args.
+    def check(self):
+        if self.server.extra_args.get(&quot;mykeyword&quot;) != &quot;propervalue&quot;:
+            # Note that we are returning an exception instead of
+            # raising it. All config errors are collected and then
+            # raised as a single group of all the errors that
+            # happened on startup.
+            # If everything looks good, don't return anything.
+            return ConfigError(self.MYMESSAGE)</code></pre>
+</doc-codeblock></div>
+<div class="flex mb-6">
+    <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-tip"></div>
+    <div class="flex w-full py-4 border border-l-0 rounded-tr-lg rounded-br-lg doc-callout bg-callout-base-bg border-callout-base-border" role="alert">
+        <div class="flex items-center ml-4 h-7">
+            <svg xmlns="http://www.w3.org/2000/svg" class="block text-callout-tip" width="22" height="22" viewBox="0 0 24 24" role="presentation">
+                <g fill="currentColor"><g>
+                    <path d="M7.90625 2.15625C4.50944 2.15625 2.15625 4.58563 2.15625 7.54688C2.15625 8.96138 2.76575 9.88281 3.57075 10.8589L3.87837 11.2226C4.19894 11.6021 4.554 12.0218 4.84581 12.4416C5.25406 13.0324 5.61775 13.7296 5.7385 14.5834C5.76728 14.8608 5.68746 15.1386 5.51579 15.3583C5.34413 15.5781 5.09399 15.7228 4.8179 15.7621C4.5418 15.8013 4.26124 15.7321 4.03512 15.5689C3.809 15.4056 3.65493 15.1612 3.60525 14.8867C3.54775 14.4814 3.37094 14.1004 3.07338 13.6692C2.8306 13.3302 2.57055 13.0039 2.29425 12.6917C2.1735 12.5479 2.04556 12.397 1.909 12.2317C1.00769 11.1406 0 9.72613 0 7.54688C0 3.32062 3.39681 0 7.90625 0C12.4157 0 15.8125 3.32062 15.8125 7.54688C15.8125 9.72613 14.8048 11.1406 13.9035 12.2317C13.7669 12.397 13.639 12.5479 13.5183 12.6903C13.2207 13.0424 12.9677 13.3414 12.7406 13.6692C12.4416 14.1004 12.2662 14.4814 12.2087 14.8867C12.1557 15.1584 12.0003 15.3994 11.7747 15.5598C11.5492 15.7202 11.2706 15.7879 10.9965 15.7488C10.7225 15.7096 10.474 15.5667 10.3023 15.3496C10.1306 15.1325 10.0489 14.8577 10.074 14.582C10.1948 13.7296 10.5584 13.0324 10.9667 12.4416C11.2585 12.0218 11.6136 11.6021 11.9341 11.2226C12.0419 11.0961 12.1454 10.9739 12.2403 10.8589C13.0468 9.88281 13.6562 8.96138 13.6562 7.54688C13.6562 4.58563 11.3031 2.15625 7.90625 2.15625ZM4.67188 17.25H11.1406C11.4266 17.25 11.7008 17.3636 11.903 17.5658C12.1052 17.768 12.2188 18.0422 12.2188 18.3281C12.2188 18.6141 12.1052 18.8883 11.903 19.0905C11.7008 19.2927 11.4266 19.4062 11.1406 19.4062H4.67188C4.38594 19.4062 4.11171 19.2927 3.90953 19.0905C3.70734 18.8883 3.59375 18.6141 3.59375 18.3281C3.59375 18.0422 3.70734 17.768 3.90953 17.5658C4.11171 17.3636 4.38594 17.25 4.67188 17.25ZM5.03125 21.9219C5.03125 21.6359 5.14484 21.3617 5.34703 21.1595C5.54921 20.9573 5.82344 20.8438 6.10938 20.8438H9.70312C9.98906 20.8438 10.2633 20.9573 10.4655 21.1595C10.6677 21.3617 10.7812 21.6359 10.7812 21.9219C10.7812 22.2078 10.6677 22.482 10.4655 22.6842C10.2633 22.8864 9.98906 23 9.70312 23H6.10938C5.82344 23 5.54921 22.8864 5.34703 22.6842C5.14484 22.482 5.03125 22.2078 5.03125 21.9219Z" />
+                </g></g>
+            </svg>
+        </div>
+        <div class="pr-5 ml-3 w-full">
+            <h5>Tip</h5>
+<p>You should have one check class per actual check that you want to run, as it will make identifying  issues much easier.</p>
+        </div>
+    </div>
+</div>
+<p>You can have as many checks as you&#x27;d like, and the base Spiderweb instance is available at <code translate="no" v-pre>self.server</code>. All checks must return an exception (<strong>not</strong> raising it!), as they will all be raised at the same time as part of an ExceptionGroup called <code translate="no" v-pre>StartupErrors</code>.</p>
+<p>To enable your checks, link them to your middleware like this:</p>
+<div id="checks-code-2" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-python"><code v-pre class="language-python">class MyMiddleware(SpiderwebMiddleware):
+    
+    checks = [MyCheck, ADifferentCheck]
+
+    def process_request(self, request):
+        ...</code></pre>
+</doc-codeblock></div>
+<p>List as many checks as you need there, and the server will run all of them during startup.</p>
+<h2 id="unusedmiddleware">UnusedMiddleware</h2>
+<div id="unusedmiddleware-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-python"><code v-pre class="language-python">from spiderweb.exceptions import UnusedMiddleware</code></pre>
+</doc-codeblock></div>
+<p>If you don&#x27;t want your middleware to run for some reason, <code translate="no" v-pre>process_request</code>, <code translate="no" v-pre>process_response</code> and <code translate="no" v-pre>post_process</code> can all raise the UnusedMiddleware exception. If this happens, Spiderweb will kick your middleware out of the processing order for the rest of the life of the server. Note that this applies to the middleware as a whole, so all functions in the middleware will not be run if an UnusedMiddleware is raised. This is a great way to mark debug middleware that shouldn&#x27;t run or create time-delay middleware that runs until a certain condition is met!</p>
+<div id="retype-backlinks">
+    <h2>See also</h2>
+<div class="card-compact-group">
+<div class="card-compact-container">
+    <a href="/spiderweb/asgi/" class="group card-compact no-link">
+        <div class="card-compact-body">
+            <div class="card-compact-header">
+                <span class="card-compact-title">asgi</span>
+            </div>
+            <p class="card-compact-description">New in 2.3.0!</p>
+        </div>
+    </a>
+</div>
+<div class="card-compact-container">
+    <a href="/spiderweb/db/" class="group card-compact no-link">
+        <div class="card-compact-body">
+            <div class="card-compact-header">
+                <span class="card-compact-title">databases</span>
+            </div>
+            <p class="card-compact-description">Spiderweb is intentionally ORM-agnostic. Internally, it now uses Advanced Alchemy (built on SQLAlchemy) to persist first‑party data like sessions. You can</p>
+        </div>
+    </a>
+</div>
+</div>
+</div>
+
+                
+                <!-- Required only on API pages -->
+                <doc-toolbar-member-filter-no-results></doc-toolbar-member-filter-no-results>
+            </div>
+            <footer id="retype-content-footer" class="clear-both">
+            
+                <nav id="retype-nextprev" class="print:hidden flex mt-14">
+                    <div class="w-1/2">
+                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../../middleware/sessions/">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19 11H7.41l5.29-5.29a.996.996 0 10-1.41-1.41l-7 7a1 1 0 000 1.42l7 7a1.024 1.024 0 001.42-.01.996.996 0 000-1.41L7.41 13H19c.55 0 1-.45 1-1s-.45-1-1-1z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
+                            <span>
+                                <span class="block text-xs font-normal text-base-text-muted">Previous</span>
+                                <span class="block mt-1">sessions middleware</span>
+                            </span>
+                        </a>
+                    </div>
+            
+                    <div class="w-1/2">
+                        <a class="px-5 py-4 -mx-px h-full flex items-center justify-end break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-r-lg transition-colors duration-150 relative hover:z-5" href="../../asgi/">
+                            <span>
+                                <span class="block text-xs font-normal text-right text-base-text-muted">Next</span>
+                                <span class="block mt-1">asgi</span>
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="ml-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19.92 12.38a1 1 0 00-.22-1.09l-7-7a.996.996 0 10-1.41 1.41l5.3 5.3H5c-.55 0-1 .45-1 1s.45 1 1 1h11.59l-5.29 5.29a.996.996 0 000 1.41c.19.2.44.3.7.3s.51-.1.71-.29l7-7c.09-.09.16-.21.21-.33z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
+                        </a>
+                    </div>
+                </nav>
+            </footer>
+        </main>
+
+        <div id="retype-page-footer" class="print:border-none border-t border-base-border pt-6 mb-8">
+            <footer class="flex flex-wrap items-center justify-between print:justify-center">
+                <div id="retype-footer-links" class="print:hidden">
+                    <ul class="flex flex-wrap items-center text-sm">
+                    </ul>
+                </div>
+                <div id="retype-copyright" class="print:justify-center py-2 text-footer-text font-footer-link text-sm leading-relaxed"><p>Made with <span class="docs-emoji">&#x1F32F;</span> and love. MIT license.</p></div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Rendered if sidebar right is enabled -->
+    <!-- Sidebar right skeleton-->
+    <div v-cloak class="fixed top-0 bottom-0 right-0 translate-x-full bg-sidebar-right-bg border-sidebar-right-border lg:sticky lg:border-l lg:shrink-0 lg:pt-6 lg:translate-x-0 sm:w-1/2 lg:w-64 lg:z-0 md:w-104 sidebar-right skeleton">
+        <div class="pl-5">
+            <div class="w-32 h-3 mb-4 bg-skeleton-bg rounded-full loading"></div>
+            <div class="w-48 h-3 mb-4 bg-skeleton-bg rounded-full loading"></div>
+            <div class="w-40 h-3 mb-4 bg-skeleton-bg rounded-full loading"></div>
+        </div>
+    </div>
+
+    <!-- User should be able to hide sidebar right -->
+    <doc-sidebar-right v-cloak></doc-sidebar-right>
+</div>
+
+        </div>
+    </div>
+
+    <doc-search-mobile></doc-search-mobile>
+    <doc-back-to-top></doc-back-to-top>
+</div>
+
+
+    <div id="retype-overlay-target"></div>
+
+        <script data-cfasync="false">window.__DOCS__ = { "title": "writing your own middleware", level: 2, icon: "file", hasPrism: true, hasInstagram: false, hasMermaid: false, hasMath: false, tocDepth: 23, "md": "/middleware/custom_middleware.md" }</script>
+</body>
+</html>
