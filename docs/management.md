@@ -29,7 +29,6 @@ This is helpful for CI pipelines of for folks who like to have everything set in
 ```shell
 export SPIDERWEB_APP=myapp:app
 web serve
-web routes
 ```
 
 **3. `pyproject.toml`**
@@ -45,8 +44,6 @@ With that in place you can use any command bare, with no flags at all:
 
 ```shell
 web serve
-web shell
-web routes
 ```
 
 > [!TIP]
@@ -141,6 +138,72 @@ System check passed.
 
 If any check fails, a `StartupErrors` exception group is raised — you'll see a one-frame traceback listing every failing check. Useful in CI or as a quick sanity check after a config change.
 
+### makemigrations
+
+Generates a new Alembic migration by comparing your current models against the database schema.
+
+```shell
+web makemigrations
+web makemigrations -m "add users table"
+```
+
+The first time you run this command the CLI scaffolds a `migrations/` directory next to your `pyproject.toml` (or in the current directory if no `pyproject.toml` is found):
+
+```
+migrations/
+    env.py           ← configure your model metadata here
+    script.py.mako   ← template for generated migration files
+    versions/        ← individual migration scripts live here
+```
+
+By default, Alembic compares spiderweb's own internal tables against the live database. To include your own models, open `migrations/env.py` and add your `Base` to `target_metadata`:
+
+```python
+from myapp.models import Base as _AppBase
+
+target_metadata = [_SpiderwebBase.metadata, _AppBase.metadata]
+```
+
+**Options**
+
+| Flag | Description |
+|---|---|
+| `-m MESSAGE` / `--message MESSAGE` | Short description embedded in the migration filename. |
+| `--empty` | Create a blank migration without running autogenerate. Useful for hand-written data migrations. |
+
+### migrate
+
+Applies pending migrations to the database. Without arguments it upgrades to the latest revision (`head`).
+
+```shell
+web migrate
+```
+
+Pass a specific revision ID, a relative step, or the special value `zero` to target a particular point in the migration history:
+
+```shell
+web migrate abc123de          # upgrade (or already at this rev: no-op)
+web migrate +1                # apply the next pending migration
+web migrate -1                # roll back the most recent migration
+web migrate zero              # roll back every migration (equivalent to `base`)
+```
+
+**Options**
+
+| Flag | Description |
+|---|---|
+| `REVISION` | Target revision (default: `head`). |
+| `--fake` | Stamp the database at the target revision without executing any SQL — useful for marking existing schemas as migrated. |
+
+> [!TIP]
+> You can configure where the migrations directory lives by setting `migrations_dir` in `[tool.spiderweb]`:
+>
+> ```toml
+> [tool.spiderweb]
+> app = "myapp:app"
+> migrations_dir = "db/migrations"
+> ```
+
 ## custom commands
 
 You can register your own management commands on the router using the `@app.command()` decorator. Every custom command receives three arguments:
@@ -222,6 +285,7 @@ You can register as many custom commands as you like. Pick meaningful names; the
 | `SPIDERWEB_APP` | Environment variable. Overrides `pyproject.toml`, overridden by `--app`. |
 | `[tool.spiderweb] app` | `pyproject.toml` key. Lowest priority; used when neither of the above is set. |
 | `[tool.spiderweb] asgi` | `pyproject.toml` boolean. When `true`, `serve` defaults to ASGI mode. Overridden by `--asgi` / `--wsgi`. |
+| `[tool.spiderweb] migrations_dir` | Path to the Alembic migrations directory, relative to `pyproject.toml`. Defaults to `migrations`. |
 
 ### `serve` options
 
@@ -231,3 +295,17 @@ You can register as many custom commands as you like. Pick meaningful names; the
 | `--wsgi` | Force WSGI mode even when `asgi = true` is set in `pyproject.toml`. |
 | `--addr ADDR` | Bind address. Overrides the value stored in the app. |
 | `--port PORT` | Port number. Overrides the value stored in the app. |
+
+### `makemigrations` options
+
+| Flag | Description |
+|---|---|
+| `-m MESSAGE` / `--message MESSAGE` | Short description for the migration. |
+| `--empty` | Create a blank migration without autogenerate. |
+
+### `migrate` options
+
+| Flag | Description |
+|---|---|
+| `REVISION` | Target revision (default: `head`). Accepts revision IDs, `+N`/`-N` relative specs, `zero`, or `base`. |
+| `--fake` | Stamp the database at the target revision without running SQL. |
