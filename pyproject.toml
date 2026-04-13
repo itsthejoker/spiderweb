@@ -62,7 +62,7 @@ dev = [
 packages = ["spiderweb"]
 
 [project.scripts]
-spiderweb = "spiderweb.cli:main"
+web = "spiderweb.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/itsthejoker/spiderweb"

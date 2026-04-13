@@ -4,10 +4,10 @@
 
 Spiderweb ships with a built-in management CLI — a single command you can use to start the dev server, explore your routes, open an interactive shell, and run startup checks. If you've ever used Django's `manage.py`, this will feel familiar.
 
-After installing the package, the `spiderweb` command is available in your environment:
+After installing the package, the `web` command is available in your environment:
 
 ```shell
-spiderweb --help
+web --help
 ```
 
 ## pointing the CLI at your app
@@ -28,8 +28,8 @@ This is helpful for CI pipelines of for folks who like to have everything set in
 
 ```shell
 export SPIDERWEB_APP=myapp:app
-spiderweb serve
-spiderweb routes
+web serve
+web routes
 ```
 
 **3. `pyproject.toml`**
@@ -44,9 +44,9 @@ app = "myapp:app"
 With that in place you can use any command bare, with no flags at all:
 
 ```shell
-spiderweb serve
-spiderweb shell
-spiderweb routes
+web serve
+web shell
+web routes
 ```
 
 > [!TIP]
@@ -56,10 +56,10 @@ spiderweb routes
 
 ### version
 
-Prints the installed version of `spiderweb-framework`. This is the one command that doesn't need an app.
+Prints the installed version of `spiderweb`. This is the one command that doesn't need an app.
 
 ```shell
-$ spiderweb version
+$ web version
 spiderweb-framework 2.4.0
 ```
 
@@ -68,19 +68,19 @@ spiderweb-framework 2.4.0
 Starts the development server. By default it runs in WSGI mode on whatever address and port your app was configured with (`localhost:8000` unless you changed them).
 
 ```shell
-spiderweb serve
+web serve
 ```
 
 Switch to ASGI mode with `--asgi`:
 
 ```shell
-spiderweb serve --asgi
+web serve --asgi
 ```
 
 Override the bind address or port without touching your source code:
 
 ```shell
-spiderweb serve --addr 0.0.0.0 --port 9000
+web serve --addr 0.0.0.0 --port 9000
 ```
 
 If your project always runs in ASGI mode, set `asgi = true` in `[tool.spiderweb]`:
@@ -135,7 +135,7 @@ Routes that haven't restricted their methods show the full default set. If you p
 Re-runs all middleware startup checks and tells you whether everything looks healthy.
 
 ```shell
-$ spiderweb check
+$ web check
 System check passed.
 ```
 
@@ -194,19 +194,19 @@ def seed_database(app, args, extra):
 ```
 
 ```shell
-spiderweb seed --dry-run
+web seed --dry-run
 ```
 
 Run any custom command the same way as a built-in:
 
 ```shell
-spiderweb --app myapp:app seed
+web --app myapp:app seed
 ```
 
 Or, with `pyproject.toml` configured, just:
 
 ```shell
-spiderweb seed
+web seed
 ```
 
 > [!NOTE]
