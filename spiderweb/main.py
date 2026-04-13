@@ -100,6 +100,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
         **kwargs,
     ):
         self._routes = {}
+        self._converters = {}
         self.routes = routes
         self._error_routes = {}
         self.error_routes = error_routes
