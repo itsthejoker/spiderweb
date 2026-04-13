@@ -200,7 +200,7 @@ The arguments you pass in must match what the path expects, or you'll get a `Spi
 
 ## Route Groups
 
-> New in 2.3.0!
+> New in 2.4.0!
 
 As your application grows, keeping all of its routes in one file becomes unwieldy. Route groups let you define a set of related routes together — with a shared URL prefix — and then mount them onto your app in one shot.
 
@@ -265,7 +265,7 @@ Without a namespace, route names pass through unchanged, so existing apps that d
 
 ## Custom Path-Parameter Converters
 
-> New in 2.3.0!
+> New in 2.4.0!
 
 The built-in converters (`str`, `int`, `float`, `path`) cover the common cases, but sometimes you need a custom pattern — a UUID, a slug, a date string, and so on. You can teach Spiderweb new converters with `register_converter()`.
 
