@@ -61,6 +61,9 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["spiderweb"]
 
+[project.scripts]
+spiderweb = "spiderweb.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/itsthejoker/spiderweb"
 Documentation = "https://github.com/itsthejoker/spiderweb"
