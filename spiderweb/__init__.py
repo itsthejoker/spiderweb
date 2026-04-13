@@ -2,4 +2,4 @@ from spiderweb.main import SpiderwebRouter  # noqa: F401
 from spiderweb.middleware import *  # noqa: F401, F403
 from spiderweb.constants import __version__ as __version__
 from spiderweb.asgi import ASGIHandler  # noqa: F401
-from spiderweb.blueprint import Blueprint  # noqa: F401
+from spiderweb.routegroup import RouteGroup  # noqa: F401

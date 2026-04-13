@@ -166,16 +166,16 @@ class RoutesMixin:
         name = getattr(cls, "name", cls.__name__.lower().replace("converter", ""))
         self._converters[name] = cls
 
-    def include_blueprint(self, blueprint) -> None:
-        """Include all routes from a Blueprint into this router.
+    def include_routegroup(self, routegroup) -> None:
+        """Include all routes from a RouteGroup into this router.
 
-        Route paths are prefixed with ``blueprint.prefix``.  If the blueprint
+        Route paths are prefixed with ``routegroup.prefix``.  If the group
         has a ``namespace``, route names become ``"namespace:name"``.
         """
-        for path, func, allowed_methods, name in blueprint._pending_routes:
-            full_path = blueprint.prefix + path
-            if name is not None and blueprint.namespace:
-                full_name = f"{blueprint.namespace}:{name}"
+        for path, func, allowed_methods, name in routegroup._pending_routes:
+            full_path = routegroup.prefix + path
+            if name is not None and routegroup.namespace:
+                full_name = f"{routegroup.namespace}:{name}"
             else:
                 full_name = name
             self.add_route(full_path, func, allowed_methods, full_name)
