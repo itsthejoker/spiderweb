@@ -1,16 +1,22 @@
 """Tests for the spiderweb management CLI (spiderweb/cli.py)."""
 
 import sys
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from spiderweb.cli import (
     _build_parser,
     _build_serve_parser,
+    _cmd_makemigrations,
+    _cmd_migrate,
     _cmd_routes,
     _cmd_version,
+    _ensure_migrations_dir,
     _find_pyproject_app,
+    _get_migrations_dir,
     _load_app,
+    _make_alembic_config,
     _read_pyproject_config,
     main,
 )
@@ -456,3 +462,210 @@ class TestParser:
         assert args.asgi is False
         assert args.addr is None
         assert args.port is None
+
+
+# ---------------------------------------------------------------------------
+# _ensure_migrations_dir / _get_migrations_dir
+# ---------------------------------------------------------------------------
+
+
+class TestMigrationsDir:
+    def test_creates_directory_structure(self, tmp_path):
+        migrations_dir = tmp_path / "migrations"
+        _ensure_migrations_dir(migrations_dir)
+        assert (migrations_dir / "versions").is_dir()
+        assert (migrations_dir / "env.py").is_file()
+        assert (migrations_dir / "script.py.mako").is_file()
+
+    def test_does_not_overwrite_existing_env_py(self, tmp_path):
+        migrations_dir = tmp_path / "migrations"
+        migrations_dir.mkdir()
+        (migrations_dir / "versions").mkdir()
+        env_py = migrations_dir / "env.py"
+        env_py.write_text("# custom content")
+        mako = migrations_dir / "script.py.mako"
+        mako.write_text("# custom mako")
+
+        _ensure_migrations_dir(migrations_dir)
+
+        assert env_py.read_text() == "# custom content"
+        assert mako.read_text() == "# custom mako"
+
+    def test_prints_message_on_first_run(self, tmp_path, capsys):
+        _ensure_migrations_dir(tmp_path / "migrations")
+        out = capsys.readouterr().out
+        assert "Created migrations directory" in out
+
+    def test_no_message_when_already_exists(self, tmp_path, capsys):
+        migrations_dir = tmp_path / "migrations"
+        _ensure_migrations_dir(migrations_dir)
+        capsys.readouterr()  # clear first-run output
+        _ensure_migrations_dir(migrations_dir)
+        out = capsys.readouterr().out
+        assert "Created migrations directory" not in out
+
+    def test_get_migrations_dir_default(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = _get_migrations_dir({})
+        assert result == tmp_path / "migrations"
+
+    def test_get_migrations_dir_custom(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = _get_migrations_dir({"migrations_dir": "db/migrations"})
+        assert result == tmp_path / "db" / "migrations"
+
+    def test_get_migrations_dir_uses_pyproject_location(self, tmp_path, monkeypatch):
+        """migrations/ should land next to pyproject.toml, not necessarily cwd."""
+        (tmp_path / "pyproject.toml").write_text("[tool.spiderweb]\napp = 'a:b'\n")
+        nested = tmp_path / "sub" / "dir"
+        nested.mkdir(parents=True)
+        monkeypatch.chdir(nested)
+        result = _get_migrations_dir({})
+        assert result == tmp_path / "migrations"
+
+
+# ---------------------------------------------------------------------------
+# _make_alembic_config
+# ---------------------------------------------------------------------------
+
+
+class TestMakeAlembicConfig:
+    def test_returns_config_with_script_location(self, tmp_path):
+        app = _make_app()
+        cfg = _make_alembic_config(app, tmp_path / "migrations")
+        assert cfg.get_main_option("script_location") == str(tmp_path / "migrations")
+
+    def test_returns_config_with_engine(self, tmp_path):
+        app = _make_app()
+        cfg = _make_alembic_config(app, tmp_path / "migrations")
+        assert cfg.attributes["engine"] is app.db_engine
+
+    def test_returns_config_with_sqlalchemy_url(self, tmp_path):
+        app = _make_app()
+        cfg = _make_alembic_config(app, tmp_path / "migrations")
+        url = cfg.get_main_option("sqlalchemy.url")
+        assert url is not None
+        assert "sqlite" in url
+
+
+# ---------------------------------------------------------------------------
+# makemigrations command
+# ---------------------------------------------------------------------------
+
+
+class TestMakeMigrationsCommand:
+    def _run(self, app, extra, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        with patch("alembic.command.revision") as mock_revision:
+            _cmd_makemigrations(app, None, extra)
+            return mock_revision
+
+    def test_calls_alembic_revision_autogenerate(self, tmp_path, monkeypatch):
+        app = _make_app()
+        mock = self._run(app, [], tmp_path, monkeypatch)
+        mock.assert_called_once()
+        _, kwargs = mock.call_args
+        assert kwargs["autogenerate"] is True
+
+    def test_message_flag_passed_through(self, tmp_path, monkeypatch):
+        app = _make_app()
+        mock = self._run(app, ["-m", "add users"], tmp_path, monkeypatch)
+        _, kwargs = mock.call_args
+        assert kwargs["message"] == "add users"
+
+    def test_empty_flag_disables_autogenerate(self, tmp_path, monkeypatch):
+        app = _make_app()
+        mock = self._run(app, ["--empty"], tmp_path, monkeypatch)
+        _, kwargs = mock.call_args
+        assert kwargs["autogenerate"] is False
+
+    def test_scaffolds_migrations_dir_on_first_run(self, tmp_path, monkeypatch):
+        app = _make_app()
+        monkeypatch.chdir(tmp_path)
+        with patch("alembic.command.revision"):
+            _cmd_makemigrations(app, None, [])
+        assert (tmp_path / "migrations" / "env.py").exists()
+
+    def test_cli_dispatches_makemigrations(self, tmp_path, monkeypatch):
+        app = _make_app()
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr("spiderweb.cli._load_app", lambda spec: app)
+        with patch("alembic.command.revision") as mock_revision:
+            main(["--app", "fake:app", "makemigrations", "-m", "initial"])
+        mock_revision.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# migrate command
+# ---------------------------------------------------------------------------
+
+
+class TestMigrateCommand:
+    def _run(self, app, extra, tmp_path, monkeypatch):
+        migrations_dir = tmp_path / "migrations"
+        migrations_dir.mkdir()
+        monkeypatch.chdir(tmp_path)
+        with patch("alembic.command.upgrade") as mock_upgrade, \
+             patch("alembic.command.downgrade") as mock_downgrade, \
+             patch("alembic.command.stamp") as mock_stamp:
+            _cmd_migrate(app, None, extra)
+            return mock_upgrade, mock_downgrade, mock_stamp
+
+    def test_defaults_to_upgrade_head(self, tmp_path, monkeypatch):
+        app = _make_app()
+        up, _, _ = self._run(app, [], tmp_path, monkeypatch)
+        up.assert_called_once()
+        assert up.call_args[0][1] == "head"
+
+    def test_explicit_revision_upgrades(self, tmp_path, monkeypatch):
+        app = _make_app()
+        up, _, _ = self._run(app, ["abc123"], tmp_path, monkeypatch)
+        up.assert_called_once()
+        assert up.call_args[0][1] == "abc123"
+
+    def test_zero_downgrades_to_base(self, tmp_path, monkeypatch):
+        app = _make_app()
+        _, down, _ = self._run(app, ["zero"], tmp_path, monkeypatch)
+        down.assert_called_once()
+        assert down.call_args[0][1] == "base"
+
+    def test_base_downgrades(self, tmp_path, monkeypatch):
+        app = _make_app()
+        _, down, _ = self._run(app, ["base"], tmp_path, monkeypatch)
+        down.assert_called_once()
+        assert down.call_args[0][1] == "base"
+
+    def test_negative_relative_downgrades(self, tmp_path, monkeypatch):
+        app = _make_app()
+        _, down, _ = self._run(app, ["-1"], tmp_path, monkeypatch)
+        down.assert_called_once()
+        assert down.call_args[0][1] == "-1"
+
+    def test_fake_stamps_database(self, tmp_path, monkeypatch):
+        app = _make_app()
+        _, _, stamp = self._run(app, ["--fake"], tmp_path, monkeypatch)
+        stamp.assert_called_once()
+        assert stamp.call_args[0][1] == "head"
+
+    def test_fake_zero_stamps_base(self, tmp_path, monkeypatch):
+        app = _make_app()
+        _, _, stamp = self._run(app, ["zero", "--fake"], tmp_path, monkeypatch)
+        stamp.assert_called_once()
+        assert stamp.call_args[0][1] == "base"
+
+    def test_missing_migrations_dir_exits(self, tmp_path, monkeypatch, capsys):
+        app = _make_app()
+        monkeypatch.chdir(tmp_path)
+        with pytest.raises(SystemExit) as exc:
+            _cmd_migrate(app, None, [])
+        assert exc.value.code == 1
+        assert "makemigrations" in capsys.readouterr().err
+
+    def test_cli_dispatches_migrate(self, tmp_path, monkeypatch):
+        app = _make_app()
+        (tmp_path / "migrations").mkdir()
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr("spiderweb.cli._load_app", lambda spec: app)
+        with patch("alembic.command.upgrade") as mock_upgrade:
+            main(["--app", "fake:app", "migrate"])
+        mock_upgrade.assert_called_once()
