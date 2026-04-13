@@ -11,6 +11,7 @@ from spiderweb.cli import (
     _cmd_version,
     _find_pyproject_app,
     _load_app,
+    _read_pyproject_config,
     main,
 )
 from spiderweb.tests.helpers import setup
@@ -343,6 +344,95 @@ class TestFindPyprojectApp:
 
 
 # ---------------------------------------------------------------------------
+# _read_pyproject_config
+# ---------------------------------------------------------------------------
+
+
+class TestReadPyprojectConfig:
+    def test_returns_full_section(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.spiderweb]\napp = "mymod:app"\nasgi = true\n'
+        )
+        monkeypatch.chdir(tmp_path)
+        cfg = _read_pyproject_config()
+        assert cfg == {"app": "mymod:app", "asgi": True}
+
+    def test_returns_empty_dict_when_no_file(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        assert _read_pyproject_config() == {}
+
+    def test_returns_empty_dict_when_section_absent(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text("[tool.other]\nkey = 1\n")
+        monkeypatch.chdir(tmp_path)
+        assert _read_pyproject_config() == {}
+
+    def test_returns_empty_dict_on_malformed_toml(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_bytes(b"\xff\xfe bad toml")
+        monkeypatch.chdir(tmp_path)
+        assert _read_pyproject_config() == {}
+
+    def test_asgi_false_by_default(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text('[tool.spiderweb]\napp = "a:b"\n')
+        monkeypatch.chdir(tmp_path)
+        assert _read_pyproject_config().get("asgi", False) is False
+
+
+# ---------------------------------------------------------------------------
+# serve: asgi flag from pyproject.toml
+# ---------------------------------------------------------------------------
+
+
+class TestServeAsgiFromPyproject:
+    def test_asgi_default_true_when_set_in_pyproject(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.spiderweb]\napp = "fake:app"\nasgi = true\n'
+        )
+        monkeypatch.chdir(tmp_path)
+        args, _ = _build_serve_parser(asgi_default=True).parse_known_args([])
+        assert args.asgi is True
+
+    def test_no_asgi_flag_overrides_pyproject_true(self):
+        args, _ = _build_serve_parser(asgi_default=True).parse_known_args(["--no-asgi"])
+        assert args.asgi is False
+
+    def test_asgi_flag_explicit_still_works(self):
+        args, _ = _build_serve_parser(asgi_default=False).parse_known_args(["--asgi"])
+        assert args.asgi is True
+
+    def test_main_passes_asgi_default_from_pyproject(self, tmp_path, monkeypatch):
+        """main() should start ASGI when pyproject sets asgi=true, no --asgi flag needed."""
+        app = _make_app()
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.spiderweb]\napp = "fake:app"\nasgi = true\n'
+        )
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("SPIDERWEB_APP", raising=False)
+        monkeypatch.setattr("spiderweb.cli._load_app", lambda spec: app)
+
+        started_asgi = []
+        monkeypatch.setattr(app, "start_asgi", lambda blocking=True: started_asgi.append(True))
+
+        main(["serve"])
+        assert started_asgi == [True]
+
+    def test_no_asgi_flag_overrides_pyproject_in_main(self, tmp_path, monkeypatch):
+        """--no-asgi on the CLI overrides asgi=true in pyproject.toml."""
+        app = _make_app()
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.spiderweb]\napp = "fake:app"\nasgi = true\n'
+        )
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("SPIDERWEB_APP", raising=False)
+        monkeypatch.setattr("spiderweb.cli._load_app", lambda spec: app)
+
+        started_wsgi = []
+        monkeypatch.setattr(app, "start", lambda blocking=True: started_wsgi.append(True))
+
+        main(["serve", "--no-asgi"])
+        assert started_wsgi == [True]
+
+
+# ---------------------------------------------------------------------------
 # Parser structure
 # ---------------------------------------------------------------------------
 
@@ -351,6 +441,10 @@ class TestParser:
     def test_serve_asgi_flag(self):
         args, _ = _build_serve_parser().parse_known_args(["--asgi"])
         assert args.asgi is True
+
+    def test_serve_no_asgi_flag(self):
+        args, _ = _build_serve_parser(asgi_default=True).parse_known_args(["--no-asgi"])
+        assert args.asgi is False
 
     def test_serve_addr_and_port(self):
         args, _ = _build_serve_parser().parse_known_args(["--addr", "0.0.0.0", "--port", "9001"])

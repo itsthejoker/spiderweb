@@ -83,6 +83,16 @@ Override the bind address or port without touching your source code:
 spiderweb serve --addr 0.0.0.0 --port 9000
 ```
 
+If your project always runs in ASGI mode, set `asgi = true` in `[tool.spiderweb]` and you'll never need to type `--asgi` again:
+
+```toml
+[tool.spiderweb]
+app = "myapp:app"
+asgi = true
+```
+
+You can still override it on the command line in either direction — `--asgi` forces ASGI, `--no-asgi` forces WSGI regardless of what `pyproject.toml` says.
+
 > [!WARNING]
 > The dev server is just that: for development. Do not use for production.
 
@@ -103,7 +113,7 @@ Type "exit()" or Ctrl-D to quit.
 ...     pass
 ```
 
-If [IPython](https://ipython.org/) is installed in your environment, the shell will use it automatically. Otherwise it falls back to the standard library `code.interact`.
+If [IPython](https://ipython.org/) is installed in your environment, the shell will use it automatically. Otherwise, it falls back to the standard library `code.interact`.
 
 ### routes
 
@@ -111,14 +121,14 @@ Prints a table of every URL route your app has registered — path, allowed meth
 
 ```shell
 $ spiderweb routes
-path            methods                     name     view
--------------------------------------------------------------------
-/               GET, POST, PUT, PATCH, ...           index
-/about          GET, POST, PUT, PATCH, ...           about
-/posts/{slug}   GET, POST, PUT, PATCH, ...  posts    get_post
+path            methods                              name   view
+-----------------------------------------------------------------------
+/               POST, GET, PUT, PATCH, DELETE               index
+/about          POST, GET, PUT, PATCH, DELETE               about
+/posts/{slug}   POST, GET, PUT, PATCH, DELETE        posts  get_post
 ```
 
-Handy for double-checking that a new route was picked up correctly, or for tracking down a duplicate.
+Routes that haven't restricted their methods show the full default set. If you pass `allowed_methods=["GET"]` to `@app.route()`, only that method appears in the table. Handy for double-checking that a new route was picked up correctly, or for tracking down a duplicate.
 
 ### check
 
@@ -129,11 +139,17 @@ $ spiderweb check
 System check passed.
 ```
 
-If any check fails, you'll see the same error messages you'd get at startup. Useful in CI or as a quick sanity check after a config change.
+If any check fails, a `StartupErrors` exception group is raised — you'll see a one-frame traceback listing every failing check. Useful in CI or as a quick sanity check after a config change.
 
 ## custom commands
 
-You can register your own management commands on the router using the `@app.command()` decorator. Custom commands receive three arguments: the router instance (`app`), the parsed `argparse.Namespace` (`args`), and a list of any unrecognised flags (`extra`).
+You can register your own management commands on the router using the `@app.command()` decorator. Every custom command receives three arguments:
+
+- `app` — the `SpiderwebRouter` instance, so you can access the database, routes, config, etc.
+- `args` — an `argparse.Namespace` containing only `.app` and `.command` (the values the CLI's own pre-parser resolved). It does **not** contain any flags you pass after the command name.
+- `extra` — a plain `list[str]` of every token that appeared after the command name on the command line. Parse this yourself if your command accepts flags.
+
+A command with no extra flags:
 
 ```python
 from spiderweb import SpiderwebRouter
@@ -157,7 +173,31 @@ if __name__ == "__main__":
     app.start()
 ```
 
-Run it the same way as any built-in command:
+A command that accepts its own flags — parse `extra` with argparse:
+
+```python
+import argparse
+
+@app.command("seed")
+def seed_database(app, args, extra):
+    p = argparse.ArgumentParser(prog="spiderweb seed")
+    p.add_argument("--dry-run", action="store_true")
+    opts = p.parse_args(extra)
+
+    if opts.dry_run:
+        print("Dry run — no changes written.")
+        return
+
+    with app.get_db_session() as session:
+        session.commit()
+    print("Database seeded.")
+```
+
+```shell
+spiderweb seed --dry-run
+```
+
+Run any custom command the same way as a built-in:
 
 ```shell
 spiderweb --app myapp:app seed
@@ -181,11 +221,13 @@ You can register as many custom commands as you like. Pick meaningful names; the
 | `--app MODULE:ATTR` | The app to use, in `module:attribute` form. Overrides `SPIDERWEB_APP` and `pyproject.toml`. |
 | `SPIDERWEB_APP` | Environment variable. Overrides `pyproject.toml`, overridden by `--app`. |
 | `[tool.spiderweb] app` | `pyproject.toml` key. Lowest priority; used when neither of the above is set. |
+| `[tool.spiderweb] asgi` | `pyproject.toml` boolean. When `true`, `serve` defaults to ASGI mode. Overridden by `--asgi` / `--no-asgi`. |
 
 ### `serve` options
 
 | Flag | Description |
 |---|---|
 | `--asgi` | Start in ASGI mode via uvicorn instead of WSGI. |
+| `--no-asgi` | Force WSGI mode even when `asgi = true` is set in `pyproject.toml`. |
 | `--addr ADDR` | Bind address. Overrides the value stored in the app. |
 | `--port PORT` | Port number. Overrides the value stored in the app. |
