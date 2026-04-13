@@ -5,8 +5,15 @@ Usage::
 
     spiderweb [--app MODULE:ATTR] COMMAND [options]
 
-The ``--app`` argument can also be set via the ``SPIDERWEB_APP`` environment
-variable so you don't have to repeat it on every invocation.
+The ``--app`` value is resolved in this order (first match wins):
+
+1. ``--app MODULE:ATTR`` flag passed on the command line.
+2. ``SPIDERWEB_APP`` environment variable.
+3. ``app`` key inside a ``[tool.spiderweb]`` section of the nearest
+   ``pyproject.toml`` found by walking up from the current directory::
+
+       [tool.spiderweb]
+       app = "myapp:app"
 
 Built-in commands
 -----------------
@@ -45,11 +52,41 @@ Then call them with::
 import argparse
 import importlib
 import os
+import pathlib
 import sys
+import tomllib
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from spiderweb.main import SpiderwebRouter
+
+
+# ---------------------------------------------------------------------------
+# pyproject.toml discovery
+# ---------------------------------------------------------------------------
+
+
+def _find_pyproject_app() -> str | None:
+    """Return the ``[tool.spiderweb] app`` value from the nearest pyproject.toml.
+
+    Walks up from the current working directory until the filesystem root is
+    reached.  Returns ``None`` if no file is found or the key is absent.
+    """
+    directory = pathlib.Path.cwd()
+    while True:
+        candidate = directory / "pyproject.toml"
+        if candidate.is_file():
+            try:
+                with candidate.open("rb") as fh:
+                    data = tomllib.load(fh)
+                return data.get("tool", {}).get("spiderweb", {}).get("app")
+            except Exception:
+                return None
+        parent = directory.parent
+        if parent == directory:
+            # Reached the filesystem root without finding anything.
+            return None
+        directory = parent
 
 
 # ---------------------------------------------------------------------------
@@ -212,7 +249,8 @@ def _build_parser() -> argparse.ArgumentParser:
         default=os.environ.get("SPIDERWEB_APP"),
         help=(
             "App to use, as 'module:attribute' (e.g. myapp:app). "
-            "May also be set via SPIDERWEB_APP."
+            "Falls back to SPIDERWEB_APP env var, then [tool.spiderweb] app "
+            "in the nearest pyproject.toml."
         ),
     )
     parser.add_argument(
@@ -255,7 +293,10 @@ def main(argv=None):
     # command-specific parser so that e.g. ``serve --asgi`` works without
     # argparse rejecting ``--asgi`` at the top level.
     pre = argparse.ArgumentParser(add_help=False)
-    pre.add_argument("--app", default=os.environ.get("SPIDERWEB_APP"))
+    pre.add_argument(
+        "--app",
+        default=os.environ.get("SPIDERWEB_APP") or _find_pyproject_app(),
+    )
     pre.add_argument("command", nargs="?")
     pre_args, remaining = pre.parse_known_args(argv)
 

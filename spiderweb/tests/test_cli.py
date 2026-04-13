@@ -9,6 +9,7 @@ from spiderweb.cli import (
     _build_serve_parser,
     _cmd_routes,
     _cmd_version,
+    _find_pyproject_app,
     _load_app,
     main,
 )
@@ -242,6 +243,103 @@ class TestCLIErrors:
         main(["routes"])
         out = capsys.readouterr().out
         assert "/env" in out
+
+
+# ---------------------------------------------------------------------------
+# pyproject.toml discovery
+# ---------------------------------------------------------------------------
+
+
+class TestFindPyprojectApp:
+    def test_returns_app_value_from_pyproject(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text(
+            "[tool.spiderweb]\napp = \"mymod:myapp\"\n"
+        )
+        monkeypatch.chdir(tmp_path)
+        assert _find_pyproject_app() == "mymod:myapp"
+
+    def test_returns_none_when_key_absent(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text("[tool.other]\nkey = \"val\"\n")
+        monkeypatch.chdir(tmp_path)
+        assert _find_pyproject_app() is None
+
+    def test_returns_none_when_no_pyproject(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        assert _find_pyproject_app() is None
+
+    def test_walks_up_to_find_pyproject(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text(
+            "[tool.spiderweb]\napp = \"pkg:obj\"\n"
+        )
+        nested = tmp_path / "a" / "b"
+        nested.mkdir(parents=True)
+        monkeypatch.chdir(nested)
+        assert _find_pyproject_app() == "pkg:obj"
+
+    def test_closer_pyproject_wins(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text(
+            "[tool.spiderweb]\napp = \"outer:app\"\n"
+        )
+        inner = tmp_path / "sub"
+        inner.mkdir()
+        (inner / "pyproject.toml").write_text(
+            "[tool.spiderweb]\napp = \"inner:app\"\n"
+        )
+        monkeypatch.chdir(inner)
+        assert _find_pyproject_app() == "inner:app"
+
+    def test_returns_none_on_malformed_toml(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_bytes(b"\xff\xfe not valid toml !!!")
+        monkeypatch.chdir(tmp_path)
+        assert _find_pyproject_app() is None
+
+    def test_cli_uses_pyproject_app_when_no_flag_or_env(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        """main() should pick up app from pyproject.toml when --app / env absent."""
+        app = _make_app()
+
+        (tmp_path / "pyproject.toml").write_text(
+            "[tool.spiderweb]\napp = \"fake:app\"\n"
+        )
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("SPIDERWEB_APP", raising=False)
+        monkeypatch.setattr("spiderweb.cli._load_app", lambda spec: app)
+
+        main(["routes"])
+        # No error — the app was resolved from pyproject.toml
+        captured = capsys.readouterr()
+        assert "error" not in captured.err
+
+    def test_explicit_flag_overrides_pyproject(self, tmp_path, monkeypatch, capsys):
+        (tmp_path / "pyproject.toml").write_text(
+            "[tool.spiderweb]\napp = \"wrong:app\"\n"
+        )
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("SPIDERWEB_APP", raising=False)
+
+        received = []
+        monkeypatch.setattr(
+            "spiderweb.cli._load_app", lambda spec: received.append(spec) or _make_app()
+        )
+
+        main(["--app", "correct:app", "routes"])
+        assert received == ["correct:app"]
+
+    def test_env_var_overrides_pyproject(self, tmp_path, monkeypatch, capsys):
+        (tmp_path / "pyproject.toml").write_text(
+            "[tool.spiderweb]\napp = \"wrong:app\"\n"
+        )
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("SPIDERWEB_APP", "env:app")
+
+        received = []
+        monkeypatch.setattr(
+            "spiderweb.cli._load_app", lambda spec: received.append(spec) or _make_app()
+        )
+
+        main(["routes"])
+        assert received == ["env:app"]
 
 
 # ---------------------------------------------------------------------------
