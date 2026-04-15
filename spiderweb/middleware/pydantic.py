@@ -40,9 +40,6 @@ class CheckPydanticInstalled(ServerCheck):
     def check(self):
         try:
             from pydantic import BaseModel as _BM  # noqa: F401
-            from pydantic_core._pydantic_core import (
-                ValidationError as _VE,
-            )  # noqa: F401
 
             return None
         except Exception:

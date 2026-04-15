@@ -601,9 +601,11 @@ def main(argv=None):
 
     if not pre_args.app:
         print(
-            ("error: need to know server entry point. Set in pyproject.toml"
-             " with:\n\n[tool.spiderweb]\napp = \"myapp:app\"\n\nOr use --app"
-             " or set SPIDERWEB_APP environment variable."),
+            (
+                "error: need to know server entry point. Set in pyproject.toml"
+                ' with:\n\n[tool.spiderweb]\napp = "myapp:app"\n\nOr use --app'
+                " or set SPIDERWEB_APP environment variable."
+            ),
             file=sys.stderr,
         )
         sys.exit(1)
@@ -613,7 +615,9 @@ def main(argv=None):
     # Built-in commands (parse their own flags from *remaining*)
     if command == "serve":
         asgi_default = bool(pyproject.get("asgi", False))
-        serve_args, extra = _build_serve_parser(asgi_default).parse_known_args(remaining)
+        serve_args, extra = _build_serve_parser(asgi_default).parse_known_args(
+            remaining
+        )
         _cmd_serve(app, serve_args, extra)
         return
 

@@ -81,7 +81,9 @@ def test_pydantic_valid_post_sets_validated_data():
         return HttpResponse("ok")
 
     sr = StartResponse()
-    result = app(_post_environ({"name": "Alice", "comment": "hello"}, path="/submit"), sr)
+    result = app(
+        _post_environ({"name": "Alice", "comment": "hello"}, path="/submit"), sr
+    )
 
     assert sr.status.startswith("200")
     assert b"ok" in b"".join(result)

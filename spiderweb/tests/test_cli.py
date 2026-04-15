@@ -1,12 +1,10 @@
 """Tests for the spiderweb management CLI (spiderweb/cli.py)."""
 
-import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from spiderweb.cli import (
-    _build_parser,
     _build_serve_parser,
     _cmd_makemigrations,
     _cmd_migrate,
@@ -215,7 +213,8 @@ class TestCLIErrors:
             main([])
         assert exc.value.code == 0
 
-    def test_missing_app_for_serve_exits(self, capsys):
+    def test_missing_app_for_serve_exits(self, capsys, monkeypatch):
+        monkeypatch.setattr("spiderweb.cli._read_pyproject_config", lambda: {})
         with pytest.raises(SystemExit) as exc:
             main(["serve"])
         assert exc.value.code == 1
@@ -260,13 +259,13 @@ class TestCLIErrors:
 class TestFindPyprojectApp:
     def test_returns_app_value_from_pyproject(self, tmp_path, monkeypatch):
         (tmp_path / "pyproject.toml").write_text(
-            "[tool.spiderweb]\napp = \"mymod:myapp\"\n"
+            '[tool.spiderweb]\napp = "mymod:myapp"\n'
         )
         monkeypatch.chdir(tmp_path)
         assert _find_pyproject_app() == "mymod:myapp"
 
     def test_returns_none_when_key_absent(self, tmp_path, monkeypatch):
-        (tmp_path / "pyproject.toml").write_text("[tool.other]\nkey = \"val\"\n")
+        (tmp_path / "pyproject.toml").write_text('[tool.other]\nkey = "val"\n')
         monkeypatch.chdir(tmp_path)
         assert _find_pyproject_app() is None
 
@@ -275,9 +274,7 @@ class TestFindPyprojectApp:
         assert _find_pyproject_app() is None
 
     def test_walks_up_to_find_pyproject(self, tmp_path, monkeypatch):
-        (tmp_path / "pyproject.toml").write_text(
-            "[tool.spiderweb]\napp = \"pkg:obj\"\n"
-        )
+        (tmp_path / "pyproject.toml").write_text('[tool.spiderweb]\napp = "pkg:obj"\n')
         nested = tmp_path / "a" / "b"
         nested.mkdir(parents=True)
         monkeypatch.chdir(nested)
@@ -285,13 +282,11 @@ class TestFindPyprojectApp:
 
     def test_closer_pyproject_wins(self, tmp_path, monkeypatch):
         (tmp_path / "pyproject.toml").write_text(
-            "[tool.spiderweb]\napp = \"outer:app\"\n"
+            '[tool.spiderweb]\napp = "outer:app"\n'
         )
         inner = tmp_path / "sub"
         inner.mkdir()
-        (inner / "pyproject.toml").write_text(
-            "[tool.spiderweb]\napp = \"inner:app\"\n"
-        )
+        (inner / "pyproject.toml").write_text('[tool.spiderweb]\napp = "inner:app"\n')
         monkeypatch.chdir(inner)
         assert _find_pyproject_app() == "inner:app"
 
@@ -306,9 +301,7 @@ class TestFindPyprojectApp:
         """main() should pick up app from pyproject.toml when --app / env absent."""
         app = _make_app()
 
-        (tmp_path / "pyproject.toml").write_text(
-            "[tool.spiderweb]\napp = \"fake:app\"\n"
-        )
+        (tmp_path / "pyproject.toml").write_text('[tool.spiderweb]\napp = "fake:app"\n')
         monkeypatch.chdir(tmp_path)
         monkeypatch.delenv("SPIDERWEB_APP", raising=False)
         monkeypatch.setattr("spiderweb.cli._load_app", lambda spec: app)
@@ -320,7 +313,7 @@ class TestFindPyprojectApp:
 
     def test_explicit_flag_overrides_pyproject(self, tmp_path, monkeypatch, capsys):
         (tmp_path / "pyproject.toml").write_text(
-            "[tool.spiderweb]\napp = \"wrong:app\"\n"
+            '[tool.spiderweb]\napp = "wrong:app"\n'
         )
         monkeypatch.chdir(tmp_path)
         monkeypatch.delenv("SPIDERWEB_APP", raising=False)
@@ -335,7 +328,7 @@ class TestFindPyprojectApp:
 
     def test_env_var_overrides_pyproject(self, tmp_path, monkeypatch, capsys):
         (tmp_path / "pyproject.toml").write_text(
-            "[tool.spiderweb]\napp = \"wrong:app\"\n"
+            '[tool.spiderweb]\napp = "wrong:app"\n'
         )
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("SPIDERWEB_APP", "env:app")
@@ -416,7 +409,9 @@ class TestServeAsgiFromPyproject:
         monkeypatch.setattr("spiderweb.cli._load_app", lambda spec: app)
 
         started_asgi = []
-        monkeypatch.setattr(app, "start_asgi", lambda blocking=True: started_asgi.append(True))
+        monkeypatch.setattr(
+            app, "start_asgi", lambda blocking=True: started_asgi.append(True)
+        )
 
         main(["serve"])
         assert started_asgi == [True]
@@ -432,7 +427,9 @@ class TestServeAsgiFromPyproject:
         monkeypatch.setattr("spiderweb.cli._load_app", lambda spec: app)
 
         started_wsgi = []
-        monkeypatch.setattr(app, "start", lambda blocking=True: started_wsgi.append(True))
+        monkeypatch.setattr(
+            app, "start", lambda blocking=True: started_wsgi.append(True)
+        )
 
         main(["serve", "--wsgi"])
         assert started_wsgi == [True]
@@ -453,7 +450,9 @@ class TestParser:
         assert args.asgi is False
 
     def test_serve_addr_and_port(self):
-        args, _ = _build_serve_parser().parse_known_args(["--addr", "0.0.0.0", "--port", "9001"])
+        args, _ = _build_serve_parser().parse_known_args(
+            ["--addr", "0.0.0.0", "--port", "9001"]
+        )
         assert args.addr == "0.0.0.0"
         assert args.port == 9001
 
@@ -605,9 +604,11 @@ class TestMigrateCommand:
         migrations_dir = tmp_path / "migrations"
         migrations_dir.mkdir()
         monkeypatch.chdir(tmp_path)
-        with patch("alembic.command.upgrade") as mock_upgrade, \
-             patch("alembic.command.downgrade") as mock_downgrade, \
-             patch("alembic.command.stamp") as mock_stamp:
+        with (
+            patch("alembic.command.upgrade") as mock_upgrade,
+            patch("alembic.command.downgrade") as mock_downgrade,
+            patch("alembic.command.stamp") as mock_stamp,
+        ):
             _cmd_migrate(app, None, extra)
             return mock_upgrade, mock_downgrade, mock_stamp
 

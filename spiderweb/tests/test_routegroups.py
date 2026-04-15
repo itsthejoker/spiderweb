@@ -1,9 +1,10 @@
 """Tests for RouteGroup and custom path-parameter converters."""
+
 import pytest
 
-from spiderweb import RouteGroup, SpiderwebRouter
+from spiderweb import RouteGroup
 from spiderweb.exceptions import ConfigError, ParseError, ReverseNotFound
-from spiderweb.response import HttpResponse, JsonResponse
+from spiderweb.response import HttpResponse
 from spiderweb.tests.helpers import setup
 
 
@@ -285,7 +286,7 @@ class TestCustomConverters:
             return HttpResponse(slug)
 
         # uppercase not allowed by slug regex
-        result = call(app, environ, start_response, "/posts/Hello-World")
+        call(app, environ, start_response, "/posts/Hello-World")
         assert start_response.status.startswith("404")
 
     def test_to_python_is_called(self):
@@ -376,7 +377,10 @@ class TestCustomConverters:
 
         result = call(app, environ, start_response, "/blog/cool-article")
         assert result == [b"cool-article"]
-        assert app.reverse("blog:post", {"post_slug": "cool-article"}) == "/blog/cool-article"
+        assert (
+            app.reverse("blog:post", {"post_slug": "cool-article"})
+            == "/blog/cool-article"
+        )
 
     def test_built_in_converters_still_work_after_register(self):
         """Registering custom converters must not break built-in ones."""
