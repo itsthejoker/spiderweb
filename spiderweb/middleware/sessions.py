@@ -8,6 +8,7 @@ from spiderweb.middleware import SpiderwebMiddleware
 from spiderweb.request import Request
 from spiderweb.response import HttpResponse
 from spiderweb.db import Base
+from spiderweb.models import User, AnonymousUser
 from spiderweb.utils import generate_key, is_jsonable
 
 
@@ -55,11 +56,22 @@ class SessionMiddleware(SpiderwebMiddleware):
                 request._session["id"] = generate_key()
                 request._session["new_session"] = True
                 request.META["SESSION"] = None
+                request.user = AnonymousUser()
                 return
 
             request.SESSION = json.loads(existing_session.session_data)
             request.META["SESSION"] = existing_session
             request._session["id"] = existing_session.session_key
+
+            user_id = request.SESSION.get("_auth_user_id")
+            if user_id:
+                user = dbsession.query(User).filter(User.id == int(user_id)).first()
+                if user:
+                    dbsession.expunge(user)
+                request.user = user if user else AnonymousUser()
+            else:
+                request.user = AnonymousUser()
+
             # touch last_active
             existing_session.last_active = datetime.now()
             dbsession.add(existing_session)
@@ -92,6 +104,7 @@ class SessionMiddleware(SpiderwebMiddleware):
             try:
                 session = Session(
                     session_key=session_key,
+                    user_id=request.SESSION.get("_auth_user_id"),
                     session_data=json.dumps(request.SESSION),
                     created_at=datetime.now(),
                     last_active=datetime.now(),
@@ -124,6 +137,7 @@ class SessionMiddleware(SpiderwebMiddleware):
             )
             if session:
                 session.session_data = json.dumps(request.SESSION)
+                session.user_id = request.SESSION.get("_auth_user_id")
                 session.last_active = datetime.now()
                 dbsession.add(session)
                 dbsession.commit()
