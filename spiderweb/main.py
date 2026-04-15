@@ -1,4 +1,3 @@
-import asyncio
 import functools
 import inspect
 import logging
@@ -256,11 +255,13 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
 
         return ASGIHandler(self)
 
-    def fire_response(self, start_response, request: Request, resp: HttpResponse):
+    def fire_response(
+        self, start_response, request: Request, resp: HttpResponse
+    ) -> None | list[bytes]:
         try:
             try:
                 rendered_output: str = resp.render()
-                final_output: str | list[str] = self.post_process_middleware(
+                final_output: str | bytes = self.post_process_middleware(
                     request, resp, rendered_output
                 )
             except Exception as e:
@@ -286,8 +287,9 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             for v in varies:
                 headers.append(("vary", str(v)))
 
+            # Is there any situation now where it could be a list before this point?
             if not isinstance(final_output, list):
-                final_output = [final_output]
+                final_output: list[str | bytes] = [final_output]
             encoded_resp = [
                 chunk.encode(DEFAULT_ENCODING) if isinstance(chunk, str) else chunk
                 for chunk in final_output
