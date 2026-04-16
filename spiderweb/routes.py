@@ -1,5 +1,6 @@
+import inspect
 import re
-from typing import Callable, Any, Sequence
+from typing import Callable, Any, Sequence, Optional
 
 from spiderweb.constants import DEFAULT_ALLOWED_METHODS
 from spiderweb.converters import *  # noqa: F403
@@ -10,8 +11,106 @@ from spiderweb.exceptions import (
     ParseError,
     SpiderwebException,
     ReverseNotFound,
+    MethodNotAllowed,
 )
-from spiderweb.response import RedirectResponse
+from spiderweb.response import RedirectResponse, HttpResponse
+
+
+class View:
+    """
+    Class that includes all the inheritance objects for a class-based view.
+
+    If a class-based view is chosen, then we assume that the person using
+    it knows exactly what HTTP methods that they want to accept. Instead
+    of going by the default allowed methods, we'll block the defaults and
+    automatically handle the rest, while they override what they want to
+    handle.
+
+    We explictly do not include CONNECT and TRACE as valid verbs here. CONNECT
+    is for internet-facing services (like nginx) and TRACE should default to
+    a 405 METHOD NOT ALLOWED.
+
+    ref: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.template_name: Optional[str] = None
+
+    def __call__(self, request, *args, **kwargs):
+        # DO NOT OVERRIDE.
+        if hasattr(self, request.method.lower()):
+            return getattr(self, request.method.lower())(request, *args, **kwargs)
+        raise MethodNotAllowed
+
+    # The descriptions are straight from Mozilla -- they're just here so
+    # that they autopopulate in end user IDEs.
+
+    def delete(self, request, *args, **kwargs) -> HttpResponse:
+        """
+        The DELETE method deletes the specified resource.
+        """
+        raise MethodNotAllowed
+
+    def get(self, request, *args, **kwargs) -> HttpResponse:
+        """
+        The GET method requests a representation of the specified resource.
+        Requests using GET should only retrieve data and should not contain a
+        request content.
+        """
+        raise MethodNotAllowed
+
+    def head(self, request, *args, **kwargs) -> HttpResponse:
+        """
+        The HEAD method asks for a response identical to a GET request, but
+        without a response body.
+        """
+        raise MethodNotAllowed
+
+    def options(self, request, *args, **kwargs) -> HttpResponse:
+        """
+        The OPTIONS method describes the communication options for the target
+        resource.
+        """
+        # Get a list of all functions on the child class that called this.
+        # Filter out all the functions that aren't route-related, then
+        # return that. OPTIONS is always available, so we include it by
+        # default.
+        values = {"options"}
+        for cls in type(self).mro():
+            if cls is View:
+                break
+            values.update(
+                {
+                    name
+                    for name in cls.__dict__.keys()
+                    if name
+                    in ["get", "post", "delete", "head", "put", "patch", "options"]
+                    and callable(getattr(self, name))
+                }
+            )
+        return HttpResponse(
+            status_code=204, headers={"ALLOW": ", ".join(values).upper()}
+        )
+
+    def patch(self, request, *args, **kwargs) -> HttpResponse:
+        """
+        The PATCH method applies partial modifications to a resource.
+        """
+        raise MethodNotAllowed
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        """
+        The POST method submits an entity to the specified resource, often
+        causing a change in state or side effects on the server.
+        """
+        raise MethodNotAllowed
+
+    def put(self, request, *args, **kwargs) -> HttpResponse:
+        """
+        The PUT method replaces all current representations of the target
+        resource with the request content.
+        """
+        raise MethodNotAllowed
 
 
 def convert_match_to_dict(match: dict, extra_converters: dict = None):
@@ -193,6 +292,15 @@ class RoutesMixin:
             or allowed_methods
             or DEFAULT_ALLOWED_METHODS
         )
+
+        if inspect.isclass(method) and issubclass(method, View):
+            view_class = method
+
+            def wrapped_view(request, *args, **kwargs):
+                return view_class()(request, *args, **kwargs)
+
+            method = wrapped_view
+
         if not path.startswith("/") and self.fix_route_starting_slash:
             path = "/" + path
         reverse_path = re.sub(r"<(.*?):(.*?)>", r"{\2}", path) if "<" in path else path
