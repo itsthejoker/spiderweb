@@ -81,3 +81,68 @@ def test_invalid_hash():
     # Invalid algo
     user.password = "md5$1000$salt$hash"
     assert user.check_password("test") is False
+
+
+def test_user_permissions():
+    app, environ, start_response = setup()
+    db = app.get_db_session()
+
+    from spiderweb.models.permission import Permission
+
+    user = User(username="perm_user")
+    perm1 = Permission(name="View Dashboard", codename="view_dashboard")
+    perm2 = Permission(name="Edit Settings", codename="edit_settings")
+
+    user.permissions.extend([perm1, perm2])
+    db.add(user)
+    db.commit()
+
+    saved_user = db.query(User).filter_by(username="perm_user").first()
+    assert len(saved_user.permissions) == 2
+    codenames = {p.codename for p in saved_user.permissions}
+    assert "view_dashboard" in codenames
+    assert "edit_settings" in codenames
+    db.close()
+
+
+def test_add_permission_to_existing_user():
+    app, environ, start_response = setup()
+    db = app.get_db_session()
+
+    from spiderweb.models.permission import Permission
+
+    user = User(username="existing_add_user")
+    db.add(user)
+    db.commit()
+
+    perm = Permission(name="Add Perm", codename="add_perm")
+    db.add(perm)
+    db.commit()
+
+    user.permissions.append(perm)
+    db.commit()
+
+    saved_user = db.query(User).filter_by(username="existing_add_user").first()
+    assert len(saved_user.permissions) == 1
+    assert saved_user.permissions[0].codename == "add_perm"
+    db.close()
+
+
+def test_remove_permission_from_existing_user():
+    app, environ, start_response = setup()
+    db = app.get_db_session()
+
+    from spiderweb.models.permission import Permission
+
+    user = User(username="existing_remove_user")
+    perm = Permission(name="Remove Perm", codename="remove_perm")
+    user.permissions.append(perm)
+    db.add(user)
+    db.commit()
+
+    user.permissions.remove(perm)
+    db.commit()
+
+    saved_user = db.query(User).filter_by(username="existing_remove_user").first()
+    assert len(saved_user.permissions) == 0
+    db.close()
