@@ -11,7 +11,6 @@ from spiderweb.exceptions import ConfigError
 from spiderweb.local_server import LocalServerMixin, SpiderwebRequestHandler
 from spiderweb.constants import __version__
 
-
 # ---------------------------------------------------------------------------
 # Helpers (mirrors test_local_server.py style)
 # ---------------------------------------------------------------------------

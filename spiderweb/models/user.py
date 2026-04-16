@@ -1,12 +1,29 @@
 import base64
 import hashlib
 import secrets
+import typing
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String
-from sqlalchemy.orm import Mapped
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table
+from sqlalchemy.orm import Mapped, relationship
 
 from spiderweb.db import Base
+
+if typing.TYPE_CHECKING:
+    from spiderweb.models.permission import Permission
+
+
+user_permissions = Table(
+    "spiderweb_user_permissions",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("spiderweb_users.id"), primary_key=True),
+    Column(
+        "permission_id",
+        Integer,
+        ForeignKey("spiderweb_permissions.id"),
+        primary_key=True,
+    ),
+)
 
 
 class AnonymousUser:
@@ -58,6 +75,9 @@ class User(Base):
     is_active: Mapped[bool] = Column(Boolean, default=True, nullable=False)
     date_joined: Mapped[datetime] = Column(
         DateTime, default=datetime.now, nullable=False
+    )
+    permissions: Mapped[list["Permission"]] = relationship(
+        "Permission", secondary=user_permissions
     )
 
     def __str__(self) -> str:

@@ -11,7 +11,6 @@ from spiderweb.response import (
     RedirectResponse,
 )
 
-
 app = SpiderwebRouter(
     templates_dirs=["templates"],
     middleware=[

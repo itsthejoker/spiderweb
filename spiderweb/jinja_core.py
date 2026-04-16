@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 from jinja2 import Environment
 
-
 if TYPE_CHECKING:
     from spiderweb import SpiderwebRouter
 

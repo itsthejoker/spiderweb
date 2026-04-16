@@ -268,6 +268,8 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
                 self.log.error("Fatal error!")
                 self.log.error(e)
                 self.log.error(traceback.format_exc())
+                if "has no attribute 'render'" in str(e):
+                    self.log.error("Did you forget to return a HttpResponse?\n")
                 return [f"Internal Server Error: {e}".encode(DEFAULT_ENCODING)]
 
             status = get_http_status_by_code(resp.status_code)

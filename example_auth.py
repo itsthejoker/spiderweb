@@ -1,5 +1,5 @@
 from spiderweb.main import SpiderwebRouter
-from spiderweb.response import HttpResponse, RedirectResponse, TemplateResponse
+from spiderweb.response import RedirectResponse, TemplateResponse
 from spiderweb.authentication import login, logout, authenticate
 from spiderweb.models import User
 
@@ -56,7 +56,9 @@ def index(request):
     username = request.user.username if is_auth else "Anonymous"
 
     return TemplateResponse(
-        request, template_string=HTML_TEMPLATE, context={'status': status, 'username': username}
+        request,
+        template_string=HTML_TEMPLATE,
+        context={"status": status, "username": username},
     )
 
 
@@ -64,8 +66,8 @@ def index(request):
 def do_login(request):
     user = authenticate(
         request,
-        username=request.POST.get('username'),
-        password=request.POST.get('password')
+        username=request.POST.get("username"),
+        password=request.POST.get("password"),
     )
     if user:
         login(request, user)

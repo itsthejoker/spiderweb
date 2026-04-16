@@ -94,3 +94,14 @@ class StartupErrors(ExceptionGroup):
 
 class ReverseNotFound(SpiderwebException):
     pass
+
+
+class MethodNotAllowed(SpiderwebNetworkException):
+    def __init__(self, desc=None):
+        self.code = 405
+        self.msg = "Method Not Allowed"
+        self.desc = (
+            desc
+            if desc
+            else "The requested endpoint does not accept the requested method."
+        )
