@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/spiderweb">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829624787253">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829681331181">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.5.3">
@@ -38,12 +38,12 @@
 
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
-    <link href="../resources/css/retype.css?v=4.5.3.829624787253" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.5.3.829681331181" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.5.3.829624787253" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.5.3.829681331181" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.5.3" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.5.3.829624787253" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.5.3.829624787253" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.5.3.829681331181" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.5.3.829681331181" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -474,6 +474,52 @@ app.reverse(&quot;blog:post&quot;, {&quot;post_slug&quot;: &quot;hello-world&quo
         <div class="pr-5 ml-3 w-full">
             <h5>Note</h5>
 <p>Custom converters don&#x27;t replace the built-ins. You can mix <code translate="no" v-pre>&lt;int:id&gt;</code> and <code translate="no" v-pre>&lt;uuid:uid&gt;</code> in the same app without any conflict.</p>
+        </div>
+    </div>
+</div>
+<h2 id="class-based-views">Class-Based Views</h2>
+<p>Sometimes a single view function becomes unwieldy because it has to handle <code translate="no" v-pre>GET</code>, <code translate="no" v-pre>POST</code>, and maybe other HTTP methods all in one place. For these situations, Spiderweb provides a <code translate="no" v-pre>View</code> class that you can inherit from to create Class-Based Views.</p>
+<p>Instead of checking the request method inside your function, you can define a class method for each HTTP verb you want to support. The base <code translate="no" v-pre>View</code> class will automatically route the request to the correct method or return a <code translate="no" v-pre>405 Method Not Allowed</code> if the method isn&#x27;t implemented. It also automatically handles <code translate="no" v-pre>OPTIONS</code> requests for you!</p>
+<p>Here&#x27;s an example of how to set one up:</p>
+<div id="class-based-views-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-python"><code v-pre class="language-python">from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+from spiderweb.routes import View
+
+app = SpiderwebRouter()
+
+class Index(View):
+    def get(self, request, *args, **kwargs):
+        return HttpResponse(&quot;This is a GET request from a class!&quot;)
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponse(&quot;This is a POST request from a class!&quot;)
+
+# You can register it using add_route:
+app.add_route(&quot;/&quot;, Index)</code></pre>
+</doc-codeblock></div>
+<p>You can also use the <code translate="no" v-pre>@app.route()</code> decorator directly on the class if you prefer that style:</p>
+<div id="class-based-views-code-2" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-python"><code v-pre class="language-python">@app.route(&quot;/about&quot;)
+class About(View):
+    def get(self, request):
+        return HttpResponse(&quot;About us&quot;)</code></pre>
+</doc-codeblock></div>
+<div class="flex mb-6">
+    <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-primary"></div>
+    <div class="flex w-full py-4 border border-l-0 rounded-tr-lg rounded-br-lg doc-callout bg-callout-base-bg border-callout-base-border" role="alert">
+        <div class="flex items-center ml-4 h-7">
+            <svg xmlns="http://www.w3.org/2000/svg" class="block text-callout-primary" width="22" height="22" viewBox="0 0 24 24" role="presentation">
+                <g fill="currentColor"><g>
+                    <path d="M12 1C5.93 1 1 5.93 1 12s4.93 11 11 11 11-4.93 11-11S18.07 1 12 1zm0 20c-4.96 0-9-4.04-9-9s4.04-9 9-9 9 4.04 9 9-4.04 9-9 9z"></path>
+                    <path d="M12 11c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1v-4c0-.55-.45-1-1-1zM12.01 7c-.56 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"></path>
+                    <path fill="none" d="M0 0h24v24H0z"></path>
+                </g></g>
+            </svg>
+        </div>
+        <div class="pr-5 ml-3 w-full">
+            <h5>Note</h5>
+<p>When using Class-Based Views, the <code translate="no" v-pre>View</code> class automatically allows any HTTP methods that you have defined on your subclass, meaning you don&#x27;t need to manually configure <code translate="no" v-pre>allowed_methods</code> for the route.</p>
         </div>
     </div>
 </div>

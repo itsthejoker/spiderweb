@@ -335,3 +335,41 @@ app.reverse("blog:post", {"post_slug": "hello-world"})  # -> "/blog/hello-world"
 
 > [!NOTE]
 > Custom converters don't replace the built-ins. You can mix `<int:id>` and `<uuid:uid>` in the same app without any conflict.
+
+## Class-Based Views
+
+Sometimes a single view function becomes unwieldy because it has to handle `GET`, `POST`, and maybe other HTTP methods all in one place. For these situations, Spiderweb provides a `View` class that you can inherit from to create Class-Based Views. 
+
+Instead of checking the request method inside your function, you can define a class method for each HTTP verb you want to support. The base `View` class will automatically route the request to the correct method or return a `405 Method Not Allowed` if the method isn't implemented. It also automatically handles `OPTIONS` requests for you!
+
+Here's an example of how to set one up:
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+from spiderweb.routes import View
+
+app = SpiderwebRouter()
+
+class Index(View):
+    def get(self, request, *args, **kwargs):
+        return HttpResponse("This is a GET request from a class!")
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponse("This is a POST request from a class!")
+
+# You can register it using add_route:
+app.add_route("/", Index)
+```
+
+You can also use the `@app.route()` decorator directly on the class if you prefer that style:
+
+```python
+@app.route("/about")
+class About(View):
+    def get(self, request):
+        return HttpResponse("About us")
+```
+
+> [!NOTE]
+> When using Class-Based Views, the `View` class automatically allows any HTTP methods that you have defined on your subclass, meaning you don't need to manually configure `allowed_methods` for the route.
