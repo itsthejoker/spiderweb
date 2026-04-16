@@ -2,8 +2,8 @@
 
 <p align="center">
     <img
-    src="https://img.shields.io/pypi/v/spiderweb-framework.svg?style=for-the-badge"
-    alt="PyPI release version for Spiderweb"
+        src="https://img.shields.io/pypi/v/spiderweb-framework.svg?style=for-the-badge"
+        alt="PyPI release version for Spiderweb"
     />
     <img
         src="https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=for-the-badge"
@@ -11,6 +11,13 @@
     />
     <img 
         src="https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge"
+        alt="Code style: Black"
+    />
+</p>
+
+<p align="center">
+    <img 
+        src="https://github.com/itsthejoker/spiderweb/actions/workflows/tests.yml/badge.svg?branch=main"
         alt="Code style: Black"
     />
 </p>
