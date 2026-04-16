@@ -7,7 +7,6 @@ from spiderweb.exceptions import ConfigError, ParseError, ReverseNotFound
 from spiderweb.response import HttpResponse
 from spiderweb.tests.helpers import setup
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

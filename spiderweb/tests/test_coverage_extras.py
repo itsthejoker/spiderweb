@@ -7,7 +7,6 @@ import pytest
 
 from spiderweb.tests.helpers import setup, RequestFactory
 
-
 # ---------------------------------------------------------------------------
 # middleware/base.py line 51: SpiderwebMiddleware.on_error default returns None
 # ---------------------------------------------------------------------------
