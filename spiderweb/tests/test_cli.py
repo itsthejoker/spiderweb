@@ -83,6 +83,72 @@ class TestVersionCommand:
 
 
 # ---------------------------------------------------------------------------
+# new command
+# ---------------------------------------------------------------------------
+
+
+class TestNewCommand:
+    def test_scaffolds_files(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        from spiderweb.cli import _cmd_new
+
+        _cmd_new(None, None, ["my_proj"])
+
+        assert (tmp_path / "my_proj").is_dir()
+        assert (tmp_path / "my_proj" / "app.py").is_file()
+        assert (tmp_path / "my_proj" / "pyproject.toml").is_file()
+
+        out = capsys.readouterr().out
+        assert "Created app.py" in out
+        assert "Created pyproject.toml" in out
+        assert "Scaffolded new project" in out
+
+    def test_skips_existing_files(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        from spiderweb.cli import _cmd_new
+
+        proj = tmp_path / "my_proj"
+        proj.mkdir()
+        (proj / "app.py").write_text("existing")
+        (proj / "pyproject.toml").write_text("[tool.spiderweb]\napp = 'my:app'")
+
+        _cmd_new(None, None, ["my_proj"])
+
+        assert (proj / "app.py").read_text() == "existing"
+
+        out = capsys.readouterr().out
+        assert "app.py already exists, skipping." in out
+        assert "pyproject.toml already exists, skipping." in out
+
+    def test_updates_existing_pyproject(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        from spiderweb.cli import _cmd_new
+
+        proj = tmp_path / "my_proj"
+        proj.mkdir()
+        (proj / "pyproject.toml").write_text("[tool.other]\n")
+
+        _cmd_new(None, None, ["my_proj"])
+
+        content = (proj / "pyproject.toml").read_text()
+        assert "[tool.other]" in content
+        assert "[tool.spiderweb]" in content
+        assert 'app = "app:app"' in content
+
+        out = capsys.readouterr().out
+        assert "Updated pyproject.toml with [tool.spiderweb] section" in out
+
+    def test_current_directory(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        from spiderweb.cli import _cmd_new
+
+        _cmd_new(None, None, ["."])
+
+        assert (tmp_path / "app.py").is_file()
+        assert (tmp_path / "pyproject.toml").is_file()
+
+
+# ---------------------------------------------------------------------------
 # routes command
 # ---------------------------------------------------------------------------
 

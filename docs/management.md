@@ -60,12 +60,28 @@ web serve
 
 ### version
 
-Prints the installed version of `spiderweb`. This is the one command that doesn't need an app.
+Prints the installed version of `spiderweb`.
 
 ```shell
 $ web version
 spiderweb-framework 2.4.0
 ```
+
+### new
+
+Scaffolds a new Spiderweb project. It creates a new directory containing a minimal `app.py` and a `pyproject.toml` configured for your app. Like `version`, this command doesn't need an app to run.
+
+```shell
+$ web new my_project
+```
+
+You can also scaffold into the current directory by passing `.`:
+
+```shell
+$ web new .
+```
+
+If the target directory already has a `pyproject.toml`, it will append the `[tool.spiderweb]` section without overwriting your existing config.
 
 ### serve
 

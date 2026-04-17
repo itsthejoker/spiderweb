@@ -76,6 +76,30 @@ if TYPE_CHECKING:
 
 
 # ---------------------------------------------------------------------------
+# Project scaffolding templates
+# ---------------------------------------------------------------------------
+
+_APP_PY_TEMPLATE = """\
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+
+app = SpiderwebRouter(append_slash=True)
+
+@app.route("/")
+def index(request):
+    return HttpResponse("HELLO, WORLD!")
+
+if __name__ == "__main__":
+    app.start()
+"""
+
+_PYPROJECT_TOML_TEMPLATE = """\
+[tool.spiderweb]
+app = "app:app"
+"""
+
+
+# ---------------------------------------------------------------------------
 # Alembic migration scaffolding templates
 # ---------------------------------------------------------------------------
 
@@ -477,6 +501,46 @@ def _cmd_migrate(app, _args, extra):
         alembic_command.upgrade(cfg, alembic_revision)
 
 
+def _cmd_new(app, _args, extra):
+    p = argparse.ArgumentParser(prog="spiderweb new", add_help=False)
+    p.add_argument(
+        "project_name",
+        nargs="?",
+        default=".",
+        metavar="PROJECT_NAME",
+        help="Name of the project directory (default: current directory).",
+    )
+    opts, _ = p.parse_known_args(extra)
+
+    project_dir = pathlib.Path(opts.project_name).resolve()
+    if opts.project_name != ".":
+        project_dir.mkdir(parents=True, exist_ok=True)
+
+    app_py = project_dir / "app.py"
+    if not app_py.exists():
+        app_py.write_text(_APP_PY_TEMPLATE)
+        print(f"Created {app_py.name}")
+    else:
+        print(f"{app_py.name} already exists, skipping.")
+
+    pyproject_toml = project_dir / "pyproject.toml"
+    if not pyproject_toml.exists():
+        pyproject_toml.write_text(_PYPROJECT_TOML_TEMPLATE)
+        print(f"Created {pyproject_toml.name}")
+    else:
+        content = pyproject_toml.read_text()
+        if "[tool.spiderweb]" not in content:
+            if content and not content.endswith("\n"):
+                content += "\n"
+            content += "\n" + _PYPROJECT_TOML_TEMPLATE
+            pyproject_toml.write_text(content)
+            print(f"Updated {pyproject_toml.name} with [tool.spiderweb] section")
+        else:
+            print(f"{pyproject_toml.name} already exists, skipping.")
+
+    print(f"Scaffolded new project in '{project_dir}'.")
+
+
 # ---------------------------------------------------------------------------
 # Command registry
 # ---------------------------------------------------------------------------
@@ -489,6 +553,7 @@ _BUILTIN_COMMANDS: dict[str, callable] = {
     "check": _cmd_check,
     "makemigrations": _cmd_makemigrations,
     "migrate": _cmd_migrate,
+    "new": _cmd_new,
 }
 
 
@@ -507,6 +572,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "Set SPIDERWEB_APP in your environment to avoid passing --app every time.\n"
             "\nExamples:\n"
             "  web version\n"
+            "  web new my_project\n"
             "  web --app myapp:app serve\n"
             "  web --app myapp:app serve --asgi --port 9000\n"
             "  web --app myapp:app shell\n"
@@ -531,7 +597,7 @@ def _build_parser() -> argparse.ArgumentParser:
         nargs="?",
         metavar="COMMAND",
         help=(
-            "Command to run: version, serve, shell, routes, check, "
+            "Command to run: version, new, serve, shell, routes, check, "
             "makemigrations, migrate, or a custom command"
         ),
     )
@@ -594,9 +660,9 @@ def main(argv=None):
         _build_parser().print_help()
         sys.exit(0)
 
-    # `version` is the only command that doesn't need an app.
-    if command == "version":
-        _cmd_version(None, pre_args, remaining)
+    # `version` and `new` do not need an app.
+    if command in ("version", "new"):
+        _BUILTIN_COMMANDS[command](None, pre_args, remaining)
         return
 
     if not pre_args.app:
