@@ -59,40 +59,10 @@ If your application requires a database not supported by SQLAlchemy or you prefe
 
 ## Migrations
 
-Advanced Alchemy works seamlessly with Alembic (SQLAlchemy's migration tool). To manage schema changes:
+Migrations are handled using `alembic`, which is already installed for you. Use the management `web` commands to create and apply migrations. See the below commands for more information. 
 
-1. Install Alembic:
-
-   ```bash
-   pip install alembic
-   ```
-
-2. Initialize a migration repository:
-
-   ```bash
-   alembic init migrations
-   ```
-
-3. Configure Alembic to use Spiderweb's metadata. In `migrations/env.py`, set:
-
-   ```python
-   from spiderweb.db import Base
-   target_metadata = Base.metadata
-   ```
-
-   Also set the database URL either in `alembic.ini` (`sqlalchemy.url = ...`) or dynamically in `env.py` (read from environment variables or config).
-
-4. Generate migrations from model changes:
-
-   ```bash
-   alembic revision --autogenerate -m "add my table"
-   ```
-
-5. Apply migrations:
-
-   ```bash
-   alembic upgrade head
-   ```
+[!ref `makemigrations` management command](/management.md#makemigrations)
+[!ref `migrate` management command](/management.md#migrate)
 
 Notes:
 - If you define your own SQLAlchemy models, make sure they inherit from `spiderweb.db.Base` (or include their metadata in `target_metadata`) so Alembic can discover them.
