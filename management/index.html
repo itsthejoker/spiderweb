@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/spiderweb">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829712615927">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829713877552">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.5.3">
@@ -38,12 +38,12 @@
 
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
-    <link href="../resources/css/retype.css?v=4.5.3.829712615927" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.5.3.829713877552" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.5.3.829712615927" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.5.3.829713877552" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.5.3" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.5.3.829712615927" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.5.3.829712615927" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.5.3.829713877552" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.5.3.829713877552" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -217,11 +217,21 @@ app = &quot;myapp:app&quot;</code></pre>
 </div>
 <h2 id="commands">commands</h2>
 <h3 id="version">version</h3>
-<p>Prints the installed version of <code translate="no" v-pre>spiderweb</code>. This is the one command that doesn&#x27;t need an app.</p>
+<p>Prints the installed version of <code translate="no" v-pre>spiderweb</code>.</p>
 <div id="version-code-1" class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-bash"><code v-pre class="language-bash">$ web version
 spiderweb-framework 2.4.0</code></pre>
 </doc-codeblock></div>
+<h3 id="new">new</h3>
+<p>Scaffolds a new Spiderweb project. It creates a new directory containing a minimal <code translate="no" v-pre>app.py</code> and a <code translate="no" v-pre>pyproject.toml</code> configured for your app. Like <code translate="no" v-pre>version</code>, this command doesn&#x27;t need an app to run.</p>
+<div id="new-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">$ web new my_project</code></pre>
+</doc-codeblock></div>
+<p>You can also scaffold into the current directory by passing <code translate="no" v-pre>.</code>:</p>
+<div id="new-code-2" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-bash"><code v-pre class="language-bash">$ web new .</code></pre>
+</doc-codeblock></div>
+<p>If the target directory already has a <code translate="no" v-pre>pyproject.toml</code>, it will append the <code translate="no" v-pre>[tool.spiderweb]</code> section without overwriting your existing config.</p>
 <h3 id="serve">serve</h3>
 <p>Starts the development server. By default it runs in WSGI mode on whatever address and port your app was configured with (<code translate="no" v-pre>localhost:8000</code> unless you changed them).</p>
 <div id="serve-code-1" class="codeblock-wrapper"><doc-codeblock>
