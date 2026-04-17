@@ -1,3 +1,10 @@
+---
+icon: command-palette
+nav:
+  badge: NEW|info
+order: 850
+---
+
 # management
 
 [!badge New in 2.4.0!]
@@ -98,7 +105,7 @@ You can still override it on the command line in either direction — `--asgi` f
 Opens an interactive Python interpreter with your app already loaded as `app`. Great for poking around at runtime state, testing a database query, or trying out a piece of logic before committing it.
 
 ```shell
-$ spiderweb shell
+$ web shell
 Spiderweb 2.4.0 shell
 Available names: app
 Type "exit()" or Ctrl-D to quit.
@@ -117,7 +124,7 @@ If [IPython](https://ipython.org/) is installed in your environment, the shell w
 Prints a table of every URL route your app has registered — path, allowed methods, optional name, and the view function.
 
 ```shell
-$ spiderweb routes
+$ web routes
 path            methods                              name   view
 -----------------------------------------------------------------------
 /               POST, GET, PUT, PATCH, DELETE               index

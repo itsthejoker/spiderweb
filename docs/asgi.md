@@ -1,3 +1,10 @@
+---
+icon: arrow-switch
+nav:
+  badge: NEW|info
+order: 0
+---
+
 # asgi
 
 [!badge New in 2.3.0!]

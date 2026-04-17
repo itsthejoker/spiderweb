@@ -1,3 +1,7 @@
+---
+icon: blocked
+---
+
 # cors middleware
 
 ```python

@@ -1,3 +1,8 @@
+---
+icon: mail
+order: 400
+---
+
 # responses
 
 Possibly the most important part of a view, a Response allows you to send information back to the browser. Responses also do most of the boring stuff for you of setting headers and making sure everything is encoded correctly.

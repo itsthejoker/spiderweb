@@ -1,3 +1,7 @@
+---
+icon: file-moved
+---
+
 # serving static files for local development
 
 When you're developing locally, it's often useful to be able to serve static files directly from your application, especially when you're working on the frontend. Spiderweb does have a mechanism for serving static files, but it's _not recommended_ (read: this is a Very Bad Idea) for production use. Instead, you should use a reverse proxy like nginx or Apache to serve them.

@@ -1,3 +1,8 @@
+---
+icon: upload
+order: 300
+---
+
 # handling file uploads
 
 [!badge New in 2.2.0!]
@@ -5,7 +10,7 @@
 Spiderweb supports handling file uploads via standard HTML forms that use multipart/form-data. Uploaded files are parsed into Request.FILES as a MultiDict of MediaFile objects, which provide convenient helpers like filename, content_type, size, read(), seek(), and save().
 
 > [!TIP]
-> If you're just getting started, try the working example in example.py together with templates/file_upload.html in this repository.
+> If you're just getting started, try the working example in `example.py` together with `templates/file_upload.html` in this repository.
 
 ## Configuration: where to store uploads
 
@@ -22,7 +27,7 @@ app = SpiderwebRouter(
 ```
 
 - If media_dir does not exist, it is created on startup.
-- In debug=True, requests to /{media_url}/<path:filename> are served from the media_dir folder.
+- In debug=True, requests to `/{media_url}/<path:filename>` are served from the media_dir folder.
 
 > [!DANGER]
 > Serving uploaded files directly from your app is for local development only. In production, serve uploads via a reverse proxy (nginx/Apache) or an object store (S3, GCS) and protect access appropriately.
@@ -33,7 +38,7 @@ To send a file from the browser, your form must:
 
 - use method="post"
 - include enctype="multipart/form-data"
-- include one or more <input type="file" name="..."> controls
+- include one or more `<input type="file" name="...">` controls
 
 ```html
 <form action="" method="post" enctype="multipart/form-data">
@@ -44,7 +49,7 @@ To send a file from the browser, your form must:
 ```
 
 > [!NOTE]
-> The {{ csrf_token }} comes from the CSRF middleware and should be included in POST forms. See Middleware → CSRF for details.
+> The `{{ csrf_token }}` comes from the CSRF middleware and should be included in POST forms. See Middleware → CSRF for details.
 
 ## Accessing uploaded files in a view
 
@@ -104,9 +109,9 @@ And the corresponding HTML:
 
 With debug=True and media_dir set, Spiderweb automatically registers a development route so you can access uploaded files at:
 
-- /{media_url}/<filename>
+- `/{media_url}/<filename>`
 
-Example: with media_dir="media" and media_url="media", a saved file named avatar.png will be accessible at /media/avatar.png while debug is true.
+Example: with `media_dir="media"` and `media_url="media"`, a saved file named `avatar.png` will be accessible at `/media/avatar.png` while debug is true.
 
 > [!DANGER]
 > Do not rely on the development file server in production. Put your web server or CDN in front of your app to serve media safely and efficiently.
@@ -116,7 +121,7 @@ Example: with media_dir="media" and media_url="media", a saved file named avatar
 Uploads are POST requests and are protected by the CSRF middleware. To accept submissions:
 
 - Add SessionMiddleware before CSRFMiddleware in your app config.
-- Include {{ csrf_token }} in your form markup.
+- Include `{{ csrf_token }}` in your form markup.
 
 See [CSRF middleware](middleware/csrf.md) for a complete example.
 
