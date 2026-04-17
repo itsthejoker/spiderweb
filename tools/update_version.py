@@ -1,3 +1,6 @@
+# !!!! DEPRECATED
+# 2026/04/16
+
 import re
 import sys
 from pathlib import Path
