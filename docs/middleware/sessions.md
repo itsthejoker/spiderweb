@@ -1,3 +1,7 @@
+---
+icon: archive
+---
+
 # sessions middleware
 
 ```python

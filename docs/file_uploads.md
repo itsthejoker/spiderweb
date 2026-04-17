@@ -1,9 +1,11 @@
+---
+icon: upload
+order: 300
+---
+
 # handling file uploads
 
 [!badge New in 2.2.0!]
-
-> [!DANGER] This page is currently broken!!
-> Throughout this page, there are multiple references to a value called `csrf_token`. It's a value that is wrapped in double curly braces. However, our documentation platform is currently swallowing every instance of curly braces and we haven't found a fix yet. The markdown version of this file, in `docs/file_uploads.md` in the respository, is complete and intact.
 
 Spiderweb supports handling file uploads via standard HTML forms that use multipart/form-data. Uploaded files are parsed into Request.FILES as a MultiDict of MediaFile objects, which provide convenient helpers like filename, content_type, size, read(), seek(), and save().
 

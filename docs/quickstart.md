@@ -1,3 +1,8 @@
+---
+icon: file-added
+order: 900
+---
+
 # quickstart
 
 Start by installing the package with your favorite package manager:

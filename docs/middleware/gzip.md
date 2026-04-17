@@ -1,3 +1,7 @@
+---
+icon: file-zip
+---
+
 # gzip compression middleware
 
 [!badge New in 1.4.0!]

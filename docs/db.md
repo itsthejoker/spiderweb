@@ -1,3 +1,8 @@
+---
+icon: database
+order: 800
+---
+
 # databases
 
 Spiderweb is intentionally ORM-agnostic. Internally, it now uses Advanced Alchemy (built on SQLAlchemy) to persist first‑party data like sessions. You can choose one of the following approaches for your application data:

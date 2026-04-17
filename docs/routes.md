@@ -1,3 +1,8 @@
+---
+icon: arrow-both
+order: 600
+---
+
 # routes
 
 To have logic that your application can use, you must be able to route incoming requests from The Outside:tm: and properly get them to your code and back. There are three different ways to set up this up depending on what works best for your application, and all three can be used together (though this is probably a bad idea).

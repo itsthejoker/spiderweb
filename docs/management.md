@@ -1,3 +1,10 @@
+---
+icon: command-palette
+nav:
+  badge: NEW|info
+order: 850
+---
+
 # management
 
 [!badge New in 2.4.0!]

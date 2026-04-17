@@ -1,3 +1,7 @@
+---
+icon: file-binary
+---
+
 # writing your own middleware
 
 Sometimes you want to run the same code on every request or every response (or both!). Lots of processing happens in the middleware layer, and if you want to write your own, all you have to do is write a quick class and put it in a place that Spiderweb can find it. A piece of middleware only needs two things to be successful:

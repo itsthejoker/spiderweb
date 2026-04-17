@@ -1,3 +1,8 @@
+---
+icon: home
+order: 999
+---
+
 # spiderweb
 
 As a professional web developer focusing on arcane uses of Django for arcane purposes, it occurred to me a little while ago that I didn't actually know how a web framework _worked_.

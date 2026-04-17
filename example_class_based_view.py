@@ -6,7 +6,7 @@ app = SpiderwebRouter(debug=True)
 
 
 # The decorator system works along with everything else!
-@app.route('/')
+@app.route("/")
 class Index(View):
     def get(self, request, *args, **kwargs):
         return HttpResponse("This is a GET request from a class!")
