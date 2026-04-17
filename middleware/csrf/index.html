@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/spiderweb">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829681331181">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829712615927">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.5.3">
@@ -38,12 +38,12 @@
 
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
-    <link href="../../resources/css/retype.css?v=4.5.3.829681331181" rel="stylesheet">
+    <link href="../../resources/css/retype.css?v=4.5.3.829712615927" rel="stylesheet">
 
-    <script data-cfasync="false" src="../../resources/js/config.js?v=4.5.3.829681331181" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../../resources/js/config.js?v=4.5.3.829712615927" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../../resources/js/retype.js?v=4.5.3" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../../resources/js/lunr.js?v=4.5.3.829681331181" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../../resources/js/prism.js?v=4.5.3.829681331181" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../../resources/js/lunr.js?v=4.5.3.829712615927" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../../resources/js/prism.js?v=4.5.3.829712615927" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -157,9 +157,9 @@
                             </svg>
                         </li>
                         <li class="pr-4">
-                            <span class="pr-4">
-                                Middleware
-                            </span>
+                            <a href="../../middleware/" class="pr-4">
+                                middleware
+                            </a>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/>
                             </svg>
@@ -252,7 +252,7 @@ def form(request):
         &lt;input type=&quot;checkbox&quot; name=&quot;formcheck&quot; class=&quot;form-check-input&quot; id=&quot;exampleCheck1&quot;&gt;
         &lt;label class=&quot;form-check-label&quot; for=&quot;exampleCheck1&quot;&gt;Check me out&lt;/label&gt;
     &lt;/div&gt;
-    
+    {{ csrf_token }}
 
     &lt;button type=&quot;submit&quot; class=&quot;btn btn-primary&quot;&gt;Submit&lt;/button&gt;
 &lt;/form&gt;
@@ -263,7 +263,7 @@ def form(request):
 &lt;/body&gt;
 &lt;/html&gt;</code></pre>
 </doc-codeblock></div>
-<p>With this complete app, it will serve and accept the form. Note towards the bottom of <code translate="no" v-pre>form.html</code> the line &#x60;&#x60; — this is the inserted key. All you need to do is make sure that line is included inside your form and it will be accepted and parsed.</p>
+<p>With this complete app, it will serve and accept the form. Note towards the bottom of <code translate="no" v-pre>form.html</code> the line <code translate="no" v-pre>{{ csrf_token }}</code> — this is the inserted key. All you need to do is make sure that line is included inside your form and it will be accepted and parsed.</p>
 <h2 id="marking-views-as-csrf-exempt">Marking views as CSRF-Exempt</h2>
 <div id="marking-views-as-csrf-exempt-code-1" class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-python"><code v-pre class="language-python">from spiderweb.decorators import csrf_exempt</code></pre>
@@ -283,6 +283,7 @@ def form(request):
     <a href="/spiderweb/file_uploads/" class="group card-compact no-link">
         <div class="card-compact-body">
             <div class="card-compact-header">
+                <span class="card-compact-icon inline-flex shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" role="presentation" fill="currentColor"><!--icon--><path d="M4 20.25V18a.75.75 0 0 1 1.5 0v2.25c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V18a.75.75 0 0 1 1.5 0v2.25A1.75 1.75 0 0 1 18.25 22H5.75A1.75 1.75 0 0 1 4 20.25Z"/><path d="M5.22 9.53a.749.749 0 0 1 0-1.06l6.25-6.25a.749.749 0 0 1 1.06 0l6.25 6.25a.749.749 0 1 1-1.06 1.06l-4.97-4.969V16.75a.75.75 0 0 1-1.5 0V4.561L6.28 9.53a.749.749 0 0 1-1.06 0Z"/></svg></span>
                 <span class="card-compact-title">handling file uploads</span>
             </div>
             <p class="card-compact-description">New in 2.2.0!</p>
@@ -293,6 +294,7 @@ def form(request):
     <a href="/spiderweb/routes/" class="group card-compact no-link">
         <div class="card-compact-body">
             <div class="card-compact-header">
+                <span class="card-compact-icon inline-flex shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" role="presentation" fill="currentColor"><!--icon--><path d="M7.78 5.97a.75.75 0 0 0-1.06 0l-5.25 5.25a.75.75 0 0 0 0 1.06l5.25 5.25a.75.75 0 0 0 1.06-1.06L3.81 12.5h16.38l-3.97 3.97a.75.75 0 1 0 1.06 1.06l5.25-5.25a.75.75 0 0 0 0-1.06l-5.25-5.25a.75.75 0 1 0-1.06 1.06L20.19 11H3.81l3.97-3.97a.75.75 0 0 0 0-1.06Z"/></svg></span>
                 <span class="card-compact-title">routes</span>
             </div>
             <p class="card-compact-description">To have logic that your application can use, you must be able to route incoming requests from The Outside™️ and properly get them to your code and back.</p>

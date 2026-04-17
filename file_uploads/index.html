@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/spiderweb">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829681331181">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829712615927">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.5.3">
@@ -38,12 +38,12 @@
 
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
-    <link href="../resources/css/retype.css?v=4.5.3.829681331181" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.5.3.829712615927" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.5.3.829681331181" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.5.3.829712615927" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.5.3" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.5.3.829681331181" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.5.3.829681331181" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.5.3.829712615927" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.5.3.829712615927" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -184,7 +184,7 @@
         </div>
         <div class="pr-5 ml-3 w-full">
             <h5>Tip</h5>
-<p>If you&#x27;re just getting started, try the working example in example.py together with templates/file_upload.html in this repository.</p>
+<p>If you&#x27;re just getting started, try the working example in <code translate="no" v-pre>example.py</code> together with <code translate="no" v-pre>templates/file_upload.html</code> in this repository.</p>
         </div>
     </div>
 </div>
@@ -201,7 +201,7 @@ app = SpiderwebRouter(
 </doc-codeblock></div>
 <ul>
 <li>If media_dir does not exist, it is created on startup.</li>
-<li media_url="">In debug=True, requests to //<a href="path:filename">path:filename</a> are served from the media_dir folder.</li>
+<li>In debug=True, requests to <code translate="no" v-pre>/{media_url}/&lt;path:filename&gt;</code> are served from the media_dir folder.</li>
 </ul>
 <div class="flex mb-6">
     <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-danger"></div>
@@ -225,12 +225,12 @@ app = SpiderwebRouter(
 <ul>
 <li>use method=&quot;post&quot;</li>
 <li>include enctype=&quot;multipart/form-data&quot;</li>
-<li>include one or more <input type="file" name="..."> controls</li>
+<li>include one or more <code translate="no" v-pre>&lt;input type=&quot;file&quot; name=&quot;...&quot;&gt;</code> controls</li>
 </ul>
 <div id="html-forms-enctype-is-required-code-1" class="codeblock-wrapper"><doc-codeblock>
 <pre translate="no" class="language-markup"><code v-pre class="language-markup">&lt;form action=&quot;&quot; method=&quot;post&quot; enctype=&quot;multipart/form-data&quot;&gt;
   &lt;input name=&quot;file&quot; type=&quot;file&quot;&gt;
-  
+  {{ csrf_token }}
   &lt;button type=&quot;submit&quot;&gt;Upload&lt;/button&gt;
 &lt;/form&gt;</code></pre>
 </doc-codeblock></div>
@@ -248,7 +248,7 @@ app = SpiderwebRouter(
         </div>
         <div class="pr-5 ml-3 w-full">
             <h5>Note</h5>
-<p>The  comes from the CSRF middleware and should be included in POST forms. See Middleware → CSRF for details.</p>
+<p>The <code translate="no" v-pre>{{ csrf_token }}</code> comes from the CSRF middleware and should be included in POST forms. See Middleware → CSRF for details.</p>
         </div>
     </div>
 </div>
@@ -301,9 +301,9 @@ for f in files:
 <h2 id="serving-uploaded-files-in-development">Serving uploaded files in development</h2>
 <p>With debug=True and media_dir set, Spiderweb automatically registers a development route so you can access uploaded files at:</p>
 <ul>
-<li media_url="">//<filename></li>
+<li><code translate="no" v-pre>/{media_url}/&lt;filename&gt;</code></li>
 </ul>
-<p>Example: with media_dir=&quot;media&quot; and media_url=&quot;media&quot;, a saved file named avatar.png will be accessible at /media/avatar.png while debug is true.</p>
+<p>Example: with <code translate="no" v-pre>media_dir=&quot;media&quot;</code> and <code translate="no" v-pre>media_url=&quot;media&quot;</code>, a saved file named <code translate="no" v-pre>avatar.png</code> will be accessible at <code translate="no" v-pre>/media/avatar.png</code> while debug is true.</p>
 <div class="flex mb-6">
     <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-danger"></div>
     <div class="flex w-full py-4 border border-l-0 rounded-tr-lg rounded-br-lg doc-callout bg-callout-base-bg border-callout-base-border" role="alert">
@@ -325,7 +325,7 @@ for f in files:
 <p>Uploads are POST requests and are protected by the CSRF middleware. To accept submissions:</p>
 <ul>
 <li>Add SessionMiddleware before CSRFMiddleware in your app config.</li>
-<li>Include  in your form markup.</li>
+<li>Include <code translate="no" v-pre>{{ csrf_token }}</code> in your form markup.</li>
 </ul>
 <p>See <a href="../middleware/csrf/">CSRF middleware</a> for a complete example.</p>
 <h2 id="validation-and-security-tips">Validation and security tips</h2>
@@ -366,7 +366,7 @@ def upload(request):
 <pre translate="no" class="language-markup"><code v-pre class="language-markup">&lt;!-- templates/file_upload.html --&gt;
 &lt;form action=&quot;&quot; method=&quot;post&quot; enctype=&quot;multipart/form-data&quot;&gt;
   &lt;input name=&quot;file&quot; type=&quot;file&quot;&gt;
-  
+  {{ csrf_token }}
   &lt;button type=&quot;submit&quot;&gt;Upload&lt;/button&gt;
 &lt;/form&gt;</code></pre>
 </doc-codeblock></div>
@@ -379,20 +379,20 @@ def upload(request):
             
                 <nav id="retype-nextprev" class="print:hidden flex mt-14">
                     <div class="w-1/2">
-                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../example/">
+                        <a class="px-5 py-4 h-full flex items-center break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-l-lg transition-colors duration-150 relative hover:z-5" href="../responses/">
                             <svg xmlns="http://www.w3.org/2000/svg" class="mr-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19 11H7.41l5.29-5.29a.996.996 0 10-1.41-1.41l-7 7a1 1 0 000 1.42l7 7a1.024 1.024 0 001.42-.01.996.996 0 000-1.41L7.41 13H19c.55 0 1-.45 1-1s-.45-1-1-1z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
                             <span>
                                 <span class="block text-xs font-normal text-base-text-muted">Previous</span>
-                                <span class="block mt-1">Example</span>
+                                <span class="block mt-1">responses</span>
                             </span>
                         </a>
                     </div>
             
                     <div class="w-1/2">
-                        <a class="px-5 py-4 -mx-px h-full flex items-center justify-end break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-r-lg transition-colors duration-150 relative hover:z-5" href="../management/">
+                        <a class="px-5 py-4 -mx-px h-full flex items-center justify-end break-normal font-medium text-body-link border border-base-border hover:border-base-border-hover rounded-r-lg transition-colors duration-150 relative hover:z-5" href="../middleware/">
                             <span>
                                 <span class="block text-xs font-normal text-right text-base-text-muted">Next</span>
-                                <span class="block mt-1">management</span>
+                                <span class="block mt-1">middleware</span>
                             </span>
                             <svg xmlns="http://www.w3.org/2000/svg" class="ml-3" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" overflow="visible"><path d="M19.92 12.38a1 1 0 00-.22-1.09l-7-7a.996.996 0 10-1.41 1.41l5.3 5.3H5c-.55 0-1 .45-1 1s.45 1 1 1h11.59l-5.29 5.29a.996.996 0 000 1.41c.19.2.44.3.7.3s.51-.1.71-.29l7-7c.09-.09.16-.21.21-.33z" /><path fill="none" d="M0 0h24v24H0z" /></svg>
                         </a>

@@ -69,7 +69,7 @@ def form(request):
         <input type="checkbox" name="formcheck" class="form-check-input" id="exampleCheck1">
         <label class="form-check-label" for="exampleCheck1">Check me out</label>
     </div>
-    
+    {{ csrf_token }}
 
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
@@ -81,7 +81,7 @@ def form(request):
 </html>
 ```
 
-With this complete app, it will serve and accept the form. Note towards the bottom of `form.html` the line `` — this is the inserted key. All you need to do is make sure that line is included inside your form and it will be accepted and parsed. 
+With this complete app, it will serve and accept the form. Note towards the bottom of `form.html` the line `{{ csrf_token }}` — this is the inserted key. All you need to do is make sure that line is included inside your form and it will be accepted and parsed. 
 
 ## Marking views as CSRF-Exempt
 

@@ -2,17 +2,19 @@
 
 Start by installing the package with your favorite package manager:
 
++++ uv
 ```shell
 uv add spiderweb-framework
 ```
-
++++ pip
 ```shell
 pip install spiderweb-framework
 ```
-
++++ pipenv
 ```shell
 pipenv install spiderweb-framework
 ```
++++
 
 Then, create a new file and drop this in it:
 

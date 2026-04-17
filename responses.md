@@ -95,7 +95,7 @@ app = SpiderwebRouter(templates_dirs=["my_templates"])
 
 @app.route("/")
 def index(request):
-    template = """This is where I will display my extra data: """
+    template = """This is where I will display my extra data: {{ extra_data }}"""
     return TemplateResponse(
         request, template_string=template, context={"extra_data": "1, 2, 3"}
     )
