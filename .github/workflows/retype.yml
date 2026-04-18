@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Generate llms.txt
+        uses: zakaria-chahboun/retype_llms@v3.0.1
+
       - uses: retypeapp/action-build@latest
         with:
           key: ${{ secrets.RETYPE_PASSWORD }}
