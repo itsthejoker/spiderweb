@@ -1,0 +1,2416 @@
+<document>
+<title>Readme</title>
+<url>https://itsthejoker.github.io/spiderweb/</url>
+<content>
+
+# spiderweb
+
+As a professional web developer focusing on arcane uses of Django for arcane purposes, it occurred to me a little while ago that I didn't actually know how a web framework _worked_.
+
+> So I built one.
+
+This is `spiderweb`, a WSGI-compatible web framework that's just big enough to hold a spider. When building it, my goals were simple:
+
+- Learn a lot
+- Create an unholy blend of Django and Flask
+- Not look at any existing code[^1]. Go off of vibes alone and try to solve all the problems I could think of in my own way
+
+> [!WARNING]
+> This is a learning project. It should not be used for production without heavy auditing. It's not secure. It's not fast. It's not well-tested. It's not well-documented. It's not well-anything. It's a learning project.
+> 
+> That being said, it's fun and it works, so I'm counting that as a win.
+
+> [!TIP|style:flat]
+> To jump in with both feet, [head over to the quickstart!](https://itsthejoker.github.io/spiderweb/quickstart.md)
+
+## Design & Usage Decisions
+
+There are a couple of things that I feel strongly about that have been implemented into Spiderweb.
+
+### Deliberate Responses
+
+In smaller frameworks, it's often the case that "how to return the response" is guessed based on the data that you return from a view. Take this view for example:
+
+```python
+def index(request):
+    return "Hi"
+```
+
+In this function, we return a string, and as such there are some assumptions that we make about what the response looks like:
+
+- a content-type header of "text/plain"
+- that we are wanting to return raw HTML
+- no post-processing of the response is needed
+
+While assumptions are nice for getting running quickly, I think that there is a balance between assuming what the user wants and making them define everything. See how Spiderweb handles this:
+
+```python
+from spiderweb.response import HttpResponse
+
+def index(request):
+    return HttpResponse("Hi")
+```
+
+In this case, we improve readability of exactly what type of response we expect (raw HTML, a template response, a JSON-based response, etc.) and we give the developer the tools that they need to modify the response beforehand.
+
+The response object has everything that it needs immediately available: headers, cookies, status codes, and more. All can be modified before sending, but providing this data for the opportunity to change is what's important.
+
+Spiderweb provides five types of responses out of the box:
+
+- HttpResponse
+- FileResponse
+- RedirectResponse
+- TemplateResponse
+- JSONResponse
+
+> [Read more about responses in Spiderweb](https://itsthejoker.github.io/spiderweb/responses.md)
+
+### Database Agnosticism (Mostly)
+
+Spiderweb persists its internal data (like sessions) using Advanced Alchemy built on SQLAlchemy. Your application can use this same setup out of the box, or bring any ORM you prefer.
+
+- By default, Spiderweb creates a SQLite database file `spiderweb.db` next to your app.
+- You can pass the `db` argument to `SpiderwebRouter` as a filesystem path (for SQLite), a SQLAlchemy database URL string, or a SQLAlchemy Engine instance.
+
+> [Read more about databases and migrations](https://itsthejoker.github.io/spiderweb/db.md)
+
+### Easy to configure
+
+Configuration is handled in different ways across different frameworks; in Flask, a simple dictionary is used that you can modify:
+
+```python
+# https://flask.palletsprojects.com/en/3.0.x/config/
+app = Flask(__name__)
+app.config['TESTING'] = True
+```
+
+This works, but suffers from the problem of your IDE not being able to see all the possible options that are available. Django solves this by having a `settings.py` file:
+
+```python
+# https://docs.djangoproject.com/en/5.1/topics/settings/
+ALLOWED_HOSTS = ["www.example.com"]
+DEBUG = False
+DEFAULT_FROM_EMAIL = "webmaster@example.com"
+```
+
+Simply having these declared in a place that Django can find them is enough, and they Just Work:tm:. This also works, but can be very verbose.
+
+Spiderweb takes a middle ground approach: it allows you to declare framework-first arguments on the SpiderwebRouter object, and if you need to pass along other data to other parts of the system (like custom middleware), you can do so by passing in any keyword argument you'd like to the constructor.
+
+```python
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+  db="myapp.db",
+  port=4500,
+  session_cookie_name="myappsession",
+  my_middleware_data="Test!"
+)
+```
+
+In this example, `db`, `port`, and `session_cookie_name` are all arguments that affect the server, but `my_middleware_data` is something new. It will be available in `app.extra_data` and is also available through middleware and on the request object later.
+
+## tl;dr: what can Spiderweb do?
+
+Here's a non-exhaustive list of things this can do:
+
+- Function-based views
+- Optional Flask-style URL routing
+- Optional Django-style URL routing
+- URLs with variables in them a lá Django
+- Full middleware implementation
+- Limit routes by HTTP verbs
+- Custom error routes
+- Built-in dev server
+- Gunicorn support
+- HTML templates with Jinja2
+- Static files support
+- Cookies (reading and setting)
+- Optional append_slash (with automatic redirects!)
+- CSRF middleware
+- CORS middleware
+- Optional POST data validation middleware with Pydantic
+- Session middleware with built-in session store
+- Database support (using SQLAlchemy, but you can use whatever you want as long as there's a SQLAlchemy driver for it)
+- Tests (currently a little over 80% coverage)
+
+[^1]: I mostly succeeded. The way that I'm approaching this is that I did my level best, then looked at (and copied) existing solutions where necessary. At the time of this writing, I did all of it solo except for the CORS middleware. [Read more about it here.](https://itsthejoker.github.io/spiderweb/middleware/cors.md)
+
+</content>
+</document>
+
+<document>
+<title>_Coverpage</title>
+<url>https://itsthejoker.github.io/spiderweb/_coverpage/</url>
+<content>
+
+![logo](https://itsthejoker.github.io/spiderweb/_media/spiderweb_logo_cropped.png)
+
+> the web framework just big enough for a spider
+
+[GitHub](https://github.com/itsthejoker/spiderweb/)
+[Get Started](https://itsthejoker.github.io/spiderweb/README)
+
+
+![color](https://itsthejoker.github.io/spiderweb/#222)
+
+</content>
+</document>
+
+<document>
+<title>_Sidebar</title>
+<url>https://itsthejoker.github.io/spiderweb/_sidebar/</url>
+<content>
+
+- [home](https://itsthejoker.github.io/spiderweb/README.md)
+- [quickstart](https://itsthejoker.github.io/spiderweb/quickstart.md)
+- [responses](https://itsthejoker.github.io/spiderweb/responses.md)
+- [routes](https://itsthejoker.github.io/spiderweb/routes.md)
+- [static files](https://itsthejoker.github.io/spiderweb/static_files.md)
+- [file uploads](https://itsthejoker.github.io/spiderweb/file_uploads.md)
+- middleware
+  - [overview](https://itsthejoker.github.io/spiderweb/middleware/overview.md)
+  - [session](https://itsthejoker.github.io/spiderweb/middleware/sessions.md)
+  - [csrf](https://itsthejoker.github.io/spiderweb/middleware/csrf.md)
+  - [cors](https://itsthejoker.github.io/spiderweb/middleware/cors.md)
+  - [pydantic](https://itsthejoker.github.io/spiderweb/middleware/pydantic.md)
+  - [gzip](https://itsthejoker.github.io/spiderweb/middleware/gzip.md)
+  - [writing your own](https://itsthejoker.github.io/spiderweb/middleware/custom_middleware.md)
+- [databases](https://itsthejoker.github.io/spiderweb/db.md)
+- [asgi](https://itsthejoker.github.io/spiderweb/asgi.md)
+- [management](https://itsthejoker.github.io/spiderweb/management.md)
+
+</content>
+</document>
+
+<document>
+<title>Asgi</title>
+<url>https://itsthejoker.github.io/spiderweb/asgi/</url>
+<content>
+
+# asgi
+
+[!badge New in 2.3.0!]
+
+Spiderweb supports both WSGI and ASGI from the same `SpiderwebRouter` instance. Your existing WSGI app continues to work exactly as before; ASGI is strictly opt-in.
+
+## Installation
+
+ASGI mode requires `uvicorn`, which is available as an optional extra:
+
+<!-- tabs:start -->
+
+<!-- tab:uv -->
+
+```shell
+uv add "spiderweb-framework[asgi]"
+```
+
+<!-- tab:pip -->
+
+```shell
+pip install "spiderweb-framework[asgi]"
+```
+
+<!-- tab:pipenv -->
+
+```shell
+pipenv install "spiderweb-framework[asgi]"
+```
+
+<!-- tabs:end -->
+
+## The Dev Server
+
+The simplest way to run your app in ASGI mode during development is `app.start_asgi()`. It behaves just like `app.start()`, but runs through uvicorn instead of `wsgiref`.
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+
+app = SpiderwebRouter()
+
+@app.route("/")
+def index(request):
+    return HttpResponse("Hello from ASGI!")
+
+if __name__ == "__main__":
+    app.start_asgi()
+```
+
+> [!WARNING]
+> The dev server is just that: for development. Do not use for production.
+
+## Production Deployment
+
+For production, pass `app.asgi_app` to any ASGI-compatible server. The `asgi_app` property returns the same `ASGIHandler` instance every time, so it's safe to pass once and reuse.
+
+```shell
+uvicorn myapp:app.asgi_app --workers 4
+```
+
+Or with Hypercorn:
+
+```shell
+hypercorn myapp:app.asgi_app
+```
+
+## Async Views
+
+Views can be defined as `async def` and they will be awaited natively in ASGI mode. Sync views continue to work too — they're dispatched via `asyncio.to_thread` so they don't block the event loop.
+
+```python
+@app.route("/sync")
+def sync_view(request):
+    return HttpResponse("I'm sync")
+
+@app.route("/async")
+async def async_view(request):
+    return HttpResponse("I'm async")
+```
+
+Both of the above work under both WSGI and ASGI. There's no need to pick one or the other.
+
+## Lifespan Callbacks
+
+You can register startup and shutdown callbacks when creating the router. These are called by the ASGI server during the lifespan protocol — startup before the first request, shutdown after the last.
+
+```python
+def on_start():
+    print("server is ready")
+
+async def on_stop():
+    print("server is shutting down")
+
+app = SpiderwebRouter(
+    on_startup=[on_start],
+    on_shutdown=[on_stop],
+)
+```
+
+Both sync and async callbacks are supported. They're no-ops when running under WSGI.
+
+## Async Middleware
+
+Middleware can define `async def` versions of `process_request`, `process_response`, and `post_process`. Spiderweb detects them and awaits them in ASGI mode. Sync middleware works in both modes via `asyncio.to_thread`.
+
+```python
+from spiderweb.middleware import SpiderwebMiddleware
+from spiderweb.request import Request
+from spiderweb.response import HttpResponse
+
+
+class TimingMiddleware(SpiderwebMiddleware):
+    async def process_request(self, request: Request) -> None:
+        import time
+        request.start_time = time.monotonic()
+
+    async def process_response(self, request: Request, response: HttpResponse) -> None:
+        if hasattr(request, "start_time"):
+            import time
+            elapsed = time.monotonic() - request.start_time
+            response.headers["X-Request-Time"] = f"{elapsed:.4f}s"
+```
+
+> [!NOTE]
+> You only need to define the hooks you actually use. Middleware that only defines `process_request` doesn't need `process_response`, and vice versa.
+
+> See [writing your own middleware](https://itsthejoker.github.io/spiderweb/middleware/custom_middleware.md) for the full middleware API.
+
+## Request Body Size Limit
+
+By default, Spiderweb rejects request bodies larger than **10 MB** with a `413` response. You can raise or remove the limit when creating the router:
+
+```python
+app = SpiderwebRouter(
+    max_request_body_size=50 * 1024 * 1024,  # 50 MB
+)
+```
+
+Pass `None` to disable the limit entirely:
+
+```python
+app = SpiderwebRouter(
+    max_request_body_size=None,  # no limit
+)
+```
+
+> [!WARNING]
+> Disabling the size limit means a single request can exhaust your server's memory. Only do this if you have another mechanism (e.g. a reverse proxy) enforcing a limit upstream.
+
+## WSGI and ASGI Side by Side
+
+You can use both protocols at the same time from the same `SpiderwebRouter` instance. The WSGI `__call__` is untouched; `asgi_app` is a separate entry point.
+
+```python
+app = SpiderwebRouter()
+
+# WSGI — pass to gunicorn, wsgiref, etc.
+wsgi_app = app
+
+# ASGI — pass to uvicorn, hypercorn, etc.
+asgi_app = app.asgi_app
+```
+
+## Configuration Reference
+
+These `SpiderwebRouter` parameters are specific to ASGI support:
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `on_startup` | `list[Callable]` | `[]` | Callbacks invoked during ASGI lifespan startup. |
+| `on_shutdown` | `list[Callable]` | `[]` | Callbacks invoked during ASGI lifespan shutdown. |
+| `max_request_body_size` | `int \| None` | `10 * 1024 * 1024` | Maximum request body in bytes. `None` disables the limit. |
+
+</content>
+</document>
+
+<document>
+<title>Db</title>
+<url>https://itsthejoker.github.io/spiderweb/db/</url>
+<content>
+
+# databases
+
+Spiderweb is intentionally ORM-agnostic. Internally, it now uses Advanced Alchemy (built on SQLAlchemy) to persist first‑party data like sessions. You can choose one of the following approaches for your application data:
+
+- Option 1: Use the built‑in Advanced Alchemy/SQLAlchemy setup
+- Option 2: Bring your own ORM and manage its lifecycle
+- Option 3: Use separate databases for Spiderweb internals and your app data
+
+## Option 1: Use the built‑in Advanced Alchemy/SQLAlchemy setup
+
+By default, Spiderweb will create and use a SQLite database file named `spiderweb.db` in your application directory. You can change this by passing the `db` argument to `SpiderwebRouter` as any of the following:
+
+- A SQLAlchemy Engine instance
+- A database URL string (e.g., `sqlite:///path/to.db`, `postgresql+psycopg://user:pass@host/db`)
+- A filesystem path string for SQLite (e.g., `my_db.sqlite`)
+
+Examples:
+
+```python
+from sqlalchemy import create_engine
+from spiderweb import SpiderwebRouter
+
+# Use a SQLite file by passing a path
+app = SpiderwebRouter(db="my_db.sqlite")
+
+# Or pass a SQLAlchemy engine
+engine = create_engine("postgresql+psycopg://user:pass@localhost/myapp")
+app = SpiderwebRouter(db=engine)
+
+# Or pass a full URL string
+app = SpiderwebRouter(db="sqlite:///./local.db")
+```
+
+## Option 2: Bring your own ORM
+
+If you are using another ORM or data layer, create and manage it as you normally would. If you need per‑request access to a connection or session, you can attach it via custom middleware:
+
+```python
+from spiderweb.middleware import SpiderwebMiddleware
+from sqlalchemy import create_engine
+
+
+class SQLAlchemyMiddleware(SpiderwebMiddleware):
+    engine = None
+
+    def process_request(self, request) -> None:
+        if not self.engine:
+            self.engine = create_engine("sqlite:///spiderweb.db")
+        request.engine = self.engine
+```
+
+Now any view that receives the incoming request object can access `request.engine` and interact with the database as needed.
+
+> See [Writing Your Own Middleware](https://itsthejoker.github.io/spiderweb/middleware/custom_middleware.md) for more information.
+
+## Option 3: Use two databases
+
+If your application requires a database not supported by SQLAlchemy or you prefer to keep concerns separated, you can run two databases: one for Spiderweb internals (sessions, etc.) and one for your application logic.
+
+## Migrations
+
+Migrations are handled using `alembic`, which is already installed for you. Use the management `web` commands to create and apply migrations. See the below commands for more information. 
+
+[!ref `makemigrations` management command](https://itsthejoker.github.io/spiderweb/management.md#makemigrations)
+[!ref `migrate` management command](https://itsthejoker.github.io/spiderweb/management.md#migrate)
+
+Notes:
+- If you define your own SQLAlchemy models, make sure they inherit from `spiderweb.db.Base` (or include their metadata in `target_metadata`) so Alembic can discover them.
+- For multi-database setups, you can configure multiple Alembic contexts or run Alembic separately per database.
+- Advanced Alchemy provides additional helpers on top of SQLAlchemy; you can use them freely alongside the guidance above.
+
+</content>
+</document>
+
+<document>
+<title>File_Uploads</title>
+<url>https://itsthejoker.github.io/spiderweb/file_uploads/</url>
+<content>
+
+# handling file uploads
+
+[!badge New in 2.2.0!]
+
+Spiderweb supports handling file uploads via standard HTML forms that use multipart/form-data. Uploaded files are parsed into Request.FILES as a MultiDict of MediaFile objects, which provide convenient helpers like filename, content_type, size, read(), seek(), and save().
+
+> [!TIP]
+> If you're just getting started, try the working example in `example.py` together with `templates/file_upload.html` in this repository.
+
+## Configuration: where to store uploads
+
+When you intend to save uploaded files to disk during development, point Spiderweb at a media directory. In debug mode, Spiderweb will also register a development-only route to serve files back from that folder.
+
+```python
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    media_dir="media",     # folder relative to your app file
+    media_url="media",     # URL prefix used to serve media in debug
+    debug=True,             # required for dev-time file serving
+)
+```
+
+- If media_dir does not exist, it is created on startup.
+- In debug=True, requests to `/{media_url}/<path:filename>` are served from the media_dir folder.
+
+> [!DANGER]
+> Serving uploaded files directly from your app is for local development only. In production, serve uploads via a reverse proxy (nginx/Apache) or an object store (S3, GCS) and protect access appropriately.
+
+## HTML forms: enctype is required
+
+To send a file from the browser, your form must:
+
+- use method="post"
+- include enctype="multipart/form-data"
+- include one or more `<input type="file" name="...">` controls
+
+```html
+<form action="" method="post" enctype="multipart/form-data">
+  <input name="file" type="file">
+  {{ csrf_token }}
+  <button type="submit">Upload</button>
+</form>
+```
+
+> [!NOTE]
+> The `{{ csrf_token }}` comes from the CSRF middleware and should be included in POST forms. See Middleware → CSRF for details.
+
+## Accessing uploaded files in a view
+
+Uploaded files are available as MediaFile objects in request.FILES. The key matches the input name attribute.
+
+```python
+from spiderweb.response import HttpResponse, TemplateResponse
+
+@app.route("/upload", allowed_methods=["GET", "POST"])
+def upload(request):
+    if request.method == "POST":
+        if "file" not in request.FILES:
+            return HttpResponse("No file uploaded", status_code=400)
+        file: MediaFile = request.FILES["file"]
+
+        # Inspect metadata
+        name = file.filename          # original filename
+        mime = file.content_type      # e.g., "text/plain" or "image/png"
+        size = file.size              # in bytes
+
+        # Option A: read content (for validation or quick processing)
+        content_bytes = file.read()
+        # If you plan to call save() after reading, rewind first:
+        file.seek(0)
+
+        # Option B: save to disk (returns full path)
+        saved_path = file.save()
+        return HttpResponse(f"Saved {name} to {saved_path}", status_code=201)
+
+    # GET → render the form
+    return TemplateResponse(request, "file_upload.html")
+```
+
+### What does MediaFile.save() do?
+
+- Writes the uploaded content to BASE_DIR / media_dir / filename.
+- If a file with the same name already exists, a short random suffix is appended before the extension, e.g., photo_[AbCdEf].png.
+- Returns a pathlib.Path to the saved file.
+
+### Multiple files with the same name
+
+If the file input uses multiple, the browser submits several parts with the same name. Use request.FILES.getall(name) to retrieve all of them.
+
+```python
+files = request.FILES.getall("photos")
+for f in files:
+    f.save()
+```
+
+And the corresponding HTML:
+
+```html
+<input name="photos" type="file" multiple>
+```
+
+## Serving uploaded files in development
+
+With debug=True and media_dir set, Spiderweb automatically registers a development route so you can access uploaded files at:
+
+- `/{media_url}/<filename>`
+
+Example: with `media_dir="media"` and `media_url="media"`, a saved file named `avatar.png` will be accessible at `/media/avatar.png` while debug is true.
+
+> [!DANGER]
+> Do not rely on the development file server in production. Put your web server or CDN in front of your app to serve media safely and efficiently.
+
+## CSRF and uploads
+
+Uploads are POST requests and are protected by the CSRF middleware. To accept submissions:
+
+- Add SessionMiddleware before CSRFMiddleware in your app config.
+- Include `{{ csrf_token }}` in your form markup.
+
+See [CSRF middleware](https://itsthejoker.github.io/spiderweb/middleware/csrf.md) for a complete example.
+
+## Validation and security tips
+
+- Validate file type and size before accepting. Do not trust filename extensions alone; inspect content_type and/or file signatures when it matters.
+- Store files outside your templates directories. Use media_dir for user content.
+- Normalize user-supplied metadata before storing in your database.
+- Consider scanning uploads (e.g., antivirus) if you accept untrusted files.
+
+## Complete minimal example
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse, TemplateResponse
+
+app = SpiderwebRouter(
+    templates_dirs=["templates"],
+    middleware=[
+        "spiderweb.middleware.sessions.SessionMiddleware",
+        "spiderweb.middleware.csrf.CSRFMiddleware",
+    ],
+    media_dir="media",
+    media_url="media",
+    debug=True,
+)
+
+@app.route("/upload", allowed_methods=["GET", "POST"])
+def upload(request):
+    if request.method == "POST":
+        if "file" not in request.FILES:
+            return HttpResponse("No file uploaded", status_code=400)
+        file = request.FILES["file"]
+        # Save and echo the location
+        saved = file.save()
+        return HttpResponse(f"Uploaded to {saved}", status_code=201)
+    return TemplateResponse(request, "file_upload.html")
+```
+
+```html
+<!-- templates/file_upload.html -->
+<form action="" method="post" enctype="multipart/form-data">
+  <input name="file" type="file">
+  {{ csrf_token }}
+  <button type="submit">Upload</button>
+</form>
+```
+
+</content>
+</document>
+
+<document>
+<title>Management</title>
+<url>https://itsthejoker.github.io/spiderweb/management/</url>
+<content>
+
+# management
+
+[!badge New in 2.4.0!]
+
+Spiderweb ships with a built-in management CLI — a single command you can use to start the dev server, explore your routes, open an interactive shell, and run startup checks. If you've ever used Django's `manage.py`, this will feel familiar.
+
+After installing the package, the `web` command is available in your environment:
+
+```shell
+web --help
+```
+
+## pointing the CLI at your app
+
+All commands (except `version`) need to know which `SpiderwebRouter` instance to work with. There are three ways to tell them, in order of priority:
+
+**1. The `--app` flag**
+
+Pass the app location directly on the command line as `module:attribute`:
+
+```shell
+web --app myapp:app serve
+```
+
+**2. The `SPIDERWEB_APP` environment variable**
+
+This is helpful for CI pipelines of for folks who like to have everything set in the shell.
+
+```shell
+export SPIDERWEB_APP=myapp:app
+web serve
+```
+
+**3. `pyproject.toml`**
+
+Add a `[tool.spiderweb]` section to your project's `pyproject.toml`. The CLI walks up from your current directory until it finds one:
+
+```toml
+[tool.spiderweb]
+app = "myapp:app"
+```
+
+With that in place you can use any command bare, with no flags at all:
+
+```shell
+web serve
+```
+
+> [!TIP]
+> The `pyproject.toml` approach is the most ergonomic for day-to-day development. Set it once and forget about it.
+
+## commands
+
+### version
+
+Prints the installed version of `spiderweb`.
+
+```shell
+$ web version
+spiderweb-framework 2.4.0
+```
+
+### new
+
+Scaffolds a new Spiderweb project. It creates a new directory containing a minimal `app.py` and a `pyproject.toml` configured for your app. Like `version`, this command doesn't need an app to run.
+
+```shell
+$ web new my_project
+```
+
+You can also scaffold into the current directory by passing `.`:
+
+```shell
+$ web new .
+```
+
+If the target directory already has a `pyproject.toml`, it will append the `[tool.spiderweb]` section without overwriting your existing config.
+
+### serve
+
+Starts the development server. By default it runs in WSGI mode on whatever address and port your app was configured with (`localhost:8000` unless you changed them).
+
+```shell
+web serve
+```
+
+Switch to ASGI mode with `--asgi`:
+
+```shell
+web serve --asgi
+```
+
+Override the bind address or port without touching your source code:
+
+```shell
+web serve --addr 0.0.0.0 --port 9000
+```
+
+If your project always runs in ASGI mode, set `asgi = true` in `[tool.spiderweb]`:
+
+```toml
+[tool.spiderweb]
+app = "myapp:app"
+asgi = true
+```
+
+You can still override it on the command line in either direction — `--asgi` forces ASGI, `--wsgi` forces WSGI regardless of what `pyproject.toml` says.
+
+> [!WARNING]
+> The dev server is just that: for development. Do not use for production.
+
+### shell
+
+Opens an interactive Python interpreter with your app already loaded as `app`. Great for poking around at runtime state, testing a database query, or trying out a piece of logic before committing it.
+
+```shell
+$ web shell
+Spiderweb 2.4.0 shell
+Available names: app
+Type "exit()" or Ctrl-D to quit.
+
+>>> app.addr
+'localhost'
+>>> with app.get_db_session() as session:
+...     # query away
+...     pass
+```
+
+If [IPython](https://ipython.org/) is installed in your environment, the shell will use it automatically. Otherwise, it falls back to the standard library `code.interact`.
+
+### routes
+
+Prints a table of every URL route your app has registered — path, allowed methods, optional name, and the view function.
+
+```shell
+$ web routes
+path            methods                              name   view
+-----------------------------------------------------------------------
+/               POST, GET, PUT, PATCH, DELETE               index
+/about          POST, GET, PUT, PATCH, DELETE               about
+/posts/{slug}   POST, GET, PUT, PATCH, DELETE        posts  get_post
+```
+
+Routes that haven't restricted their methods show the full default set. If you pass `allowed_methods=["GET"]` to `@app.route()`, only that method appears in the table. Handy for double-checking that a new route was picked up correctly, or for tracking down a duplicate.
+
+### check
+
+Re-runs all middleware startup checks and tells you whether everything looks healthy.
+
+```shell
+$ web check
+System check passed.
+```
+
+If any check fails, a `StartupErrors` exception group is raised — you'll see a one-frame traceback listing every failing check. Useful in CI or as a quick sanity check after a config change.
+
+### makemigrations
+
+Generates a new Alembic migration by comparing your current models against the database schema.
+
+```shell
+web makemigrations
+web makemigrations -m "add users table"
+```
+
+The first time you run this command the CLI scaffolds a `migrations/` directory next to your `pyproject.toml` (or in the current directory if no `pyproject.toml` is found):
+
+```
+migrations/
+    env.py           ← configure your model metadata here
+    script.py.mako   ← template for generated migration files
+    versions/        ← individual migration scripts live here
+```
+
+By default, Alembic compares spiderweb's own internal tables against the live database. To include your own models, open `migrations/env.py` and add your `Base` to `target_metadata`:
+
+```python
+from myapp.models import Base as _AppBase
+
+target_metadata = [_SpiderwebBase.metadata, _AppBase.metadata]
+```
+
+**Options**
+
+| Flag | Description |
+|---|---|
+| `-m MESSAGE` / `--message MESSAGE` | Short description embedded in the migration filename. |
+| `--empty` | Create a blank migration without running autogenerate. Useful for hand-written data migrations. |
+
+### migrate
+
+Applies pending migrations to the database. Without arguments it upgrades to the latest revision (`head`).
+
+```shell
+web migrate
+```
+
+Pass a specific revision ID, a relative step, or the special value `zero` to target a particular point in the migration history:
+
+```shell
+web migrate abc123de          # upgrade (or already at this rev: no-op)
+web migrate +1                # apply the next pending migration
+web migrate -1                # roll back the most recent migration
+web migrate zero              # roll back every migration (equivalent to `base`)
+```
+
+**Options**
+
+| Flag | Description |
+|---|---|
+| `REVISION` | Target revision (default: `head`). |
+| `--fake` | Stamp the database at the target revision without executing any SQL — useful for marking existing schemas as migrated. |
+
+> [!TIP]
+> You can configure where the migrations directory lives by setting `migrations_dir` in `[tool.spiderweb]`:
+>
+> ```toml
+> [tool.spiderweb]
+> app = "myapp:app"
+> migrations_dir = "db/migrations"
+> ```
+
+## custom commands
+
+You can register your own management commands on the router using the `@app.command()` decorator. Every custom command receives three arguments:
+
+- `app` — the `SpiderwebRouter` instance, so you can access the database, routes, config, etc.
+- `args` — an `argparse.Namespace` containing only `.app` and `.command` (the values the CLI's own pre-parser resolved). It does **not** contain any flags you pass after the command name.
+- `extra` — a plain `list[str]` of every token that appeared after the command name on the command line. Parse this yourself if your command accepts flags.
+
+A command with no extra flags:
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+
+app = SpiderwebRouter()
+
+@app.route("/")
+def index(request):
+    return HttpResponse("hello!")
+
+@app.command("seed")
+def seed_database(app, args, extra):
+    """Populate the database with initial data."""
+    with app.get_db_session() as session:
+        # ... insert seed records ...
+        session.commit()
+    print("Database seeded.")
+
+if __name__ == "__main__":
+    app.start()
+```
+
+A command that accepts its own flags — parse `extra` with argparse:
+
+```python
+import argparse
+
+@app.command("seed")
+def seed_database(app, args, extra):
+    p = argparse.ArgumentParser(prog="spiderweb seed")
+    p.add_argument("--dry-run", action="store_true")
+    opts = p.parse_args(extra)
+
+    if opts.dry_run:
+        print("Dry run — no changes written.")
+        return
+
+    with app.get_db_session() as session:
+        session.commit()
+    print("Database seeded.")
+```
+
+```shell
+web seed --dry-run
+```
+
+Run any custom command the same way as a built-in:
+
+```shell
+web --app myapp:app seed
+```
+
+Or, with `pyproject.toml` configured, just:
+
+```shell
+web seed
+```
+
+> [!NOTE]
+> The decorated function is still a regular Python function. Applying `@app.command()` doesn't change it in any way — you can still call it directly in your own code.
+
+You can register as many custom commands as you like. Pick meaningful names; they'll show up in the error message if someone types an unrecognised command, so short and descriptive is best.
+
+## configuration reference
+
+| Option | Description |
+|---|---|
+| `--app MODULE:ATTR` | The app to use, in `module:attribute` form. Overrides `SPIDERWEB_APP` and `pyproject.toml`. |
+| `SPIDERWEB_APP` | Environment variable. Overrides `pyproject.toml`, overridden by `--app`. |
+| `[tool.spiderweb] app` | `pyproject.toml` key. Lowest priority; used when neither of the above is set. |
+| `[tool.spiderweb] asgi` | `pyproject.toml` boolean. When `true`, `serve` defaults to ASGI mode. Overridden by `--asgi` / `--wsgi`. |
+| `[tool.spiderweb] migrations_dir` | Path to the Alembic migrations directory, relative to `pyproject.toml`. Defaults to `migrations`. |
+
+### `serve` options
+
+| Flag | Description |
+|---|---|
+| `--asgi` | Start in ASGI mode via uvicorn instead of WSGI. |
+| `--wsgi` | Force WSGI mode even when `asgi = true` is set in `pyproject.toml`. |
+| `--addr ADDR` | Bind address. Overrides the value stored in the app. |
+| `--port PORT` | Port number. Overrides the value stored in the app. |
+
+### `makemigrations` options
+
+| Flag | Description |
+|---|---|
+| `-m MESSAGE` / `--message MESSAGE` | Short description for the migration. |
+| `--empty` | Create a blank migration without autogenerate. |
+
+### `migrate` options
+
+| Flag | Description |
+|---|---|
+| `REVISION` | Target revision (default: `head`). Accepts revision IDs, `+N`/`-N` relative specs, `zero`, or `base`. |
+| `--fake` | Stamp the database at the target revision without running SQL. |
+
+</content>
+</document>
+
+<document>
+<title>Cors</title>
+<url>https://itsthejoker.github.io/spiderweb/middleware/cors/</url>
+<content>
+
+# cors middleware
+
+```python
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    middleware=["spiderweb.middleware.cors.CorsMiddleware"],
+)
+```
+
+CORS, or Cross-Origin Resource Sharing, is an incredibly important piece of how different parts of the web communicate. As such, there is a CORS handler built into Spiderweb.
+
+> [!TIP]
+> The CorsMiddleware should be placed as high as possible in the middleware list, as it needs as much control as possible over requests and responses.
+
+This implementation is lovingly ~~ripped~~ ~~lifted~~ borrowed from [Django CORS Headers](https://github.com/adamchainz/django-cors-headers/), an industry-standard implementation for handing CORS that has existed for over a decade. It is essentially and functionally the same. The below doc is ~~copy-and-pasted~~ also borrowed from Django CORS Headers, with updates where needed. (They just already do a great job of explaining these things.)
+
+The available configurations are listed below, and you must set at least one of three following settings:
+
+- `cors_allowed_origins`
+- `cors_allowed_origin_regexes` 
+- `cors_allow_all_origins`
+
+## cors_allowed_origins
+
+A list of origins that are authorized to make cross-site HTTP requests. The origins in this setting will be allowed, and the requesting origin will be echoed back to the client in the access-control-allow-origin header. Defaults to `[]`.
+
+An Origin is defined as a URI scheme + hostname + port, or one of the special values 'null' or 'file://'. Default ports (HTTPS = 443, HTTP = 80) are optional.
+
+```python
+app = SpiderwebRouter(
+    cors_allowed_origins=[
+        "https://example.com",
+        "https://sub.example.com",
+        "http://localhost:8080",
+        "http://127.0.0.1:9000",
+    ]
+)
+```
+
+## cors_allowed_origin_regexes
+
+A list of strings representing regexes that match Origins that are authorized to make cross-site HTTP requests. Defaults to `[]`. Useful when `cors_allowed_origins` is impractical, such as when you have a large number of subdomains.
+
+```python
+app = SpiderwebRouter(
+    cors_allowed_origin_regexes=[
+        r"^https://\w+\.example\.com$",
+    ]
+)
+```
+
+## cors_allow_all_origins
+
+If `True`, all origins will be allowed. Other settings restricting allowed origins will be ignored. Defaults to `False`.
+
+Setting this to `True` can be _dangerous_, as it allows any website to make cross-origin requests to yours. Generally you'll want to restrict the list of allowed origins with `cors_allowed_origins` or `cors_allowed_origin_regexes`.
+
+```python
+app = SpiderwebRouter(
+    cors_allow_all_origins=True
+)
+```
+
+# Optional settings
+
+All the following settings have sensible defaults, but are available if you want to tweak them for your use case. For most cases, you'll just want to leave these alone.
+
+## cors_urls_regex
+
+A regex which restricts the URL's for which the CORS headers will be sent. Defaults to `r'^.*$'`, i.e. match all URL's. Useful when you only need CORS on a part of your site, e.g. an API at /api/.
+
+```python
+app = SpiderwebRouter(
+    cors_urls_regex=r"^/api/.*$"
+)
+```
+
+## cors_allow_methods
+
+A list of HTTP verbs that are allowed for the actual request. Defaults to:
+
+```python
+DEFAULT_CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
+```
+
+The default can be imported from `spiderweb.constants` so you can just extend it with custom methods. This allows you to keep up to date with any future changes. For example:
+
+```python
+from spiderweb.constants import DEFAULT_CORS_ALLOW_METHODS as default_methods
+
+app = SpiderwebRouter(
+    cors_allow_methods=(
+        *default_methods,
+        "POKE",
+    )
+)
+```
+
+## cors_allow_headers
+
+The list of non-standard HTTP headers that you permit in requests from the browser. Sets the `Access-Control-Allow-Headers` header in responses to preflight requests. Defaults to:
+
+```python
+CORS_ALLOW_HEADERS = (
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+)
+```
+
+The default can be imported from `spiderweb.constants` so you can extend it with your custom headers. This allows you to keep up to date with any future changes. For example:
+
+```python
+from spiderweb.constants import DEFAULT_CORS_ALLOW_HEADERS as default_headers
+
+app = SpiderwebRouter(
+    cors_allow_headers=(
+        *default_headers,
+        "my-custom-header",
+    )
+)
+```
+
+## cors_expose_headers
+
+The list of extra HTTP headers to expose to the browser, in addition to the default [safelisted headers](https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_response_header). If non-empty, these are declared in the [`access-control-expose-headers` header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Expose-Headers). Defaults to `[]`.
+
+## cors_preflight_max_age
+
+The number of seconds (integer) the browser can cache the preflight response. This sets the [`access-control-max-age` header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age) in preflight responses. If this is 0 (or any falsey value), no max age header will be sent. Defaults to `86400` (one day).
+
+Note: Browsers send [preflight requests](https://developer.mozilla.org/en-US/docs/Glossary/Preflight_request) before certain “non-simple” requests, to check they will be allowed. Read more about it in the [CORS MDN article](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#preflighted_requests).
+
+## cors_allow_credentials
+
+If `True`, cookies will be allowed to be included in cross-site HTTP requests. This sets the [`Access-Control-Allow-Credentials` header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/access-control-allow-credentials) in preflight and normal responses. Defaults to `False`.
+
+> [!NOTE]
+> The session cookie, by default, uses `Lax` as the security setting, which will prevent the session cookie from being sent cross-domain. If you want to use `cors_allow_credentials`, you will need to change `session_cookie_same_site` to `none` to bypass the security restriction.
+
+## cors_allow_private_network
+
+If `True`, allow requests from sites on “public” IP to this server on a “private” IP. In such cases, browsers send an extra CORS header `access-control-request-private-network`, for which `OPTIONS` responses must contain `access-control-allow-private-network: true`. Defaults to `False`.
+
+Refer to:
+
+- [Local Network Access](https://wicg.github.io/local-network-access/), the W3C Community Draft specification.
+- [Private Network Access: introducing preflights](https://developer.chrome.com/blog/private-network-access-preflight/), a blog post from the Google Chrome team.
+
+# A note about CSRF
+
+Most sites will need to take advantage of the Cross-Site Request Forgery protection built into Spiderweb. CORS and CSRF are separate, and Spiderweb wants you to be explicit about how the domains that you work with fit together. If you need to exempt sites from the [`Referer`](https://en.wikipedia.org/wiki/HTTP_referer#Etymology) checking that Spiderweb performs does on secure requests, you can use the `csrf_trusted_origins` setting. For example:
+
+```python
+from spiderweb.constants import DEFAULT_CORS_ALLOW_HEADERS as default_headers
+
+app = SpiderwebRouter(
+    cors_allowed_origins=[
+        "https://read-only.example.com",
+        "https://read-and-write.example.com",
+    ],
+    csrf_trusted_origins=[
+        "https://read-and-write.example.com",
+    ]
+)
+```
+
+</content>
+</document>
+
+<document>
+<title>Csrf</title>
+<url>https://itsthejoker.github.io/spiderweb/middleware/csrf/</url>
+<content>
+
+# csrf middleware
+
+```python
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    middleware=[
+            "spiderweb.middleware.sessions.SessionMiddleware",
+            "spiderweb.middleware.csrf.CSRFMiddleware",
+        ],
+)
+```
+
+Cross-site request forgery, put simply, is a method for attackers to make legitimate-looking requests in your name to a service or system that you've previously authenticated to. Ways that we can protect against this involve aggressively expiring session cookies, special IDs for forms that are keyed to a specific user, and more.
+
+> [!TIP]
+> Notice that in the example above, SessionMiddleware is also included in the middleware list. The CSRF middleware requires the SessionMiddleware to function, and SessionMiddleware must be placed above it in the middleware list.
+
+## CSRF and Forms
+
+When you create a form, submitting data to the form is the part where things can go wrong. The CSRF middleware grants you two extra pieces in the TemplateResponse response: `csrf_token` and `csrf_token_raw`. `csrf_token` is a preformatted HTML input with preset attributes, ready for use, that you can drop into your template, while `csrf_token_raw` is the token itself with no extra formatting in case you'd like to do something else with it.
+
+Here's an example app that renders a form with two input fields and a checkbox, accepts the form data, and sends back the information as JSON.
+
+```python
+# myapp.py
+from spiderweb import SpiderwebRouter
+from spiderweb.response import JsonResponse, TemplateResponse
+
+app = SpiderwebRouter(
+    templates_dirs=["templates"],
+    middleware=[
+            "spiderweb.middleware.sessions.SessionMiddleware",
+            "spiderweb.middleware.csrf.CSRFMiddleware",
+        ],
+)
+
+@app.route("/", allowed_methods=["GET", "POST"])
+def form(request):
+    if request.method == "POST":
+        return JsonResponse(data=request.POST)
+    else:
+        return TemplateResponse(request, "form.html")
+```
+
+```html
+<!-- templates/form.html -->
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Form Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+<div class="container">
+    <h1>Example Form</h1>
+    <form action="" method="post">
+    <div class="mb-3">
+        <input type="email" class="form-control" name="email" id="emailInput" placeholder="name@example.com">
+    </div>
+    <div class="mb-3">
+        <label for="exampleFormControlTextarea1" class="form-label">Example textarea</label>
+        <textarea class="form-control" name="comment" id="exampleFormControlTextarea1" rows="3"></textarea>
+    </div>
+    <div class="mb-3 form-check">
+        <input type="checkbox" name="formcheck" class="form-check-input" id="exampleCheck1">
+        <label class="form-check-label" for="exampleCheck1">Check me out</label>
+    </div>
+    {{ csrf_token }}
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+</html>
+```
+
+With this complete app, it will serve and accept the form. Note towards the bottom of `form.html` the line `{{ csrf_token }}` — this is the inserted key. All you need to do is make sure that line is included inside your form and it will be accepted and parsed. 
+
+## Marking views as CSRF-Exempt
+
+```python
+from spiderweb.decorators import csrf_exempt
+```
+
+If you want to accept POST data at an endpoint with CSRF verification enabled, you will need to mark the endpoint as CSRF-exempt. Spiderweb provides a decorator for this use case:
+
+```python
+@csrf_exempt
+@app.route("/form", allowed_methods=["GET", "POST"])
+def form(request):
+    ...
+```
+
+Just drop it above the route information for your function and Spiderweb will not check for a CSRF token when form data is submitted.
+
+</content>
+</document>
+
+<document>
+<title>Custom_Middleware</title>
+<url>https://itsthejoker.github.io/spiderweb/middleware/custom_middleware/</url>
+<content>
+
+# writing your own middleware
+
+Sometimes you want to run the same code on every request or every response (or both!). Lots of processing happens in the middleware layer, and if you want to write your own, all you have to do is write a quick class and put it in a place that Spiderweb can find it. A piece of middleware only needs two things to be successful:
+
+- it must be a class that inherits from SpiderwebMiddleware
+- it must handle either requests, responses, or both!
+
+That's really all there is to it. Here's a template you can copy:
+
+```python
+from spiderweb.middleware import SpiderwebMiddleware
+from spiderweb.request import Request
+from spiderweb.response import HttpResponse
+
+
+class TestMiddleware(SpiderwebMiddleware):
+    def process_request(self, request: Request) -> None:
+        # example of a middleware that sets a flag on the request
+        request.spiderweb = True
+
+    def process_response(self, request: Request, response: HttpResponse) -> None:
+        # example of a middleware that sets a header on the resp
+        if hasattr(request, "spiderweb"):
+            response.headers["X-Spiderweb"] = "true"
+```
+
+Middleware is run twice: once for the incoming request and once for the outgoing response. You only need to include whichever function is required for the functionality you need.
+
+## process_request(self, request: Request) -> Optional[HttpResponse]:
+
+`process_request` is called before the view is reached in the execution order. You will receive the assembled Request object, and any middleware declared above this one will have already run. Because the request is the single instantiation of a class, you can modify it in-place without returning anything and your changes will stick. 
+
+This function also has a special ability; it can stop execution before the view is called by returning a response. If a response is returned, Spiderweb will immediately skip to applying the response middleware and sending the response back to the client. Here's an example of what that might look like:
+
+```python
+class JohnMiddleware(SpiderwebMiddleware):
+    def process_request(self, request: Request) -> Optional[HttpResponse]:
+        if (
+            hasattr(request, "user")
+            and user.name == "John"
+            and request.path.startswith("/admin")
+        ):
+            return HttpResponse("Go away, John!", status_code=403)
+```
+
+In this case, if the user John tries to access any route that starts with "/admin", he'll immediately get denied and the view will never be called. If the request does not have a user attached to it (or the user is not John), then the middleware will return None and Spiderweb will continue processing.
+
+## process_response(self, request: Request, response: HttpResponse) -> None:
+
+This function is called after the view has run and returned a response. You will receive the request object and the response object; like with the request object, the response is also a single instantiation of a class, so any changes you make will stick automatically.
+
+Unlike `process_request`, returning a value here doesn't change anything. We're already processing a request, and there are opportunities to turn away requests / change the response at both the `process_request` layer and the view layer, so Spiderweb assumes that whatever it is working on here is what you mean to return to the user. The response object that you receive in the middleware is still prerendered, so any changes you make to it will take effect after it finishes the middleware and renders the response.
+
+## on_error(self, request: Request, triggered_exception: Exception) -> Optional[HttpResponse]:
+
+This is a helper function that is available for you to override; it's not often used by middleware, but there are some ([like the pydantic middleware](https://itsthejoker.github.io/spiderweb/middleware/pydantic.md)) that call `on_error` when there is a validation failure.
+
+## post_process(self, request: Request, response: HttpResponse, rendered_response: str) -> str | bytes:
+
+[!badge New in 1.3.0!]
+
+After `process_request` and `process_response` run, the response is rendered out into the raw text that is going to be sent to the client. Right before that happens, `post_process` is called on each middleware in the same order as `process_response` (so the closer something is to the beginning of the middleware list, the more important it is).
+
+There are three things passed to `post_process`:
+
+- `request`: the request object. It's provided here purely for reference purposes; while you can technically change it here, it won't have any effect on the response.
+- `response`: the response object. The full HTML of the response has already been rendered, but the headers can still be modified here. This object can be modified in place, like in `process_response`.
+- `rendered_response`: the full HTML of the response as a string or bytes. This is the final output that will be sent to the client. Every instance of `post_process` must return the full HTML of the response, so if you want to make changes, you'll need to return the modified string. A string is _strongly_ preferred, but bytes are also acceptable; keep in mind that you'll be making things harder for any `post_process` middleware that comes after you.
+
+Note that this function *must* return the full HTML of the response (provided at the start as `rendered_response`. Each invocation of `post_process` overwrites the entire output of the response, so make sure to return everything that you want to send. For example, here's a middleware that ~~breaks~~ adjusts the capitalization of the response and also demonstrates passing variables into the middleware and modifies the headers with the type of transformation:
+
+```python
+import random
+
+from spiderweb.request import Request
+from spiderweb.response import HttpResponse
+from spiderweb.middleware import SpiderwebMiddleware
+from spiderweb.exceptions import ConfigError
+
+
+class CaseTransformMiddleware(SpiderwebMiddleware):
+    # this breaks everything, but it's hilarious so it's worth it. Blame Sam.
+    def post_process(self, request: Request, response: HttpResponse, rendered_response: str) -> str:
+        valid_options = ["spongebob", "random"]
+        # grab the value from the extra data passed into the server object
+        # during instantiation
+        method = self.server.extra_data.get("case_transform_middleware_type", "spongebob")
+        if method not in valid_options:
+            raise ConfigError(
+                f"Invalid method '{method}' for CaseTransformMiddleware."
+                f" Valid options are {', '.join(valid_options)}"
+            )
+
+        if method == "spongebob":
+            response.headers["X-Case-Transform"] = "spongebob"
+            return "".join(
+                char.upper() 
+                if i % 2 == 0 
+                else char.lower() for i, char in enumerate(rendered_response)
+            )
+        else:
+            response.headers["X-Case-Transform"] = "random"
+            return "".join(
+                char.upper() 
+                if random.random() > 0.5 
+                else char for char in rendered_response
+            )
+
+# usage:
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    middleware=["CaseTransformMiddleware"],
+    case_transform_middleware_type="random",
+)
+```
+
+## checks
+
+If you want to have runtime verifications that ensure that everything is running smoothly, you can take advantage of Spiderweb's `checks` feature.
+
+> [!TIP]
+> If you just want to run startup checks, you can also tie this in with the `UnusedMiddleware` exception, as it'll trigger after the checks run.
+
+A startup check looks like this:
+
+```python
+from spiderweb.exceptions import ConfigError
+from spiderweb.server_checks import ServerCheck
+
+
+class MyCheck(ServerCheck):
+    # You don't have to extract the message out into a top-level
+    # variable, but it does make testing your middleware easier.
+    MYMESSAGE = "Something has gone wrong!"
+
+    # The function must be called `check` and it takes no args.
+    def check(self):
+        if self.server.extra_args.get("mykeyword") != "propervalue":
+            # Note that we are returning an exception instead of
+            # raising it. All config errors are collected and then
+            # raised as a single group of all the errors that
+            # happened on startup.
+            # If everything looks good, don't return anything.
+            return ConfigError(self.MYMESSAGE)
+```
+
+> [!TIP]
+> You should have one check class per actual check that you want to run, as it will make identifying  issues much easier.
+
+You can have as many checks as you'd like, and the base Spiderweb instance is available at `self.server`. All checks must return an exception (**not** raising it!), as they will all be raised at the same time as part of an ExceptionGroup called `StartupErrors`.
+
+To enable your checks, link them to your middleware like this:
+
+```python
+class MyMiddleware(SpiderwebMiddleware):
+    
+    checks = [MyCheck, ADifferentCheck]
+
+    def process_request(self, request):
+        ...
+```
+
+List as many checks as you need there, and the server will run all of them during startup.
+
+## UnusedMiddleware
+
+```python
+from spiderweb.exceptions import UnusedMiddleware
+```
+
+If you don't want your middleware to run for some reason, `process_request`, `process_response` and `post_process` can all raise the UnusedMiddleware exception. If this happens, Spiderweb will kick your middleware out of the processing order for the rest of the life of the server. Note that this applies to the middleware as a whole, so all functions in the middleware will not be run if an UnusedMiddleware is raised. This is a great way to mark debug middleware that shouldn't run or create time-delay middleware that runs until a certain condition is met!
+
+</content>
+</document>
+
+<document>
+<title>Gzip</title>
+<url>https://itsthejoker.github.io/spiderweb/middleware/gzip/</url>
+<content>
+
+# gzip compression middleware
+
+[!badge New in 1.4.0!]
+
+```python
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    middleware=["spiderweb.middleware.gzip.GzipMiddleware"],
+)
+```
+
+If your app is serving large responses, you may want to compress them. We don't (currently) have built-in support for Brotli, deflate, zstd, or other compression methods, but we do support gzip. (Want to add support for other methods? We'd love to see a PR!)
+
+> [!NOTE]
+> `GzipMiddleware` must be the as close to the 'top' of the middleware stack as possible. If you have multiple middleware, make sure that `gzip` is the first one in the list. For example:
+> ```python
+> app = SpiderwebRouter(
+>    middleware=[
+>        "spiderweb.middleware.gzip.GzipMiddleware",
+>        "spiderweb.middleware.cors.CorsMiddleware",
+>        "spiderweb.middleware.csrf.CSRFMiddleware",
+>    ]
+> )
+> ```
+
+The implementation in Spiderweb is simple: it compresses the response body if the client indicates that it is supported. If the client doesn't support gzip, the response is sent uncompressed. Compression happens at the end of the response cycle, so it won't interfere with other middleware.
+
+Error responses and responses with status codes that indicate that the response body should not be sent (like 204, 304, etc.) will not be compressed. Responses with a `Content-Encoding` header already set (e.g. if you're serving pre-compressed files) will be handled the same way.
+
+The available configuration options are:
+
+## gzip_minimum_response_length
+
+The minimum size in bytes of a response before it will be compressed. Defaults to `500`. Responses smaller than this will not be compressed.
+
+```python
+app = SpiderwebRouter(
+    gzip_minimum_response_length=1000
+)
+```
+
+## gzip_compression_level
+
+The level of compression to use. Defaults to `6`. This is a number between 0 and 9, where 0 is no compression and 9 is maximum compression. Higher levels will result in smaller files, but will take longer to compress and decompress. Level 6 is a good balance between file size and speed.
+
+```python
+app = SpiderwebRouter(
+    gzip_compression_level=9
+)
+```
+
+</content>
+</document>
+
+<document>
+<title>Index</title>
+<url>https://itsthejoker.github.io/spiderweb/middleware/</url>
+<content>
+
+# middleware
+
+When processing a request, there are often things that need to happen before the request is passed to the view. Middleware is a way to intercept the request and response objects and do something with them before they are passed to the view or returned to the client.
+
+Middleware in Spiderweb is defined as a list of importable strings that looks like this:
+
+```python
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    middleware=[
+            "spiderweb.middleware.sessions.SessionMiddleware",
+            "spiderweb.middleware.csrf.CSRFMiddleware",
+            "spiderweb.middleware.pydantic.PydanticMiddleware",
+        ],
+)
+```
+
+Middleware affects both the incoming request AND the outgoing response, so the order that it's defined here is important. When a request comes in, it will be processed through the middleware in the order that it's defined, but after the response is created, it will pass back through the middleware going the opposite direction. Each piece of middleware has two functions: `process_request` and `process_response`.
+
+When a request comes in, after building the request object, Spiderweb will start running through the middleware from the top down. In the example above, that means that it will call `process_request()` on the SessionMiddleware, then CSRFMiddleware, and finally PydanticMiddleware. At this point, control is passed to the view so that you can run your application-specific logic. As part of the view, you'll return a response, and Spiderweb will take over again.
+
+Now that Spiderweb has the response object, it will start from the bottom of the stack (PydanticMiddleware in the example) and call `process_response()`, working its way up back to the top and ending with the `process_response()` of SessionMiddleware.
+
+> [!NOTE]
+> Middleware must be declared when instantiating the server; they can't be added on afterward. Once the server has been started, every piece of middleware will run for every request and every response.
+
+There are a few pieces of middleware built into Spiderweb that you can immediately put to use; they're described on the following pages.
+
+</content>
+</document>
+
+<document>
+<title>Pydantic</title>
+<url>https://itsthejoker.github.io/spiderweb/middleware/pydantic/</url>
+<content>
+
+# pydantic form validation
+
+```python
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    middleware=["spiderweb.middleware.pydantic.PydanticMiddleware"],
+)
+```
+When working with form data, you may not want to always have to perform your own validation on the incoming data. Spiderweb gives you a way out of the box to perform this validation using Pydantic.
+
+> [!WARNING]
+> Pydantic is not installed by default. Install it with `pip install pydantic` or `pip install spiderweb[pydantic]`.
+
+Let's assume that we have a form view that looks like this:
+
+```python
+@app.route("/myform", allowed_methods=["GET", "POST"])
+def form(request):
+    if request.method == "POST":
+        if "username" in request.POST and "comment" in request.POST:
+            # there's presumably other data in there, but we care about these two
+            return JsonResponse(
+                data={
+                    "username": request.POST["username"],
+                    "comment": request.POST["comment"]
+                }
+            )
+    else:
+        return TemplateResponse(request, "myform.html")
+```
+
+Our form takes in an indeterminate amount of data, but if we really care about some of the fields (or all of them) then we can utilize Pydantic to handle this validation for us. Once the middleware is enabled, we can update our view:
+
+```python
+from pydantic import EmailStr
+
+from spiderweb.middleware.pydantic import RequestModel
+
+
+class CommentForm(RequestModel):
+    email: EmailStr
+    comment: str
+
+@app.route("/myform", allowed_methods=["GET", "POST"])
+def form(request: CommentForm):
+    if request.method == "POST":
+        return JsonResponse(request.validated_data.dict())
+    else:
+        return TemplateResponse(request, "myform.html")
+```
+
+The Pydantic middleware will automatically detect that the model that you want to use for the request has been added as a type hint, and it will run the validation during the middleware phase so that it can return an error immediately if it fails validation.
+
+> [!NOTE]
+> Your validator **must** inherit from RequestModel to function correctly! If it doesn't, it will not trigger.
+
+If the validation fails, the middleware will call `on_error`, which by default will return a 400 with a list of the broken fields. You may not want this behavior, so the easiest way to address it is to subclass PydanticMiddleware with your own version and override `on_error` to do whatever you'd like.
+
+If validation succeeds, the data from the validator will appear on the request object under `request.validated_data` — to access it, just call `.dict()` on the validated data.
+
+</content>
+</document>
+
+<document>
+<title>Sessions</title>
+<url>https://itsthejoker.github.io/spiderweb/middleware/sessions/</url>
+<content>
+
+# sessions middleware
+
+```python
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    middleware=["spiderweb.middleware.sessions.SessionMiddleware"],
+)
+```
+
+Arguably one of the more important things that a server-side web framework can do, besides take in requests and serve responses, is keep track of folks as they navigate your website. That's what the sessions middleware is for!
+
+Visitors are assigned a random value when they visit for the first time, and that value will follow them around until it either expires or it's deleted. The total amount of time that it's around is configurable, as are the various settings for the session cookie.
+
+## request.SESSION
+
+When the sessions middleware is enabled, the request object will have a new attribute labeled `SESSION`. This is a dictionary, and you can put pretty much anything you want in it as long as it's serializable to JSON! When the user visits again with an active session, the data will automatically be available on the `SESSION` object again. Here's an example of a complete server using sessions:
+
+```python
+from spiderweb import SpiderwebRouter, HttpResponse
+
+app = SpiderwebRouter(
+    middleware=["spiderweb.middleware.sessions.SessionMiddleware"],
+)
+
+@app.route("/")
+def session(request):
+    if "val" not in request.SESSION:
+        request.SESSION["val"] = 0
+    else:
+        request.SESSION["val"] += 1
+    return HttpResponse(body=f"Session value: {request.SESSION['val']}")
+
+if __name__ == "__main__":
+    app.start()
+```
+
+If you drop this into a new file and call it with `python yourfile.py`, you should see two things:
+
+- there is a new file created called `spiderweb.db`
+- if you open your browser and navigate to http://localhost:8000 and refresh the page a few times, the number should increment
+
+Use the session object to keep track of anything you need to!
+
+> Read more [about the database here!](https://itsthejoker.github.io/spiderweb/../db.md)
+
+## Settings
+
+There are a few configurable things with the settings middleware, and they all have to do with the cookie itself.
+
+```python
+app = SpiderwebRouter(
+    session_cookie_name="swsession",
+    session_cookie_secure=False,
+    session_cookie_http_only=True,
+    session_cookie_same_site="lax",
+    session_cookie_path="/",
+)
+```
+
+### session_cookie_name
+
+Any valid cookie name is acceptable here; the default is `swsession`. You can [read more about valid names for cookies here][cookienames].
+
+### session_cookie_secure
+
+This marks that the cookie will only be sent back to the server with a valid HTTPS session. By default, this is set to `False`, but should be manually set to `True` if the server is deployed.
+
+### session_cookie_http_only
+
+This marks whether the session cookie will have the `HttpOnly` attribute. This makes it unreadable to client-side javascript. The default is `False`.
+
+### session_cookie_same_site
+
+There are three valid values for this: "strict", "lax", and "none".
+
+- `strict`: the browser will only send the cookie when the user performs a request on the same site that sent the cookie, and notably not on the first request to the server when navigating to the site from a different origin.
+- `lax`: the browser will send the cookie when the user performs a request on the same site that sent the cookie, and also on the first request to the server when navigating to the site from a different origin. This is the default setting.
+- `none`: the browser will send the cookie regardless of the origin of the request. However, you must also set `session_cookie_secure` to `True` if you want to use this setting, otherwise the browser will refuse to send it.
+
+### session_cookie_path
+
+This is the path that the cookie is valid for. By default, it's set to `/`, which means that the cookie is valid for the entire domain. If you want to restrict the cookie to a specific path, you can set it here.
+
+[cookienames]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#attributes
+
+</content>
+</document>
+
+<document>
+<title>Quickstart</title>
+<url>https://itsthejoker.github.io/spiderweb/quickstart/</url>
+<content>
+
+# quickstart
+
+Start by installing the package with your favorite package manager:
+
++++ uv
+```shell
+uv add spiderweb-framework
+```
++++ pip
+```shell
+pip install spiderweb-framework
+```
++++ pipenv
+```shell
+pipenv install spiderweb-framework
+```
++++
+
+
+Then, create a new file and drop this in it:
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+
+app = SpiderwebRouter()
+
+@app.route("/")
+def index(request):
+    return HttpResponse("HELLO, WORLD!")
+
+if __name__ == "__main__":
+    app.start()
+```
+
+Start the dev server by running `python {yourfile.py}` and navigating to `http://localhost:8000/` in your browser. You should see `HELLO, WORLD!` displayed on the page. Press `Ctrl+C` to stop the server.
+
+That's it! You've got a working web app. Let's take a look at what these few lines of code are doing:
+
+```python
+from spiderweb import SpiderwebRouter
+```
+
+The `SpiderwebRouter` class is the main object that everything stems from in Spiderweb. It's where you'll set your options, your routes, and more.
+
+```python
+from spiderweb.response import HttpResponse
+```
+
+Rather than trying to infer what you want, Spiderweb wants you to be specific about what you want it to do. Part of that is the One Response Rule:
+
+> Every view must return a Response, and each Response must be a specific type.
+
+There are five different types of responses; if you want to skip ahead, hop over to [the responses page](https://itsthejoker.github.io/spiderweb/responses.md) to learn more. For this example, we'll focus on `HttpResponse`, which is the base response.
+
+```python
+app = SpiderwebRouter()
+```
+
+This line creates a new instance of the `SpiderwebRouter` class and assigns it to the variable `app`. This is the object that will handle all of your requests and responses. If you need to pass any options into Spiderweb, you'll do that here.
+
+```python
+@app.route("/")
+def index(request):
+    return HttpResponse("HELLO, WORLD!")
+```
+
+This is an example view. There are a few things to note here:
+
+- The `@app.route("/")` decorator tells spiderweb that this view should be called when the user navigates to the root of the site. There are three different ways to declare this, but this is the easiest for demo purposes.
+- The `def index(request):` function is the view itself. It takes a single argument, `request`, which is a `Request` object that contains all the information about the incoming request.
+- The `return HttpResponse("HELLO, WORLD!")` line is the response. In this case, it's a simple `HttpResponse` object that contains the string `HELLO, WORLD!`. This will be sent back to the user's browser.
+
+> See [declaring routes](https://itsthejoker.github.io/spiderweb/routes.md) for more information.
+
+> [!NOTE]
+> Every view must accept a `request` object as its first argument. This object contains all the information about the incoming request, including headers, cookies, and more.
+> 
+> There's more that we can pass in, but for now, we'll keep it simple.
+
+```python
+if __name__ == "__main__":
+    app.start()
+```
+
+Once you finish setting up your app, it's time to start it! You can start the dev server by just calling `app.start()` (and its counterpart `app.stop()`, or just CTRL+C). This will start a simple server on `localhost:8000` that you can access in your browser.
+
+> [!WARNING]
+> The dev server is just that: for development. Do not use for production.
+
+Now that your app is done, you can also run it with Gunicorn by running `gunicorn --workers=2 {yourfile}:app` in your terminal. This will start a Gunicorn server on `localhost:8000` that you can access in your browser and is a bit more robust than the dev server.
+
+</content>
+</document>
+
+<document>
+<title>Responses</title>
+<url>https://itsthejoker.github.io/spiderweb/responses/</url>
+<content>
+
+# responses
+
+Possibly the most important part of a view, a Response allows you to send information back to the browser. Responses also do most of the boring stuff for you of setting headers and making sure everything is encoded correctly.
+
+There are five different types of response in Spiderweb, and each one has a slightly different function.
+
+## HttpResponse
+
+```python
+from spiderweb.response import HttpResponse
+```
+
+The HttpResponse object is the base class for responses, and if you want to implement your own Response type, this is what you will need to subclass. More information on that at the bottom.
+
+This response is used for raw HTML responses and also contains the helper functions used by the other responses.
+
+Usage:
+
+```python
+resp = HttpResponse(
+    # the raw string data you want to return
+    body: str = None,
+    status_code: int = 200,
+    # If you want to specify your own headers, you can do
+    # so when you instantiate it.
+    headers: dict[str, Any] = None,
+)
+```
+
+## JsonResponse
+
+```python
+from spiderweb.response import JsonResponse
+```
+
+Sometimes you just need to return JSON, and the JsonResponse is the class you need. It sets up the correct headers for you and is ready to go as soon as you call it.
+
+Usage:
+
+```python
+resp = JsonResponse(
+    data: dict[str, Any] = None,
+    status_code: int = 200,
+    headers: dict[str, Any] = None,
+)
+```
+
+## TemplateResponse
+
+```python
+from spiderweb.response import TemplateResponse
+```
+
+If you want to render an template using Jinja, you'll need a TemplateResponse. This one is instantiated a little differently from the other responses, but it's to make sure that all your data gets to the places it needs to be.
+
+Usage:
+
+```python
+resp = TemplateResponse(
+    request: Request,
+    template_path: PathLike | str = None,
+    template_string: str = None,
+    context: dict[str, Any] = None,
+    # same as before
+    status_code: int = 200,
+    headers: dict[str, Any] = None,
+)
+```
+
+In practice, this is simpler than it looks at first glance.
+
+- `request`: Required. This is the request object that is passed into the view.
+- `template_path`: Choose either this or `template_string`. This is the path to the template that you will want to be loading inside your templates directories.
+- `template_string`: Choose either this or `template_path`. This is a raw string that will be treated as a template instead of reading from a file.
+- `context`: a dict that contains data that will get slotted into the template.
+
+Example (where there is a folder in the local directory called "my_templates", and a file within that directory called "index.html"):
+
+```python
+app = SpiderwebRouter(templates_dirs=["my_templates"])
+
+
+@app.route("/")
+def index(request):
+    return TemplateResponse(request, "index.html", context={"extra_data": "1, 2, 3"})
+```
+
+In this case, the TemplateResponse will load `my_templates/index.html` and use the context dictionary of `{"extra_data": "1, 2, 3"}` to populate it. (The request object will also automatically be added to the context dictionary so that it is accessible in the template during render time.)
+
+Using the `template_string` argument looks like this:
+
+```python
+app = SpiderwebRouter(templates_dirs=["my_templates"])
+
+
+@app.route("/")
+def index(request):
+    template = """This is where I will display my extra data: {{ extra_data }}"""
+    return TemplateResponse(
+        request, template_string=template, context={"extra_data": "1, 2, 3"}
+    )
+```
+
+> [!TIP]
+> You can [read more about crafting templates for Jinja here!](https://jinja.palletsprojects.com/en/3.0.x/templates/)
+
+## RedirectResponse
+
+```python
+from spiderweb.response import RedirectResponse
+```
+
+Occasionally, it's handy to tell the browser to request something else. You can do that with the RedirectResponse:
+
+```python
+resp = RedirectResponse(location: str = None)
+```
+
+The RedirectResponse will automatically set the status code and headers for you on intitialization, though you can always change them after.
+
+Example:
+
+```python
+return RedirectResponse("/")
+```
+
+## FileResponse
+
+```python
+from spiderweb.response import FileResponse
+```
+
+Generic files on the web have two distinct problems: we don't know what kind they are and we don't know how big they are. The FileResponse class handles both setting the headers automatically for the correct mimetype and also breaking the file into chunks to send in a reasonable way.
+
+Ideally, static files and the like will be handled by the reverse proxy aimed at your app (nginx or Apache, usually), but for local developement, being able to serve files is a useful shortcut. You can also use this to serve files directly from your application in other more specific circumstances.
+
+> [!WARNING]
+> Using this response is much slower than letting your reverse proxy handle it if you have one; as this is a normal response, it will also undergo processing through the middleware stack each time it's used. For returning a file, it's a waste of computational power.
+
+This is the complete source of the view used to serve static files when using the development server, as it shows nicely how to use this response type:
+
+```python
+def send_file(request, filename: str) -> FileResponse:
+    for folder in request.server.staticfiles_dirs:
+        requested_path = request.server.BASE_DIR / folder / filename
+        if os.path.exists(requested_path):
+            if not is_safe_path(requested_path):
+                raise NotFound
+            return FileResponse(filename=requested_path)
+    raise NotFound
+```
+
+</content>
+</document>
+
+<document>
+<title>Routes</title>
+<url>https://itsthejoker.github.io/spiderweb/routes/</url>
+<content>
+
+# routes
+
+To have logic that your application can use, you must be able to route incoming requests from The Outside:tm: and properly get them to your code and back. There are three different ways to set up this up depending on what works best for your application, and all three can be used together (though this is probably a bad idea).
+
+## `route()` Decorator
+
+In this pattern, you'll create your server at the top of the file and assign it to an object (usually called `app`). Once it's created, you'll be able to use the `@app.route` decorator to assign routes. This is the pattern used by the quickstart app:
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+
+app = SpiderwebRouter()
+
+@app.route("/")
+def index(request):
+    return HttpResponse("HELLO, WORLD!")
+
+if __name__ == "__main__":
+    app.start()
+```
+
+The `@app.route()` decorator takes two arguments — one required, one optional. The first is the path that your view will be found under; all paths start from the server root (`"/"`). The second is `allowed_methods`, which allows you to limit (or expand) the HTTP methods used for calling your view. For example, you may want to specify that a form view takes in `GET` and `POST` requests:
+
+```python
+@app.route("/myform", allowed_methods=["GET", "POST"])
+def form_view(request):
+    ...
+```
+If `allowed_methods` isn't passed in, the defaults (`["POST", "GET", "PUT", "PATCH", "DELETE"]`) will be used.
+
+The decorator pattern is recommended simply because it's familiar to many, and for small apps, it's hard to beat the simplicity.
+
+## After Instantiation
+
+Some folks prefer to manually assign routes after the server has been instantiated, perhaps because the route isn't actually determined until runtime. To do this, the built server object has a function you can use:
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+
+app = SpiderwebRouter()
+
+def index(request):
+    return HttpResponse("HELLO, WORLD!")
+
+if __name__ == "__main__":
+    # shown here with the optional `allowed_methods` arg
+    app.add_route("/", index, allowed_methods=["GET"])
+    app.start()
+```
+The `allowed_methods` argument, like with the `.route()` decorator, is optional. If it's not passed, the defaults will be used instead. 
+
+## During Instantiation
+
+The third and final way that you can assign routes is in a single block more akin to how Django handles it. This allows you to curate large numbers of routes and pass them all in at the same time with little fuss. Though it may be a little contrived here, you can see how this works in the following example:
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+
+
+def index(request):
+    return HttpResponse("HELLO, WORLD!")
+
+
+if __name__ == "__main__":
+    app = SpiderwebRouter(
+        routes=[
+            ("/", index, {"allowed_methods": ["GET", "POST"]})
+        ]
+    )
+    app.start()
+```
+To declare routes during instantiation, pass in a list of tuples, where each tuple consists of three things:
+
+```
+routes = [
+    (path: str, function: Callable, args: dict),
+    ...
+]
+```
+The only two args that can be passed here are `allowed_methods` as discussed above and `csrf_exempt`, where the value is a boolean (presumably `True`, as it defaults to `False`). For example, if you had a view that took unverified `POST` requests, you might set it up like this:
+
+```python
+routes = [
+    ("/submit", submit_view, {"allowed_methods": ["POST"], "csrf_exempt": True})
+]
+```
+Note that passing in `csrf_exempt` is not listed on the other two methods, mostly because it doesn't really make sense for the other methods. Instead, they use a decorator to handle it, which can be found in [the docs for CSRF protection.](https://itsthejoker.github.io/spiderweb/middleware/csrf.md?id=marking-views-as-csrf-exempt) You can also use the decorator in the same way for routes assigned in this manner, but when you have a large number of routes, being able to see all the attributes in one place is helpful.
+
+## Passing Data Through Routes
+
+Some views need to be able to take arguments via the URL path, so Spiderweb provides that ability for you. The syntax used is identical to Django's: `/routename/<str:argname>`. In this case, it will slice out that part of the URL, cast it to a string, and pass it as a variable named `argname` to your view. Here's what that looks like in practice:
+
+```python
+@app.route("/example/<int:id>")
+def example(request, id):  # <- note the additional arg!
+    return HttpResponse(body=f"Example with id {id}")
+```
+You can pass integers, strings, and positive floats with the following types:
+
+- str
+- int
+- float
+- path (see below)
+
+A URL can also have multiple capture groups:
+
+```python
+@app.route("/example/<int:id>/<str:name>")
+def example(request, id, name):
+    return HttpResponse(body=f"Example with id {id} and name {name}")
+```
+In this case, a valid URL might be `/example/3/james`, and both sections will be split out and passed to the view.
+
+The `path` option is special; this is used when you want to capture everything after the slash. For example:
+
+[!badge New in 1.2.0!]
+
+```python
+@app.route("/example/<path:rest>")
+def example(request, rest):
+    return HttpResponse(body=f"Example with {rest}")
+```
+It will come in as a string, but it will include all the slashes and other characters that are in the URL.
+
+## Adding Error Views
+
+For some apps, you may want to have your own error views that are themed to your particular application. For this, there's a slightly different process, but the gist is the same. There are also three ways to handle error views, all very similar to adding regular views.
+
+An error view has three pieces: the request, the response, and what error code triggers it. The easiest way to do this is with the decorator.
+
+### `.error` Decorator
+
+```python
+@app.error(405)
+def http405(request) -> HttpResponse:
+    return HttpResponse(body="Method not allowed", status_code=405)
+```
+Note that this is just a basic view with nothing really special about it; the only real difference is that the `.error()` decorator highlights the specific error that will trigger this view. If the server, at any point, hits this error value, it will retrieve this view and return it instead of the requested view.
+
+### After Instantiation
+
+Similar to the regular views, error views can also be added programmatically at runtime like this:
+
+```python
+def http405(request) -> HttpResponse:
+    return HttpResponse(body="Method not allowed", status_code=405)
+
+app.add_error_route(405, http405)
+```
+No other attributes or arguments are available.
+
+### During Instantiation
+
+For those with larger numbers of routes, it may make more sense to declare them when the server object is built. For example:
+
+```python
+app = SpiderwebRouter(
+    error_routes={405: http405},
+)
+```
+As with the `routes` argument, as many routes as you'd like can be registered here without issue.
+
+## Finding Routes Again
+
+[!badge New in 1.1.0!]
+
+If you need to find the path that's associated with a route (for example, for a RedirectResponse), you can use the `app.reverse()` function to find it. This function takes the name of the view and returns the path that it's associated with. For example:
+
+```python
+@app.route("/example", name="example")
+def example(request):
+    return HttpResponse(body="Example")
+
+path = app.reverse("example")
+print(path)  # -> "/example"
+```
+
+If you have a route that takes arguments, you can pass them in as a dictionary:
+
+```python
+@app.route("/example/<int:obj_id>", name="example")
+def example(request, obj_id):
+    return HttpResponse(body=f"Example with id {obj_id}")
+
+path = app.reverse("example", {'obj_id': 3})
+print(path)  # -> "/example/3"
+```
+
+You can also provide a dictionary of query parameters to be added to the URL:
+
+```python
+path = app.reverse("example", {'obj_id': 3}, query={'name': 'james'})
+print(path)  # -> "/example/3?name=james"
+```
+
+The arguments you pass in must match what the path expects, or you'll get a `SpiderwebException`. If there's no route with that name, you'll get a `ReverseNotFound` exception instead.
+
+## Route Groups
+
+[!badge New in 2.4.0!]
+
+As your application grows, keeping all of its routes in one file becomes unwieldy. Route groups let you define a set of related routes together — with a shared URL prefix — and then mount them onto your app in one shot.
+
+```python
+from spiderweb import SpiderwebRouter, RouteGroup
+from spiderweb.response import HttpResponse, JsonResponse
+
+api = RouteGroup(prefix="/api")
+
+@api.route("/users")
+def list_users(request):
+    return JsonResponse({"users": []})
+
+@api.route("/users/<int:id>")
+def get_user(request, id):
+    return JsonResponse({"id": id})
+
+app = SpiderwebRouter()
+app.include_routegroup(api)
+
+if __name__ == "__main__":
+    app.start()
+```
+
+The two routes above are registered as `/api/users` and `/api/users/<int:id>`. Everything else works exactly as it would if you had written `@app.route("/api/users")` yourself — URL parameter conversion, `allowed_methods`, all of it.
+
+You can also use `add_route()` on a group directly, without the decorator:
+
+```python
+api = RouteGroup(prefix="/api")
+api.add_route("/status", status_view, allowed_methods=["GET"], name="status")
+```
+
+### Namespaces
+
+If you give a route group a `namespace`, route names inside it are automatically prefixed with `"namespace:"`. This keeps reverse lookups unambiguous when two groups have routes with the same local name.
+
+```python
+v1 = RouteGroup(prefix="/v1", namespace="v1")
+v2 = RouteGroup(prefix="/v2", namespace="v2")
+
+@v1.route("/ping", name="ping")
+def ping_v1(request):
+    return HttpResponse("v1")
+
+@v2.route("/ping", name="ping")
+def ping_v2(request):
+    return HttpResponse("v2")
+
+app = SpiderwebRouter()
+app.include_routegroup(v1)
+app.include_routegroup(v2)
+
+app.reverse("v1:ping")  # -> "/v1/ping"
+app.reverse("v2:ping")  # -> "/v2/ping"
+```
+
+Without a namespace, route names pass through unchanged, so existing apps that don't need namespacing work exactly as before.
+
+> [!TIP]
+> You can include as many route groups as you like on the same app. Groups don't know about each other, so two groups that share the same prefix are fine as long as their individual paths don't clash.
+
+## Custom Path-Parameter Converters
+
+[!badge New in 2.4.0!]
+
+The built-in converters (`str`, `int`, `float`, `path`) cover the common cases, but sometimes you need a custom pattern — a UUID, a slug, a date string, and so on. You can teach Spiderweb new converters with `register_converter()`.
+
+A converter is any class with two things:
+
+- a `regex` class attribute — the pattern that must match the URL segment
+- a `to_python()` method — converts the matched string to whatever Python type you want
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+
+class SlugConverter:
+    regex = r"[-a-z0-9_]+"
+    name = "slug"
+
+    def to_python(self, value):
+        return str(value)
+
+app = SpiderwebRouter()
+app.register_converter(SlugConverter)
+
+@app.route("/posts/<slug:post_slug>")
+def get_post(request, post_slug):
+    return HttpResponse(f"post: {post_slug}")
+```
+
+The `name` attribute controls what you write in the route path — `<slug:...>` in this case. If you leave `name` off the class, Spiderweb derives it automatically by lower-casing the class name and stripping a trailing `"converter"` (so `SlugConverter` becomes `"slug"` either way).
+
+### A more complete example
+
+Here's a UUID converter that hands you a proper `uuid.UUID` object in your view:
+
+```python
+import uuid
+
+class UUIDConverter:
+    regex = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    name = "uuid"
+
+    def to_python(self, value):
+        return uuid.UUID(value)
+
+app.register_converter(UUIDConverter)
+
+@app.route("/records/<uuid:record_id>")
+def get_record(request, record_id):
+    # record_id is a uuid.UUID instance here
+    return HttpResponse(str(record_id))
+```
+
+Custom converters work inside route groups too — just register them on the app before calling `include_routegroup()`:
+
+```python
+app.register_converter(SlugConverter)
+
+blog = RouteGroup(prefix="/blog", namespace="blog")
+
+@blog.route("/<slug:post_slug>", name="post")
+def blog_post(request, post_slug):
+    return HttpResponse(post_slug)
+
+app.include_routegroup(blog)
+
+app.reverse("blog:post", {"post_slug": "hello-world"})  # -> "/blog/hello-world"
+```
+
+> [!NOTE]
+> Custom converters don't replace the built-ins. You can mix `<int:id>` and `<uuid:uid>` in the same app without any conflict.
+
+
+## Class-Based Views
+
+Sometimes a single view function becomes unwieldy because it has to handle `GET`, `POST`, and maybe other HTTP methods all in one place. For these situations, Spiderweb provides a `View` class that you can inherit from to create Class-Based Views. 
+
+Instead of checking the request method inside your function, you can define a class method for each HTTP verb you want to support. The base `View` class will automatically route the request to the correct method or return a `405 Method Not Allowed` if the method isn't implemented. It also automatically handles `OPTIONS` requests for you!
+
+Here's an example of how to set one up:
+
+```python
+from spiderweb import SpiderwebRouter
+from spiderweb.response import HttpResponse
+from spiderweb.routes import View
+
+app = SpiderwebRouter()
+
+class Index(View):
+    def get(self, request, *args, **kwargs):
+        return HttpResponse("This is a GET request from a class!")
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponse("This is a POST request from a class!")
+
+# You can register it using add_route:
+app.add_route("/", Index)
+```
+
+You can also use the `@app.route()` decorator directly on the class if you prefer that style:
+
+```python
+@app.route("/about")
+class About(View):
+    def get(self, request):
+        return HttpResponse("About us")
+```
+
+> [!NOTE]
+> When using Class-Based Views, the `View` class automatically allows any HTTP methods that you have defined on your subclass, meaning you don't need to manually configure `allowed_methods` for the route.
+
+</content>
+</document>
+
+<document>
+<title>Static_Files</title>
+<url>https://itsthejoker.github.io/spiderweb/static_files/</url>
+<content>
+
+# serving static files for local development
+
+When you're developing locally, it's often useful to be able to serve static files directly from your application, especially when you're working on the frontend. Spiderweb does have a mechanism for serving static files, but it's _not recommended_ (read: this is a Very Bad Idea) for production use. Instead, you should use a reverse proxy like nginx or Apache to serve them.
+
+To serve static files locally, you'll need to tell Spiderweb where they are. Once you fill this out, Spiderweb will automatically handle the routing to find them.
+
+Before we get started:
+
+> [!DANGER]
+> Having Spiderweb handle your static files in production is a **critical safety issue**. It does its best to identify if a request is malicious, but it is much safer to have this be handled by a reverse proxy.
+
+```python
+from spiderweb import SpiderwebRouter
+
+app = SpiderwebRouter(
+    staticfiles_dirs=[
+        "my_static_files", 
+        "maybe_other_static_files_here"
+    ],
+    debug=True,
+    static_url="assets",
+)
+```
+
+> [!NOTE]
+> Note the `debug` attribute in the example above; even if `staticfiles_dirs` is set, Spiderweb will only serve the files if `debug` is set to `True`. This is a safety check for you and an easy toggle for deployment.
+
+## `staticfiles_dirs`
+
+> default: `[]`
+
+This is a list of directories that Spiderweb will look in for static files. When a request comes in for a static file, Spiderweb will look in each of these directories in order to find the file. If it doesn't find the file in any of the directories, it will return a 404.
+
+## `static_url`
+
+> default: `static`
+
+This is the URL that Spiderweb will use to serve static files. In the example above, the URL would be `http://localhost:8000/assets/`. If you don't set this, Spiderweb will default to `/static/`.
+
+## `debug`
+
+[!badge New in 1.2.0!]
+
+> default: `False`
+
+This is a boolean that tells Spiderweb whether it is running in debug mode or not. Among other things, it's used in serving static files. If this value is not included, it defaults to False, and Spiderweb will not serve static files. For local development, you will want to set it to True.
+
+## Linking to static files
+
+[!badge New in 1.2.0!]
+
+There is a tag in the templates that you can use to link to static files. This tag will automatically generate the correct URL for the file based on the `static_url` attribute you set in the router.
+
+```html
+<img 
+    src="{% static 'hello_world.gif' %}" 
+    alt="A rotating globe with the caption, 'hello world'."
+>
+```
+
+In this example, the `static` tag will generate a URL that looks like `/assets/hello_world.gif`. This is the URL that the browser will use to request the file. If you have a file that is in a folder, you can specify that in the tag:
+
+```html
+<img 
+    src="{% static 'gifs/landing/hello_world.gif' %}" 
+    alt="A rotating globe with the caption, 'hello world'."
+>
+```
+This will pull the gif from `{your static folder}/gifs/landing/hello_world.gif`.
+
+</content>
+</document>
