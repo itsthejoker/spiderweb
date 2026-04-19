@@ -88,45 +88,63 @@ jobs:
           # PyPI version - with for-the-badge style and pypi logo
           curl -s "https://img.shields.io/pypi/v/spiderweb-framework?style=for-the-badge&logo=pypi" > badges/pypi-version.svg
 
-      - name: Update README with badges
-        run: |
-          # Update badges in README.md
-          if [ -f "README.md" ]; then
-            # Create a temporary file to avoid direct modification issues
-            cp README.md README.md.tmp
-            
-            # Replace or add badges in the README
-            sed -i 's|!\[Build Status\].*|![Build Status](https://github.com/itsthejoker/spiderweb/raw/main/badges/build.svg)|' README.md.tmp || echo "Build badge not found, will add it"
-            sed -i 's|!\[Coverage\].*|![Coverage](https://github.com/itsthejoker/spiderweb/raw/main/badges/coverage.svg)|' README.md.tmp || echo "Coverage badge not found, will add it"
-            sed -i 's|!\[Version\].*|![Version](https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-version.svg)|' README.md.tmp || echo "Version badge not found, will add it"
-            sed -i 's|!\[NPM Downloads\].*|![Downloads](https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-downloads-monthly.svg)|' README.md.tmp || echo "PyPI downloads badge not found, will add it"
-            sed -i 's|!\[Downloads\].*|![Downloads](https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-downloads-monthly.svg)|' README.md.tmp || echo "Downloads badge not found, will add it"
-            sed -i 's|!\[Stars\].*|![Stars](https://github.com/itsthejoker/spiderweb/raw/main/badges/stars.svg)|' README.md.tmp || echo "Stars badge not found, will add it"
-            sed -i '/!\[License\]/d' README.md.tmp || echo "License badge not found"
-            sed -i 's|!\[Repo Size\].*|![Repo Size](https://github.com/itsthejoker/spiderweb/raw/main/badges/repo-size.svg)|' README.md.tmp || echo "Repo size badge not found, will add it"
-            sed -i 's|!\[Forks\].*|![Forks](https://github.com/itsthejoker/spiderweb/raw/main/badges/forks.svg)|' README.md.tmp || echo "Forks badge not found, will add it"
-            
-            # If badges section doesn't exist, add it after the first heading
-            if ! grep -q "Build Status\|Coverage\|Version\|Downloads\|Stars" README.md.tmp; then
-              # Add badges after the first heading
-              sed -i '2i \
-          \
-          # Status Badges \
-          \
-          ![Build Status](https://github.com/itsthejoker/spiderweb/raw/main/badges/build.svg) \
-          ![Coverage](https://github.com/itsthejoker/spiderweb/raw/main/badges/coverage.svg) \
-          ![Version](https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-version.svg) \
-          ![Downloads](https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-downloads-monthly.svg) \
-          ![Stars](https://github.com/itsthejoker/spiderweb/raw/main/badges/stars.svg) \
-          ![Repo Size](https://github.com/itsthejoker/spiderweb/raw/main/badges/repo-size.svg) \
-          ![Forks](https://github.com/itsthejoker/spiderweb/raw/main/badges/forks.svg) \
-          \
-          ' README.md.tmp
-            fi
-            
-            # Replace the original file
-            mv README.md.tmp README.md
-          fi
+#      - name: Update README with badges
+#        run: |
+#          # Update badges in README.md
+#          if [ -f "README.md" ]; then
+#            # Create a temporary file to avoid direct modification issues
+#            cp README.md README.md.tmp
+#
+#            # If badges section doesn't exist, add it after the first heading
+#            if ! grep -q 'alt="Build status"\|alt="Coverage"' README.md.tmp; then
+#              # Add HTML badges after the first heading
+#              sed -i '2i \
+#          \
+#          <p align="center">\
+#              <img\
+#                  src="https://github.com/itsthejoker/spiderweb/raw/main/badges/build.svg"\
+#                  alt="Build status"\
+#              />\
+#              <img\
+#                  src="https://github.com/itsthejoker/spiderweb/raw/main/badges/coverage.svg"\
+#                  alt="Coverage"\
+#              />\
+#              <img\
+#                  src="https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-version.svg"\
+#                  alt="Version"\
+#              />\
+#              <img\
+#                  src="https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-downloads-monthly.svg"\
+#                  alt="Downloads"\
+#              />\
+#              <img\
+#                  src="https://github.com/itsthejoker/spiderweb/raw/main/badges/stars.svg"\
+#                  alt="Stars"\
+#              />\
+#              <img\
+#                  src="https://github.com/itsthejoker/spiderweb/raw/main/badges/repo-size.svg"\
+#                  alt="Repo Size"\
+#              />\
+#              <img\
+#                  src="https://github.com/itsthejoker/spiderweb/raw/main/badges/forks.svg"\
+#                  alt="Forks"\
+#              />\
+#              <img\
+#                  src="https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=for-the-badge"\
+#                  alt="Gitmoji"\
+#              />\
+#              <img\
+#                  src="https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge"\
+#                  alt="Code style: Black"\
+#              />\
+#          </p>\
+#          \
+#          ' README.md.tmp
+#            fi
+#
+#            # Replace the original file
+#            mv README.md.tmp README.md
+#          fi
 
       - name: Commit and push badges
         run: |
