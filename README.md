@@ -1,23 +1,19 @@
 # spiderweb
 
 <p align="center">
-    <img
-        src="https://img.shields.io/pypi/v/spiderweb-framework.svg?style=for-the-badge"
-        alt="PyPI release version for Spiderweb"
-    />
+    ![Build Status](https://github.com/itsthejoker/spiderweb/raw/main/badges/build.svg)
+    ![Coverage](https://github.com/itsthejoker/spiderweb/raw/main/badges/coverage.svg)
+    ![Version](https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-version.svg)
+    ![Downloads](https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-downloads-monthly.svg)
+    ![Stars](https://github.com/itsthejoker/spiderweb/raw/main/badges/stars.svg)
+    ![Repo Size](https://github.com/itsthejoker/spiderweb/raw/main/badges/repo-size.svg)
+    ![Forks](https://github.com/itsthejoker/spiderweb/raw/main/badges/forks.svg)
     <img
         src="https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=for-the-badge"
         alt="Gitmoji"
     />
     <img 
         src="https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge"
-        alt="Code style: Black"
-    />
-</p>
-
-<p align="center">
-    <img 
-        src="https://github.com/itsthejoker/spiderweb/actions/workflows/tests.yml/badge.svg?branch=main"
         alt="Code style: Black"
     />
 </p>
