@@ -1,13 +1,34 @@
 # spiderweb
 
 <p align="center">
-    ![Build Status](https://github.com/itsthejoker/spiderweb/raw/main/badges/build.svg)
-    ![Coverage](https://github.com/itsthejoker/spiderweb/raw/main/badges/coverage.svg)
-    ![Version](https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-version.svg)
-    ![Downloads](https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-downloads-monthly.svg)
-    ![Stars](https://github.com/itsthejoker/spiderweb/raw/main/badges/stars.svg)
-    ![Repo Size](https://github.com/itsthejoker/spiderweb/raw/main/badges/repo-size.svg)
-    ![Forks](https://github.com/itsthejoker/spiderweb/raw/main/badges/forks.svg)
+    <img
+        src="https://github.com/itsthejoker/spiderweb/raw/main/badges/build.svg"
+        alt="Build status"
+    />
+    <img
+        src="https://github.com/itsthejoker/spiderweb/raw/main/badges/coverage.svg"
+        alt="Coverage"
+    />
+    <img
+        src="https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-version.svg"
+        alt="Version"
+    />
+    <img
+        src="https://github.com/itsthejoker/spiderweb/raw/main/badges/pypi-downloads-monthly.svg"
+        alt="Downloads"
+    />
+    <img
+        src="https://github.com/itsthejoker/spiderweb/raw/main/badges/stars.svg"
+        alt="Stars"
+    />
+    <img
+        src="https://github.com/itsthejoker/spiderweb/raw/main/badges/repo-size.svg"
+        alt="Repo Size"
+    />
+    <img
+        src="https://github.com/itsthejoker/spiderweb/raw/main/badges/forks.svg"
+        alt="Forks"
+    />
     <img
         src="https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=for-the-badge"
         alt="Gitmoji"
