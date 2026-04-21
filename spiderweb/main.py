@@ -195,6 +195,7 @@ class SpiderwebRouter(LocalServerMixin, MiddlewareMixin, RoutesMixin, FernetMixi
             "server": self,
             "extensions": [
                 "spiderweb.jinja_extensions.StaticFilesExtension",
+                "spiderweb.jinja_extensions.UrlExtension",
             ],
         }
 
