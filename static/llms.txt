@@ -2157,6 +2157,16 @@ print(path)  # -> "/example/3?name=james"
 
 The arguments you pass in must match what the path expects, or you'll get a `SpiderwebException`. If there's no route with that name, you'll get a `ReverseNotFound` exception instead.
 
+### Reversing in Templates
+
+If you are using Spiderweb's built-in Jinja2 templates, you can also reverse URLs directly inside your templates using the `{% url %}` tag:
+
+```html
+<a href="{% url 'example' %}">Click Here</a>
+```
+
+This works exactly like `app.reverse()` and will insert the correct path for the route name provided.
+
 ## Route Groups
 
 [!badge New in 2.4.0!]

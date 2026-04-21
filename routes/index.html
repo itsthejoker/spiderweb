@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/spiderweb">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.829890994559">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.830056816295">
 
     <!-- See retype.com -->
     <meta name="generator" content="Retype 4.5.3">
@@ -38,12 +38,12 @@
 
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
-    <link href="../resources/css/retype.css?v=4.5.3.829890994559" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.5.3.830056816295" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.5.3.829890994559" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.5.3.830056816295" data-turbo-eval="false" defer></script>
     <script data-cfasync="false" src="../resources/js/retype.js?v=4.5.3" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.5.3.829890994559" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.5.3.829890994559" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.5.3.830056816295" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.5.3.830056816295" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -328,6 +328,12 @@ print(path)  # -&gt; &quot;/example/3&quot;</code></pre>
 print(path)  # -&gt; &quot;/example/3?name=james&quot;</code></pre>
 </doc-codeblock></div>
 <p>The arguments you pass in must match what the path expects, or you&#x27;ll get a <code translate="no" v-pre>SpiderwebException</code>. If there&#x27;s no route with that name, you&#x27;ll get a <code translate="no" v-pre>ReverseNotFound</code> exception instead.</p>
+<h3 id="reversing-in-templates">Reversing in Templates</h3>
+<p>If you are using Spiderweb&#x27;s built-in Jinja2 templates, you can also reverse URLs directly inside your templates using the <code translate="no" v-pre>{% url %}</code> tag:</p>
+<div id="reversing-in-templates-code-1" class="codeblock-wrapper"><doc-codeblock>
+<pre translate="no" class="language-markup"><code v-pre class="language-markup">&lt;a href=&quot;{% url 'example' %}&quot;&gt;Click Here&lt;/a&gt;</code></pre>
+</doc-codeblock></div>
+<p>This works exactly like <code translate="no" v-pre>app.reverse()</code> and will insert the correct path for the route name provided.</p>
 <h2 id="route-groups">Route Groups</h2>
 <p><span class="no-link inline-flex align-middle items-center justify-center font-medium leading-none whitespace-nowrap text-badge-primary-text bg-badge-primary border border-badge-primary-border h-6 px-2 text-xs rounded-md">
     <span>New in 2.4.0!</span>
