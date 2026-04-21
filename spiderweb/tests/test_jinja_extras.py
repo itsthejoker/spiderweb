@@ -33,3 +33,27 @@ def test_str_template_with_static_tag():
     )
 
     assert app(environ, start_response) == [bytes(rendered_template, DEFAULT_ENCODING)]
+
+
+def test_str_template_with_url_tag():
+    # test that the url tag works
+    template = """
+    <html>
+        <body>
+            <a href="{% url 'target_route' %}">Link</a>
+        </body>
+    </html>
+    """
+    app, environ, start_response = setup()
+
+    @app.route("/")
+    def index(request):
+        return TemplateResponse(request, template_string=template)
+
+    @app.route("/target", name="target_route")
+    def target(request):
+        pass
+
+    rendered_template = template.replace("{% url 'target_route' %}", "/target")
+
+    assert app(environ, start_response) == [bytes(rendered_template, DEFAULT_ENCODING)]
