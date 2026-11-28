@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <meta name="turbo-root" content="/spiderweb">
-    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.5.3.830056865982">
+    <meta name="turbo-cache-control" content="no-cache" data-turbo-track="reload" data-track-token="4.6.0.849210304046">
 
     <!-- See retype.com -->
-    <meta name="generator" content="Retype 4.5.3">
+    <meta name="generator" content="Retype 4.6.0">
 
     <!-- Primary Meta Tags -->
     <title>management</title>
@@ -38,12 +38,12 @@
 
     <script data-cfasync="false">(function(){var cl=document.documentElement.classList,ls=localStorage.getItem("retype_scheme"),hd=cl.contains("dark"),hl=cl.contains("light"),wm=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;if(ls==="dark"||(!ls&&wm&&!hd&&!hl)){cl.remove("light");cl.add("dark")}else if(ls==="light"||(!ls&&!wm&&!hd&&!hl)){cl.remove("dark");cl.add("light")}})();</script>
 
-    <link href="../resources/css/retype.css?v=4.5.3.830056865982" rel="stylesheet">
+    <link href="../resources/css/retype.css?v=4.6.0.849210304046" rel="stylesheet">
 
-    <script data-cfasync="false" src="../resources/js/config.js?v=4.5.3.830056865982" data-turbo-eval="false" defer></script>
-    <script data-cfasync="false" src="../resources/js/retype.js?v=4.5.3" data-turbo-eval="false" defer></script>
-    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.5.3.830056865982" data-turbo-eval="false" defer></script>
-    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.5.3.830056865982" defer></script>
+    <script data-cfasync="false" src="../resources/js/config.js?v=4.6.0.849210304046" data-turbo-eval="false" defer></script>
+    <script data-cfasync="false" src="../resources/js/retype.js?v=4.6.0" data-turbo-eval="false" defer></script>
+    <script id="lunr-js" data-cfasync="false" src="../resources/js/lunr.js?v=4.6.0.849210304046" data-turbo-eval="false" defer></script>
+    <script id="prism-js" data-cfasync="false" src="../resources/js/prism.js?v=4.6.0.849210304046" defer></script>
 </head>
 <body>
     <div id="retype-app" class="relative text-base antialiased text-base-text bg-base-bg font-body">
@@ -322,6 +322,10 @@ web makemigrations -m &quot;add users table&quot;</code></pre>
 target_metadata = [_SpiderwebBase.metadata, _AppBase.metadata]</code></pre>
 </doc-codeblock></div>
 <p><strong>Options</strong></p>
+<retype-table copy-text="| Flag | Description |
+|---|---|
+| `-m MESSAGE` / `--message MESSAGE` | Short description embedded in the migration filename. |
+| `--empty` | Create a blank migration without running autogenerate. Useful for hand-written data migrations. |">
 <div class="table-wrapper scrollbar overflow-hidden">
 <table class="comfortable">
 <thead>
@@ -342,6 +346,7 @@ target_metadata = [_SpiderwebBase.metadata, _AppBase.metadata]</code></pre>
 </tbody>
 </table>
 </div>
+</retype-table>
 <h3 id="migrate">migrate</h3>
 <p>Applies pending migrations to the database. Without arguments it upgrades to the latest revision (<code translate="no" v-pre>head</code>).</p>
 <div id="migrate-code-1" class="codeblock-wrapper"><doc-codeblock>
@@ -355,6 +360,10 @@ web migrate -1                # roll back the most recent migration
 web migrate zero              # roll back every migration (equivalent to `base`)</code></pre>
 </doc-codeblock></div>
 <p><strong>Options</strong></p>
+<retype-table copy-text="| Flag | Description |
+|---|---|
+| `REVISION` | Target revision (default: `head`). |
+| `--fake` | Stamp the database at the target revision without executing any SQL — useful for marking existing schemas as migrated. |">
 <div class="table-wrapper scrollbar overflow-hidden">
 <table class="comfortable">
 <thead>
@@ -375,6 +384,7 @@ web migrate zero              # roll back every migration (equivalent to `base`)
 </tbody>
 </table>
 </div>
+</retype-table>
 <div class="flex mb-6">
     <div class="shrink-0 w-1.5 rounded-tl-lg rounded-bl-lg bg-callout-tip"></div>
     <div class="flex w-full py-4 border border-l-0 rounded-tr-lg rounded-br-lg doc-callout bg-callout-base-bg border-callout-base-border" role="alert">
@@ -474,6 +484,13 @@ def seed_database(app, args, extra):
 </div>
 <p>You can register as many custom commands as you like. Pick meaningful names; they&#x27;ll show up in the error message if someone types an unrecognised command, so short and descriptive is best.</p>
 <h2 id="configuration-reference">configuration reference</h2>
+<retype-table copy-text="| Option | Description |
+|---|---|
+| `--app MODULE:ATTR` | The app to use, in `module:attribute` form. Overrides `SPIDERWEB_APP` and `pyproject.toml`. |
+| `SPIDERWEB_APP` | Environment variable. Overrides `pyproject.toml`, overridden by `--app`. |
+| `[tool.spiderweb] app` | `pyproject.toml` key. Lowest priority; used when neither of the above is set. |
+| `[tool.spiderweb] asgi` | `pyproject.toml` boolean. When `true`, `serve` defaults to ASGI mode. Overridden by `--asgi` / `--wsgi`. |
+| `[tool.spiderweb] migrations_dir` | Path to the Alembic migrations directory, relative to `pyproject.toml`. Defaults to `migrations`. |">
 <div class="table-wrapper scrollbar overflow-hidden">
 <table class="comfortable">
 <thead>
@@ -506,7 +523,14 @@ def seed_database(app, args, extra):
 </tbody>
 </table>
 </div>
+</retype-table>
 <h3 id="serve-options"><code translate="no" v-pre>serve</code> options</h3>
+<retype-table copy-text="| Flag | Description |
+|---|---|
+| `--asgi` | Start in ASGI mode via uvicorn instead of WSGI. |
+| `--wsgi` | Force WSGI mode even when `asgi = true` is set in `pyproject.toml`. |
+| `--addr ADDR` | Bind address. Overrides the value stored in the app. |
+| `--port PORT` | Port number. Overrides the value stored in the app. |">
 <div class="table-wrapper scrollbar overflow-hidden">
 <table class="comfortable">
 <thead>
@@ -535,7 +559,12 @@ def seed_database(app, args, extra):
 </tbody>
 </table>
 </div>
+</retype-table>
 <h3 id="makemigrations-options"><code translate="no" v-pre>makemigrations</code> options</h3>
+<retype-table copy-text="| Flag | Description |
+|---|---|
+| `-m MESSAGE` / `--message MESSAGE` | Short description for the migration. |
+| `--empty` | Create a blank migration without autogenerate. |">
 <div class="table-wrapper scrollbar overflow-hidden">
 <table class="comfortable">
 <thead>
@@ -556,7 +585,12 @@ def seed_database(app, args, extra):
 </tbody>
 </table>
 </div>
+</retype-table>
 <h3 id="migrate-options"><code translate="no" v-pre>migrate</code> options</h3>
+<retype-table copy-text="| Flag | Description |
+|---|---|
+| `REVISION` | Target revision (default: `head`). Accepts revision IDs, `+N`/`-N` relative specs, `zero`, or `base`. |
+| `--fake` | Stamp the database at the target revision without running SQL. |">
 <div class="table-wrapper scrollbar overflow-hidden">
 <table class="comfortable">
 <thead>
@@ -577,6 +611,7 @@ def seed_database(app, args, extra):
 </tbody>
 </table>
 </div>
+</retype-table>
 <div id="retype-backlinks">
     <h2>See also</h2>
 <div class="card-compact-group">
